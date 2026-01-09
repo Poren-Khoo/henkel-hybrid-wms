@@ -63,26 +63,26 @@ export default function DispatchOrders() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="border-l-4 border-l-blue-500 shadow-sm"><CardContent className="p-4"><div className="text-2xl font-bold">{shipments.length}</div><div className="text-xs text-slate-500">Active Shipments</div></CardContent></Card>
-            <Card className="border-l-4 border-l-green-500 shadow-sm"><CardContent className="p-4"><div className="text-2xl font-bold">{availableFG.length}</div><div className="text-xs text-slate-500">Available Pallets</div></CardContent></Card>
+            <Card className="bg-white border-slate-200 shadow-sm"><CardContent className="p-4"><div className="text-3xl font-bold text-slate-900">{shipments.length}</div><div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Active Shipments</div></CardContent></Card>
+            <Card className="bg-white border-slate-200 shadow-sm"><CardContent className="p-4"><div className="text-3xl font-bold text-slate-900">{availableFG.length}</div><div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Available Pallets</div></CardContent></Card>
         </div>
 
         {/* Main Table */}
-        <Card className="border-slate-200 shadow-sm">
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-semibold text-slate-800 flex items-center gap-2"><Truck className="h-5 w-5" /> Transfer Orders</h3>
-                <Button className="bg-slate-900 text-white" onClick={() => setIsCreateOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" /> New Transfer
+        <Card className="bg-white border-slate-200 shadow-sm">
+            <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex justify-between items-center">
+                <h3 className="font-semibold text-slate-800 flex items-center gap-2"><Truck className="h-5 w-5 text-slate-500" /> Transfer Orders</h3>
+                <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={() => setIsCreateOpen(true)}>
+                    <Plus className="h-4 w-4" /> New Transfer
                 </Button>
             </div>
             <Table>
                 <TableHeader>
-                    <TableRow className="bg-slate-50">
-                        <TableHead>DN Number</TableHead>
-                        <TableHead>Customer / 3PL</TableHead>
-                        <TableHead>Destination</TableHead>
-                        <TableHead>Items</TableHead>
-                        <TableHead>Status</TableHead>
+                    <TableRow className="bg-slate-50 border-b border-slate-200">
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">DN Number</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Customer / 3PL</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Destination</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Items</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -90,18 +90,18 @@ export default function DispatchOrders() {
                         <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-400">No active shipments.</TableCell></TableRow>
                     ) : (
                         shipments.map(s => (
-                            <TableRow key={s.dn_id}>
-                                <TableCell className="font-mono text-blue-600 font-medium">{s.dn_id}</TableCell>
-                                <TableCell>{s.customer}</TableCell>
-                                <TableCell className="text-xs text-slate-500"><div className="flex items-center gap-1"><MapPin className="h-3 w-3"/> {s.destination}</div></TableCell>
+                            <TableRow key={s.dn_id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+                                <TableCell className="font-mono text-xs font-bold text-slate-700">{s.dn_id}</TableCell>
+                                <TableCell className="font-medium text-slate-900">{s.customer}</TableCell>
+                                <TableCell className="text-xs text-slate-500"><div className="flex items-center gap-1"><MapPin className="h-4 w-4 text-slate-400"/> {s.destination}</div></TableCell>
                                 <TableCell>
                                     {s.items.map((i, idx) => (
-                                        <div key={idx} className="text-xs bg-slate-100 rounded px-2 py-1 inline-block mr-1">
+                                        <Badge key={idx} variant="outline" className="text-xs bg-slate-50 text-slate-600 border-slate-200 border rounded-sm mr-1 mb-1">
                                             {i.sku} ({i.qty} kg)
-                                        </div>
+                                        </Badge>
                                     ))}
                                 </TableCell>
-                                <TableCell><Badge variant="outline" className={s.status === 'READY_TO_PICK' ? 'bg-green-50 text-green-700' : ''}>{s.status}</Badge></TableCell>
+                                <TableCell><Badge variant="outline" className={s.status === 'READY_TO_PICK' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm' : 'bg-slate-50 text-slate-600 border-slate-200 border rounded-sm'}>{s.status}</Badge></TableCell>
                             </TableRow>
                         ))
                     )}
@@ -112,7 +112,7 @@ export default function DispatchOrders() {
         {/* CREATE DIALOG */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogContent>
-                <DialogHeader><DialogTitle>Create 3PL Transfer Order</DialogTitle></DialogHeader>
+                <DialogHeader className="border-b border-slate-100 bg-slate-50/50"><DialogTitle>Create 3PL Transfer Order</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="space-y-2">
                         <Label>Select 3PL / Customer</Label>
@@ -143,8 +143,9 @@ export default function DispatchOrders() {
                         </Select>
                     </div>
                 </div>
-                <DialogFooter>
-                    <Button onClick={handleCreateShipment} disabled={!customer || !selectedProduct}>Create Transfer</Button>
+                <DialogFooter className="border-t border-slate-100 bg-slate-50/30">
+                    <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 h-10 px-4" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+                    <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={handleCreateShipment} disabled={!customer || !selectedProduct}>Create Transfer</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

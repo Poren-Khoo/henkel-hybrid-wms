@@ -17,7 +17,6 @@ import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
 import PageContainer from '../../../components/PageContainer'
 
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
 
 // MQTT Topics
 const TOPIC_STATE = "Henkelv2/Shanghai/Logistics/Exceptions/State/Dispute_List"
@@ -157,30 +156,30 @@ export default function ThreePLExceptions() {
   const getSeverityBadge = (severity) => {
     const severityUpper = (severity || '').toUpperCase()
     if (severityUpper === 'HIGH') {
-      return <Badge variant="red" className="uppercase px-3 rounded-full">High</Badge>
+      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 border rounded-sm uppercase text-[10px] px-2">High</Badge>
     }
     if (severityUpper === 'MEDIUM') {
-      return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 uppercase px-3 rounded-full">Medium</Badge>
+      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 border rounded-sm uppercase text-[10px] px-2">Medium</Badge>
     }
     if (severityUpper === 'LOW') {
-      return <Badge variant="secondary" className="uppercase px-3 rounded-full">Low</Badge>
+      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm uppercase text-[10px] px-2">Low</Badge>
     }
-    return <Badge variant="gray" className="uppercase px-3 rounded-full">{severity}</Badge>
+    return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm uppercase text-[10px] px-2">{severity}</Badge>
   }
 
   // Get status badge
   const getStatusBadge = (status) => {
     const statusUpper = (status || '').toUpperCase()
     if (statusUpper === 'OPEN') {
-      return <Badge variant="blue" className="uppercase px-3 rounded-full">Open</Badge>
+      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm uppercase text-[10px] px-2">Open</Badge>
     }
     if (statusUpper === 'RESOLVED') {
-      return <Badge variant="green" className="uppercase px-3 rounded-full">Resolved</Badge>
+      return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm uppercase text-[10px] px-2">Resolved</Badge>
     }
     if (statusUpper === 'PENDING_3PL' || statusUpper === 'PENDING') {
-      return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 uppercase px-3 rounded-full">Pending 3PL</Badge>
+      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 border rounded-sm uppercase text-[10px] px-2">Pending 3PL</Badge>
     }
-    return <Badge variant="gray" className="uppercase px-3 rounded-full">{status}</Badge>
+    return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm uppercase text-[10px] px-2">{status}</Badge>
   }
 
   // Format date
@@ -305,8 +304,7 @@ export default function ThreePLExceptions() {
         <div className="flex justify-end">
           <Button
             onClick={handleCreateException}
-            variant="destructive"
-            className="h-10 px-4 inline-flex items-center gap-2"
+            className="h-10 px-4 inline-flex items-center gap-2 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
           >
             <Plus className="h-4 w-4" />
             Create Exception
@@ -315,33 +313,36 @@ export default function ThreePLExceptions() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <Card className="border border-green-300 bg-green-50">
-          <CardContent className="pt-6">
-            <p className="text-sm text-green-800">{toastMessage}</p>
+        <Card className="bg-white border border-emerald-200 shadow-sm">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <p className="text-sm font-medium text-emerald-800">{toastMessage}</p>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Connection Info */}
-      <Card className="border border-slate-200 shadow-sm">
-        <CardHeader>
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
           <UNSConnectionInfo topic={TOPIC_STATE} />
         </CardHeader>
       </Card>
 
       {/* Filter Bar */}
-      <Card className="border border-slate-200 shadow-sm">
-        <CardContent className="pt-6">
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardContent className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
         <div className="grid gap-4 md:grid-cols-5">
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
               <Input
                 type="text"
                 placeholder="Search exceptions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8"
+                className="pl-9 h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white transition-colors"
               />
             </div>
 
@@ -416,25 +417,25 @@ export default function ThreePLExceptions() {
       </Card>
 
       {/* Main Table */}
-      <Card className="border border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle>Exception List</CardTitle>
-          <p className="text-sm text-slate-500 mt-1">
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+          <CardTitle className="text-lg font-bold text-slate-900">Exception List</CardTitle>
+          <p className="text-xs text-slate-500 mt-1">
             {filteredDisputes.length} exception{filteredDisputes.length !== 1 ? 's' : ''} found
           </p>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className={headerClass}>Exception ID</TableHead>
-                <TableHead className={headerClass}>Reference</TableHead>
-                <TableHead className={headerClass}>3PL Provider</TableHead>
-                <TableHead className={headerClass}>Type</TableHead>
-                <TableHead className={headerClass}>Severity</TableHead>
-                <TableHead className={headerClass}>Status</TableHead>
-                <TableHead className={headerClass}>Created</TableHead>
-                <TableHead className={headerClass}>Actions</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Exception ID</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Reference</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">3PL Provider</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Type</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Severity</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Created</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -452,18 +453,18 @@ export default function ThreePLExceptions() {
                 filteredDisputes.map((dispute) => (
                   <TableRow
                     key={dispute.id}
-                    className="bg-white border-b hover:bg-slate-50"
+                    className="bg-white border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors"
                   >
-                    <TableCell className="font-medium text-slate-900 font-mono text-sm">
+                    <TableCell className="font-mono text-xs font-bold text-slate-700">
                       {dispute.id}
                     </TableCell>
-                    <TableCell className="text-slate-700 font-medium">
+                    <TableCell className="text-slate-900 font-medium">
                       {dispute.reference}
                     </TableCell>
-                    <TableCell className="text-slate-700">
+                    <TableCell className="text-slate-600 text-sm">
                       {dispute.tpl_provider || dispute.provider || '-'}
                     </TableCell>
-                    <TableCell className="text-slate-700">
+                    <TableCell className="text-slate-600 text-sm">
                       {dispute.type || dispute.reason_code || '-'}
                     </TableCell>
                     <TableCell>
@@ -472,7 +473,7 @@ export default function ThreePLExceptions() {
                     <TableCell>
                       {getStatusBadge(dispute.status)}
                     </TableCell>
-                    <TableCell className="text-slate-600 text-sm">
+                    <TableCell className="text-slate-500 text-xs">
                       {formatDate(dispute.created_date || dispute.created_at || dispute.timestamp)}
                     </TableCell>
                     <TableCell>
@@ -481,7 +482,7 @@ export default function ThreePLExceptions() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleResolve(dispute.id)}
-                          className="text-xs"
+                          className="text-xs border-slate-200 text-slate-700 hover:bg-slate-50 h-8"
                         >
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Resolve
@@ -499,7 +500,7 @@ export default function ThreePLExceptions() {
       {/* Exception Dialog (Reused from Reconciliation) */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
-          <DialogHeader>
+          <DialogHeader className="border-b border-slate-100 bg-slate-50/50">
             <DialogTitle>
               {selectedException?.sku === 'MANUAL' 
                 ? 'Create Manual Exception' 
@@ -591,9 +592,10 @@ export default function ThreePLExceptions() {
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="border-t border-slate-100 bg-slate-50/30">
                 <Button
                   variant="outline"
+                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
                   onClick={() => {
                     setIsDialogOpen(false)
                     setSelectedException(null)
@@ -606,8 +608,7 @@ export default function ThreePLExceptions() {
                 </Button>
                 <Button
                   onClick={handleSubmitException}
-                  variant="destructive"
-                  className="h-10 px-4"
+                  className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2"
                 >
                   Submit Exception
                 </Button>

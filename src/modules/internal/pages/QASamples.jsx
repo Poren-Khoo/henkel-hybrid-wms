@@ -6,8 +6,7 @@ import { Button } from '../../../components/ui/button'
 import { Input } from '../../../components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../../components/ui/dialog'
 import { Label } from '../../../components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'
-import { FlaskConical, Search, Box, CheckCircle, XCircle, TestTube2 } from 'lucide-react'
+import { FlaskConical, Search, Box, CheckCircle, XCircle, TestTube2, AlertCircle, Clock, PauseCircle } from 'lucide-react'
 import PageContainer from '../../../components/PageContainer'
 import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
@@ -30,7 +29,7 @@ export default function QASamples() {
 
   // DEBUG: Track when MQTT data arrives
   useEffect(() => {
-    console.log('🔍 [QASamples] Data Update:', data.raw[TOPIC_QC_QUEUE])
+    // console.log('🔍 [QASamples] Data Update:', data.raw[TOPIC_QC_QUEUE])
   }, [data.raw])
 
   // Get live data
@@ -102,23 +101,39 @@ export default function QASamples() {
   // --- RENDER HELPERS ---
 
   const getStatusBadge = (status) => {
-    if (status === 'IN_TESTING') return <Badge className="bg-purple-100 text-purple-700">In Testing</Badge>
-    if (status === 'PENDING_SAMPLING' || status === 'QUARANTINE') return <Badge className="bg-amber-100 text-amber-700">Pending Test</Badge>
-    return <Badge variant="outline">{status}</Badge>
+    switch (status) {
+        case 'IN_TESTING': 
+            return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 rounded-sm">In Testing</Badge>
+        case 'PENDING_SAMPLING': 
+        case 'QUARANTINE':
+            return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 rounded-sm">Pending</Badge>
+        case 'PASS':
+            return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 rounded-sm">Pass</Badge>
+        case 'FAIL':
+            return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 rounded-sm">Fail</Badge>
+        default:
+            return <Badge variant="outline" className="text-slate-500 border-slate-200 rounded-sm">{status}</Badge>
+    }
   }
 
-  const KPICard = ({ label, value, colorClass }) => (
-    <Card className={`border-l-4 ${colorClass} shadow-sm`}>
-      <CardContent className="p-4">
-        <div className="text-2xl font-bold text-slate-900">{value}</div>
-        <div className={`text-xs font-medium uppercase mt-1 ${colorClass.replace('border-l-', 'text-')}`}>{label}</div>
+  // Refactored KPI Card (Neutral Style)
+  const KPICard = ({ label, value, icon: Icon, colorClass }) => (
+    <Card className="border-slate-200 shadow-sm bg-white">
+      <CardContent className="p-4 flex justify-between items-start">
+        <div>
+            <div className="text-3xl font-bold text-slate-900">{value}</div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">{label}</div>
+        </div>
+        <div className={`h-8 w-8 rounded-md flex items-center justify-center bg-slate-50 ${colorClass}`}>
+            <Icon className="h-4 w-4" />
+        </div>
       </CardContent>
     </Card>
   )
 
   return (
     <PageContainer title="QA Samples" subtitle="Lab Interface: Record test results">
-      <div className="space-y-6">
+      <div className="space-y-4">
         
         {/* Connection Status */}
         <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -127,71 +142,72 @@ export default function QASamples() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KPICard label="Pending Tests" value={kpiData.pending} colorClass="border-l-amber-500" />
-          <KPICard label="High Priority" value={kpiData.priority} colorClass="border-l-red-500" />
-          <KPICard label="On Hold" value={kpiData.onHold} colorClass="border-l-slate-500" />
-          <KPICard label="Avg Turnaround" value={kpiData.avgTime} colorClass="border-l-blue-500" />
+          <KPICard label="Pending Tests" value={kpiData.pending} icon={FlaskConical} colorClass="text-amber-600" />
+          <KPICard label="High Priority" value={kpiData.priority} icon={AlertCircle} colorClass="text-red-600" />
+          <KPICard label="On Hold" value={kpiData.onHold} icon={PauseCircle} colorClass="text-slate-600" />
+          <KPICard label="Avg Turnaround" value={kpiData.avgTime} icon={Clock} colorClass="text-blue-600" />
+        </div>
+
+        {/* SEARCH BAR */}
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+            <div className="relative w-full sm:w-96">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                <Input 
+                    placeholder="Scan Batch or Sample ID..." 
+                    className="pl-9 h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                />
+            </div>
         </div>
 
         {/* TABLE */}
-        <Card className="border-slate-200 shadow-sm">
-          <div className="p-4 border-b border-slate-100 flex justify-between items-center">
-            <div className="relative w-72">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
-              <Input 
-                placeholder="Scan Batch or Sample ID..." 
-                className="pl-8" 
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
-            </div>
-          </div>
-
+        <Card className="border-slate-200 shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>Sample ID</TableHead>
-                <TableHead>Material</TableHead>
-                <TableHead>Batch</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Sample ID</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Material Info</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Batch</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Qty</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Location</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                <TableHead className="text-right uppercase text-[11px] font-bold text-slate-500 tracking-wider">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {samples.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">
-                    <div className="flex flex-col items-center gap-2">
-                        <Box className="h-8 w-8 text-slate-300" />
-                        <span>No samples waiting for testing. Good job!</span>
+                  <TableCell colSpan={7} className="h-40 text-center text-slate-500">
+                    <div className="flex flex-col items-center gap-2 py-8">
+                        <Box className="h-10 w-10 text-slate-200" />
+                        <span className="text-sm font-medium text-slate-600">No samples waiting for testing</span>
+                        <span className="text-xs text-slate-400">All caught up!</span>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 samples.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono text-xs text-blue-600 font-medium">
-                        <div className="flex items-center gap-2"><FlaskConical className="h-3 w-3"/> {item.id}</div>
+                  <TableRow key={item.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                    <TableCell className="font-mono text-xs text-blue-600 font-bold">
+                        <div className="flex items-center gap-2">{item.id}</div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium text-slate-900">{item.material}</div>
-                      <div className="text-xs text-slate-500">{item.desc}</div>
+                      <div className="font-medium text-slate-900 text-sm">{item.material}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{item.desc}</div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{item.batch}</TableCell>
-                    <TableCell>{item.qty}</TableCell>
-                    <TableCell className="text-xs">{item.location}</TableCell>
+                    <TableCell className="font-mono text-xs text-slate-700">{item.batch}</TableCell>
+                    <TableCell className="text-sm text-slate-700">{item.qty}</TableCell>
+                    <TableCell className="text-xs text-slate-500">{item.location}</TableCell>
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
                     <TableCell className="text-right">
-                        {/* THIS BUTTON WAS MISSING IN YOUR CODE */}
                         <Button 
                             size="sm" 
                             variant="outline"
-                            className="border-slate-800 text-slate-800 hover:bg-slate-50"
+                            className="h-8 text-xs border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50"
                             onClick={() => handleOpenLab(item)}
                         >
-                            <TestTube2 className="h-4 w-4 mr-2" />
+                            <TestTube2 className="h-3.5 w-3.5 mr-2" />
                             Record Results
                         </Button>
                     </TableCell>
@@ -205,54 +221,69 @@ export default function QASamples() {
         {/* --- LAB RESULTS MODAL --- */}
         <Dialog open={isResultOpen} onOpenChange={setIsResultOpen}>
           <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Lab Results Entry</DialogTitle>
-              <DialogDescription>Enter measured values for Batch: {selectedSample?.batch}</DialogDescription>
+            <DialogHeader className="border-b border-slate-100 pb-4">
+              <DialogTitle className="text-lg font-bold text-slate-900">Lab Results Entry</DialogTitle>
+              <DialogDescription className="text-xs">
+                Recording data for Batch: <span className="font-mono text-slate-700">{selectedSample?.batch}</span>
+              </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-6 py-4">
                 {/* Result Toggle */}
                 <div className="flex gap-4 justify-center">
                     <div 
-                        className={`cursor-pointer border-2 rounded-lg p-4 w-32 flex flex-col items-center gap-2 ${labOutcome === 'PASS' ? 'border-green-500 bg-green-50' : 'border-slate-200 opacity-50'}`}
+                        className={`cursor-pointer border-2 rounded-xl p-4 w-36 flex flex-col items-center gap-2 transition-all ${labOutcome === 'PASS' ? 'border-green-500 bg-green-50 ring-2 ring-green-200' : 'border-slate-100 bg-white hover:border-slate-300'}`}
                         onClick={() => setLabOutcome('PASS')}
                     >
-                        <CheckCircle className="text-green-600 h-6 w-6" />
-                        <span className="font-bold text-green-700">PASS</span>
+                        <CheckCircle className={`h-8 w-8 ${labOutcome === 'PASS' ? 'text-green-600' : 'text-slate-300'}`} />
+                        <span className={`font-bold text-sm ${labOutcome === 'PASS' ? 'text-green-700' : 'text-slate-400'}`}>PASS</span>
                     </div>
                     <div 
-                        className={`cursor-pointer border-2 rounded-lg p-4 w-32 flex flex-col items-center gap-2 ${labOutcome === 'FAIL' ? 'border-red-500 bg-red-50' : 'border-slate-200 opacity-50'}`}
+                        className={`cursor-pointer border-2 rounded-xl p-4 w-36 flex flex-col items-center gap-2 transition-all ${labOutcome === 'FAIL' ? 'border-red-500 bg-red-50 ring-2 ring-red-200' : 'border-slate-100 bg-white hover:border-slate-300'}`}
                         onClick={() => setLabOutcome('FAIL')}
                     >
-                        <XCircle className="text-red-600 h-6 w-6" />
-                        <span className="font-bold text-red-700">FAIL</span>
+                        <XCircle className={`h-8 w-8 ${labOutcome === 'FAIL' ? 'text-red-600' : 'text-slate-300'}`} />
+                        <span className={`font-bold text-sm ${labOutcome === 'FAIL' ? 'text-red-700' : 'text-slate-400'}`}>FAIL</span>
                     </div>
                 </div>
 
                 {/* Input Fields */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                        <Label>Viscosity (cP)</Label>
-                        <Input 
-                            placeholder="e.g. 2000" 
-                            value={labValues.viscosity}
-                            onChange={(e) => setLabValues({...labValues, viscosity: e.target.value})}
-                        />
+                <div className="bg-slate-50/50 p-4 rounded-lg border border-slate-100 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold text-slate-600">Viscosity (cP)</Label>
+                            <Input 
+                                className="h-9 bg-white border-slate-200"
+                                placeholder="e.g. 2000" 
+                                value={labValues.viscosity}
+                                onChange={(e) => setLabValues({...labValues, viscosity: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold text-slate-600">pH Level</Label>
+                            <Input 
+                                className="h-9 bg-white border-slate-200"
+                                placeholder="e.g. 7.2" 
+                                value={labValues.ph}
+                                onChange={(e) => setLabValues({...labValues, ph: e.target.value})}
+                            />
+                        </div>
                     </div>
-                    <div className="grid gap-2">
-                        <Label>pH Level</Label>
+                    <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-slate-600">Purity / Notes</Label>
                         <Input 
-                            placeholder="e.g. 7.2" 
-                            value={labValues.ph}
-                            onChange={(e) => setLabValues({...labValues, ph: e.target.value})}
+                            className="h-9 bg-white border-slate-200"
+                            placeholder="e.g. 99.8% - Visual Inspection OK" 
+                            value={labValues.purity}
+                            onChange={(e) => setLabValues({...labValues, purity: e.target.value})}
                         />
                     </div>
                 </div>
             </div>
 
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setIsResultOpen(false)}>Cancel</Button>
-              <Button className="bg-slate-900 text-white" onClick={handleSubmitResults}>
+            <DialogFooter className="border-t border-slate-100 pt-4">
+              <Button variant="ghost" onClick={() => setIsResultOpen(false)} className="text-slate-500 hover:text-slate-900">Cancel</Button>
+              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2 min-w-[120px]" onClick={handleSubmitResults}>
                 Submit Results
               </Button>
             </DialogFooter>

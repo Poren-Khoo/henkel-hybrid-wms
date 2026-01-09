@@ -5,8 +5,6 @@ import { ArrowUp, ArrowDown } from 'lucide-react'
 import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
 
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
-
 // MQTT Topic
 const TOPIC_STATE = "Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB"
 
@@ -15,7 +13,7 @@ const CHART_COLORS = {
   inbound: '#94a3b8',      // Slate-400
   outbound: '#475569',     // Slate-600
   storage: '#1e293b',       // Slate-800
-  vas: '#e60000'            // Henkel Red
+  vas: '#a3e635'            // Tier0 Green
 }
 
 export default function Reports() {
@@ -173,11 +171,11 @@ export default function Reports() {
           <h1 className="text-3xl font-bold text-slate-900">Financial Dashboard</h1>
           <p className="text-slate-600 mt-2">Real-time financial analytics from approved delivery notes.</p>
         </div>
-        <Card className="border border-slate-200 shadow-sm">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="pt-6">
             <div className="text-center py-12">
-              <p className="text-slate-500 text-lg">No approved delivery notes found</p>
-              <p className="text-slate-400 text-sm mt-2">Approved DNs will appear here once they are processed.</p>
+              <p className="text-slate-500 text-sm font-medium">No approved delivery notes found</p>
+              <p className="text-slate-400 text-xs mt-2">Approved DNs will appear here once they are processed.</p>
             </div>
           </CardContent>
         </Card>
@@ -199,12 +197,12 @@ export default function Reports() {
       {/* KPI Cards Row */}
       <div className="grid gap-4 md:grid-cols-4">
         {/* Total Spend */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-600">Total Spend</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Spend</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-[#e60000]">
+            <div className="text-3xl font-bold text-slate-900">
               ¥{kpiMetrics.totalSpend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className={`flex items-center gap-1 mt-2 ${trendData.totalSpend.isGood ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -222,9 +220,9 @@ export default function Reports() {
         </Card>
 
         {/* Total Orders */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-600">Total Orders</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Orders</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-slate-900">
@@ -245,9 +243,9 @@ export default function Reports() {
         </Card>
 
         {/* Storage Spend */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-600">Total Storage Fees</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Storage Fees</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-slate-900">
@@ -268,9 +266,9 @@ export default function Reports() {
         </Card>
 
         {/* VAS Spend */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-600">VAS Spend</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">VAS Spend</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-slate-900">
@@ -294,9 +292,9 @@ export default function Reports() {
       {/* Charts Row */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Chart 1: Cost Structure Breakdown (Pie Chart) */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Cost Structure Breakdown</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-lg font-bold text-slate-900">Cost Structure Breakdown</CardTitle>
             <p className="text-sm text-slate-500 mt-1">Activity-Based Costing Analysis</p>
           </CardHeader>
           <CardContent>
@@ -334,9 +332,9 @@ export default function Reports() {
         </Card>
 
         {/* Chart 2: Spend by Destination (Bar Chart) */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Spend by Destination</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-lg font-bold text-slate-900">Spend by Destination</CardTitle>
             <p className="text-sm text-slate-500 mt-1">Total cost per destination city</p>
           </CardHeader>
           <CardContent>

@@ -6,8 +6,7 @@ import { Button } from '../../../components/ui/button'
 import { Select } from '../../../components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../components/ui/tabs'
 import { useGlobalUNS } from '../../../context/UNSContext'
-
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
+import { CheckCircle2, Calculator } from 'lucide-react'
 
 // MQTT Topics for Costing Engine
 const TOPIC_ACTION = "Henkelv2/Shanghai/Logistics/Costing/Action/Run_Calculation"
@@ -85,19 +84,22 @@ export default function CostingEngine() {
     <div className="space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <Card className="border border-green-300 bg-green-50 mb-4">
-          <CardContent className="pt-6">
-            <p className="text-sm text-green-800">{toastMessage}</p>
+        <Card className="bg-white border border-emerald-200 shadow-sm mb-4">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <p className="text-sm font-medium text-emerald-800">{toastMessage}</p>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      <Card className="border border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle>Costing Engine</CardTitle>
-          <p className="text-sm text-slate-500">Hybrid Cost Control - Internal Allocation & External Billing</p>
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+          <CardTitle className="text-lg font-bold text-slate-900">Costing Engine</CardTitle>
+          <p className="text-sm text-slate-500 mt-1">Hybrid Cost Control - Internal Allocation & External Billing</p>
           <p className="text-xs text-slate-400 mt-1">
-            Status: <span className={status === 'CONNECTED' ? 'text-green-600' : status === 'ERROR' ? 'text-red-500' : 'text-amber-500'}>{status}</span>
+            Status: <span className={status === 'CONNECTED' ? 'text-emerald-600' : status === 'ERROR' ? 'text-red-500' : 'text-amber-500'}>{status}</span>
           </p>
         </CardHeader>
         <CardContent>
@@ -111,9 +113,9 @@ export default function CostingEngine() {
             <TabsContent value="internal" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Input Section */}
-                <Card className="border border-slate-200">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Cost Allocation Input</CardTitle>
+                <Card className="bg-white border-slate-200 shadow-sm">
+                  <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Cost Allocation Input</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -142,8 +144,7 @@ export default function CostingEngine() {
                     </div>
                     <Button
                       onClick={calculateInternalCost}
-                      variant="destructive"
-                      className="w-full h-10"
+                      className="w-full h-10 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
                     >
                       Calculate
                     </Button>
@@ -151,9 +152,9 @@ export default function CostingEngine() {
                 </Card>
 
                 {/* Output Section */}
-                <Card className="border border-slate-200">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Cost Per Order</CardTitle>
+                <Card className="bg-white border-slate-200 shadow-sm">
+                  <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Cost Per Order</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {costPerOrder !== null ? (
@@ -175,35 +176,38 @@ export default function CostingEngine() {
               </div>
 
               {/* Recent DNs Table */}
-              <Card className="border border-slate-200">
-                <CardHeader>
-                  <CardTitle className="text-lg">Recent Internal DNs - Allocated Cost</CardTitle>
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                  <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Recent Internal DNs - Allocated Cost</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead className={headerClass}>DN Number</TableHead>
-                        <TableHead className={headerClass}>Order Date</TableHead>
-                        <TableHead className={headerClass}>Pallet Days</TableHead>
-                        <TableHead className={headerClass}>Allocated Cost (RMB)</TableHead>
+                      <TableRow className="bg-slate-50 border-b border-slate-200">
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">DN Number</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Order Date</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Pallet Days</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Allocated Cost (RMB)</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {costPerOrder !== null ? (
                         // Show sample DNs with calculated cost
-                        <TableRow className="bg-white border-b hover:bg-slate-50">
-                          <TableCell className="font-medium text-slate-900">Sample DN</TableCell>
-                          <TableCell className="text-slate-700">{new Date().toLocaleDateString()}</TableCell>
-                          <TableCell className="text-slate-700">-</TableCell>
-                          <TableCell className="text-slate-900 font-semibold">
+                        <TableRow className="bg-white border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors">
+                          <TableCell className="font-mono text-xs font-bold text-slate-700">Sample DN</TableCell>
+                          <TableCell className="text-slate-600 text-sm">{new Date().toLocaleDateString()}</TableCell>
+                          <TableCell className="text-slate-600 text-sm">-</TableCell>
+                          <TableCell className="text-slate-900 font-bold">
                             ¥{costPerOrder.toFixed(2)} per {costDriver === 'total_orders' ? 'order' : 'pallet-day'}
                           </TableCell>
                         </TableRow>
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-slate-500 py-4">
-                            Calculate cost per order to see allocation
+                          <TableCell colSpan={4} className="text-center text-slate-500 py-8">
+                            <div className="flex flex-col items-center justify-center">
+                              <Calculator className="h-8 w-8 text-slate-300 mb-2" />
+                              <p className="text-sm font-medium">Calculate cost per order to see allocation</p>
+                            </div>
                           </TableCell>
                         </TableRow>
                       )}
@@ -217,9 +221,9 @@ export default function CostingEngine() {
             <TabsContent value="external" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Rate Card Section */}
-                <Card className="border border-slate-200">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Active Rate Card</CardTitle>
+                <Card className="bg-white border-slate-200 shadow-sm">
+                  <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Active Rate Card</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {resultData?.rate_card ? (
@@ -256,9 +260,9 @@ export default function CostingEngine() {
                 </Card>
 
                 {/* Activity Summary */}
-                <Card className="border border-slate-200">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Activity Summary</CardTitle>
+                <Card className="bg-white border-slate-200 shadow-sm">
+                  <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Activity Summary</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {resultData?.activity_summary ? (
@@ -291,10 +295,10 @@ export default function CostingEngine() {
 
               {/* Discrepancy Alert */}
               {hasDiscrepancy && resultData?.official_invoice_total && (
-                <Card className="border border-amber-300 bg-amber-50">
-                  <CardContent className="pt-6">
+                <Card className="bg-white border border-amber-200 shadow-sm">
+                  <CardContent className="pt-6 pb-6">
                     <div className="flex items-center gap-3">
-                      <Badge variant="warning" className="uppercase px-3">
+                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 border rounded-sm uppercase text-[10px] px-3">
                         Invoice Discrepancy Detected
                       </Badge>
                       <div className="flex-1">
@@ -314,12 +318,11 @@ export default function CostingEngine() {
               )}
 
               {/* Calculate Button */}
-              <Card className="border border-slate-200">
+              <Card className="bg-white border-slate-200 shadow-sm">
                 <CardContent className="pt-6">
                   <Button
                     onClick={handleCalculateExternal}
-                    variant="destructive"
-                    className="w-full h-10"
+                    className="w-full h-10 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
                     disabled={status !== 'CONNECTED'}
                   >
                     Calculate External Bill
@@ -333,11 +336,11 @@ export default function CostingEngine() {
               </Card>
 
               {/* Shadow Bill Table */}
-              <Card className="border border-slate-200">
-                <CardHeader>
-                  <CardTitle className="text-lg">Shadow Bill - Invoice Calculation</CardTitle>
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                  <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Shadow Bill - Invoice Calculation</CardTitle>
                   {resultData?.total_cost && (
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       Generated: {new Date(resultData.timestamp || Date.now()).toLocaleString()}
                     </p>
                   )}
@@ -345,37 +348,38 @@ export default function CostingEngine() {
                 <CardContent className="p-0">
                   {invoiceItems.length === 0 ? (
                     <div className="p-8 text-center text-slate-500">
-                      <p>No calculation data available</p>
-                      <p className="text-xs mt-2">Click "Calculate External Bill" to generate</p>
+                      <Calculator className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                      <p className="text-sm font-medium">No calculation data available</p>
+                      <p className="text-xs mt-2 text-slate-400">Click "Calculate External Bill" to generate</p>
                     </div>
                   ) : (
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead className={headerClass}>Activity</TableHead>
-                          <TableHead className={headerClass}>Quantity</TableHead>
-                          <TableHead className={headerClass}>Unit</TableHead>
-                          <TableHead className={headerClass}>Rate (RMB)</TableHead>
-                          <TableHead className={headerClass}>Total (RMB)</TableHead>
+                        <TableRow className="bg-slate-50 border-b border-slate-200">
+                          <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Activity</TableHead>
+                          <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Quantity</TableHead>
+                          <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Unit</TableHead>
+                          <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Rate (RMB)</TableHead>
+                          <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Total (RMB)</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {invoiceItems.map((item, index) => (
-                          <TableRow key={index} className="bg-white border-b hover:bg-slate-50">
+                          <TableRow key={index} className="bg-white border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors">
                             <TableCell className="font-medium text-slate-900">{item.activity || item.name}</TableCell>
-                            <TableCell className="text-slate-700">{(item.qty || item.quantity || 0).toLocaleString()}</TableCell>
-                            <TableCell className="text-slate-700">{item.unit || 'N/A'}</TableCell>
-                            <TableCell className="text-slate-700">¥{(item.rate || 0).toFixed(2)}</TableCell>
-                            <TableCell className="text-slate-900 font-semibold">
+                            <TableCell className="text-slate-600 text-sm">{(item.qty || item.quantity || 0).toLocaleString()}</TableCell>
+                            <TableCell className="text-slate-600 text-sm">{item.unit || 'N/A'}</TableCell>
+                            <TableCell className="text-slate-600 text-sm">¥{(item.rate || 0).toFixed(2)}</TableCell>
+                            <TableCell className="text-slate-900 font-bold">
                               ¥{(item.total || 0).toFixed(2)}
                             </TableCell>
                           </TableRow>
                         ))}
-                        <TableRow className="bg-slate-50 border-t-2 border-slate-300">
-                          <TableCell colSpan={4} className="text-right font-semibold text-slate-900">
+                        <TableRow className="bg-slate-50 border-t-2 border-slate-200">
+                          <TableCell colSpan={4} className="text-right font-bold text-slate-900">
                             Grand Total:
                           </TableCell>
-                          <TableCell className="text-2xl font-bold text-slate-900">
+                          <TableCell className="text-2xl font-bold text-[#a3e635]">
                             ¥{calculatedTotal.toFixed(2)}
                           </TableCell>
                         </TableRow>
@@ -387,13 +391,13 @@ export default function CostingEngine() {
 
               {/* Total Cost Summary Card */}
               {resultData?.total_cost && (
-                <Card className="border border-[#e60000] bg-red-50">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-[#e60000]">Total Cost</CardTitle>
+                <Card className="bg-white border-slate-200 shadow-sm">
+                  <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Cost</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-4">
-                      <div className="text-5xl font-bold text-[#e60000] mb-2">
+                      <div className="text-5xl font-bold text-[#a3e635] mb-2">
                         ¥{resultData.total_cost.toFixed(2)}
                       </div>
                       <p className="text-sm text-slate-600">Calculated by UNS Costing Engine</p>

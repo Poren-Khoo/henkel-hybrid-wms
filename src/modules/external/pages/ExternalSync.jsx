@@ -7,9 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
 import PageContainer from '../../../components/PageContainer'
-import { Send, RefreshCw, Activity } from 'lucide-react'
-
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
+import { Send, RefreshCw, Activity, CheckCircle2 } from 'lucide-react'
 
 // MQTT Topics
 const TOPIC_STATE = "Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB"
@@ -67,13 +65,13 @@ export default function ExternalSync() {
     const optimisticStatus = optimisticStatuses[dn.dn_no]
     if (optimisticStatus) {
       if (optimisticStatus === 'SYNCING') {
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 uppercase px-3">Processing...</Badge>
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm uppercase text-[10px] px-2">Processing...</Badge>
       }
       if (optimisticStatus === 'SYNCED') {
-        return <Badge variant="green" className="uppercase px-3">Synced</Badge>
+        return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm uppercase text-[10px] px-2">Synced</Badge>
       }
       if (optimisticStatus === 'ERROR') {
-        return <Badge variant="red" className="uppercase px-3">Error</Badge>
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 border rounded-sm uppercase text-[10px] px-2">Error</Badge>
       }
     }
 
@@ -81,13 +79,13 @@ export default function ExternalSync() {
     const syncStatus = (dn.sync_status || '').toString().toUpperCase()
     
     if (syncStatus === 'SYNCED') {
-      return <Badge variant="green" className="uppercase px-3">Synced</Badge>
+      return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm uppercase text-[10px] px-2">Synced</Badge>
     } else if (syncStatus === 'SYNCING') {
-      return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 uppercase px-3">Processing...</Badge>
+      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm uppercase text-[10px] px-2">Processing...</Badge>
     } else if (syncStatus === 'ERROR') {
-      return <Badge variant="red" className="uppercase px-3">Error</Badge>
+      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 border rounded-sm uppercase text-[10px] px-2">Error</Badge>
     } else {
-      return <Badge variant="secondary" className="uppercase px-3">Pending Upload</Badge>
+      return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm uppercase text-[10px] px-2">Pending Upload</Badge>
     }
   }
 
@@ -193,9 +191,12 @@ export default function ExternalSync() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <Card className="border border-blue-300 bg-blue-50">
-          <CardContent className="pt-6">
-            <p className="text-sm text-blue-800">{toastMessage}</p>
+        <Card className="bg-white border border-blue-200 shadow-sm">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-blue-600" />
+              <p className="text-sm font-medium text-blue-800">{toastMessage}</p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -203,12 +204,12 @@ export default function ExternalSync() {
       {/* Sync Status Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         {/* Pending Sync */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-600">Pending Sync</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pending Sync</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-amber-600">
+            <div className="text-3xl font-bold text-slate-900">
               {syncMetrics.pendingSync}
             </div>
             <p className="text-xs text-slate-500 mt-2">Orders awaiting upload</p>
@@ -216,12 +217,12 @@ export default function ExternalSync() {
         </Card>
 
         {/* Synced */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-600">Synced</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Synced</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-emerald-600">
+            <div className="text-3xl font-bold text-slate-900">
               {syncMetrics.synced}
             </div>
             <p className="text-xs text-slate-500 mt-2">Successfully synchronized</p>
@@ -229,9 +230,9 @@ export default function ExternalSync() {
         </Card>
 
         {/* API Health */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-600">API Health</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">API Health</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -246,29 +247,32 @@ export default function ExternalSync() {
       </div>
 
       {/* Main Table */}
-      <Card className="border border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle>Delivery Notes Queue</CardTitle>
-          <p className="text-sm text-slate-500 mt-1">Approved orders ready for carrier synchronization</p>
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+          <CardTitle className="text-lg font-bold text-slate-900">Delivery Notes Queue</CardTitle>
+          <p className="text-xs text-slate-500 mt-1">Approved orders ready for carrier synchronization</p>
           <UNSConnectionInfo topic={TOPIC_STATE} />
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className={headerClass}>DN No</TableHead>
-                <TableHead className={headerClass}>Destination</TableHead>
-                <TableHead className={headerClass}>Carrier</TableHead>
-                <TableHead className={headerClass}>Status</TableHead>
-                <TableHead className={headerClass}>External ID</TableHead>
-                <TableHead className={headerClass}>Actions</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">DN No</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Destination</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Carrier</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">External ID</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {approvedDNs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-slate-500 py-8">
-                    No approved delivery notes found
+                  <TableCell colSpan={6} className="text-center text-slate-500 py-12">
+                    <div className="flex flex-col items-center justify-center">
+                      <Send className="h-10 w-10 text-slate-300 mb-2" />
+                      <p className="text-sm font-medium">No approved delivery notes found</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -279,15 +283,15 @@ export default function ExternalSync() {
                   const currentCarrier = carrierSelections[dnNo] || dn.carrier || 'DHL'
 
                   return (
-                    <TableRow key={dnNo} className="bg-white border-b hover:bg-slate-50">
-                      <TableCell className="font-medium text-slate-900">{dnNo}</TableCell>
-                      <TableCell className="text-slate-700">{destination}</TableCell>
+                    <TableRow key={dnNo} className="bg-white border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors">
+                      <TableCell className="font-mono text-xs font-bold text-slate-700">{dnNo}</TableCell>
+                      <TableCell className="text-slate-700 font-medium">{destination}</TableCell>
                       <TableCell>
                         <Select
                           value={currentCarrier}
                           onValueChange={(carrier) => handleCarrierChange(dnNo, carrier)}
                         >
-                          <SelectTrigger className="w-32">
+                          <SelectTrigger className="w-32 h-9 text-sm bg-slate-50 border-slate-200">
                             <SelectValue>
                               {currentCarrier}
                             </SelectValue>
@@ -300,14 +304,13 @@ export default function ExternalSync() {
                         </Select>
                       </TableCell>
                       <TableCell>{getStatusBadge(dn)}</TableCell>
-                      <TableCell className="text-slate-700 font-mono text-xs">{externalId}</TableCell>
+                      <TableCell className="text-slate-600 font-mono text-xs">{externalId}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {isPending(dn) && (
                             <Button
                               size="sm"
-                              variant="destructive"
-                              className="h-9 px-4 inline-flex items-center gap-2"
+                              className="h-9 px-4 inline-flex items-center gap-2 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
                               onClick={() => handlePushToCarrier(dn)}
                             >
                               <Send className="h-3 w-3" />
@@ -319,7 +322,7 @@ export default function ExternalSync() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleForceResync(dn)}
-                              className="border-slate-300"
+                              className="border-slate-200 text-slate-700 hover:bg-slate-50 h-9"
                             >
                               <RefreshCw className="h-3 w-3 mr-1" />
                               Force Resync

@@ -5,12 +5,11 @@ import { Badge } from '../../../components/ui/badge'
 import { Button } from '../../../components/ui/button'
 import { Sheet, SheetHeader, SheetTitle, SheetContent } from '../../../components/ui/sheet'
 import { Input } from '../../../components/ui/input'
-import { ClipboardCheck, Box, ArrowRight, Truck } from 'lucide-react'
+import { ClipboardCheck, Box, ArrowRight, Truck, CheckCircle2 } from 'lucide-react'
 import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
 import PageContainer from '../../../components/PageContainer'
 
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
 
 // TOPIC 1: LISTENING (State)
 const TOPIC_SYNC_STATUS = "Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status"
@@ -62,12 +61,12 @@ export default function OutboundDN() {
 
   const getStatusBadge = (status) => {
     const statusUpper = status?.toUpperCase() || ''
-    if (statusUpper === 'NEW') return <Badge variant="blue" className="uppercase px-2">NEW</Badge>
-    if (statusUpper === 'PICKING') return <Badge variant="amber" className="uppercase px-2">PICKING</Badge>
-    if (statusUpper === 'PACKING') return <Badge variant="amber" className="uppercase px-2">PACKING</Badge>
-    if (statusUpper === 'READY_TO_SHIP') return <Badge variant="green" className="uppercase px-2">READY TO SHIP</Badge>
-    if (statusUpper === 'SHIPPED') return <Badge variant="gray" className="uppercase px-2">SHIPPED</Badge>
-    return <Badge variant="gray" className="uppercase px-2">{status}</Badge>
+    if (statusUpper === 'NEW') return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm uppercase text-[10px] px-2">NEW</Badge>
+    if (statusUpper === 'PICKING') return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 border rounded-sm uppercase text-[10px] px-2">PICKING</Badge>
+    if (statusUpper === 'PACKING') return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 border rounded-sm uppercase text-[10px] px-2">PACKING</Badge>
+    if (statusUpper === 'READY_TO_SHIP') return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm uppercase text-[10px] px-2">READY TO SHIP</Badge>
+    if (statusUpper === 'SHIPPED') return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm uppercase text-[10px] px-2">SHIPPED</Badge>
+    return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm uppercase text-[10px] px-2">{status}</Badge>
   }
 
   // --- THE NEW REAL-TIME ACTION HANDLER ---
@@ -156,11 +155,12 @@ export default function OutboundDN() {
       <div className="space-y-4">
         {/* Toast Notification */}
         {toastMessage && (
-          <Card className="border border-green-300 bg-green-50">
-            <CardContent className="pt-6">
-              <p className="text-sm text-green-800 flex items-center gap-2">
-                <ClipboardCheck className="h-4 w-4"/> {toastMessage}
-              </p>
+          <Card className="bg-white border border-emerald-200 shadow-sm">
+            <CardContent className="pt-6 pb-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                <p className="text-sm font-medium text-emerald-800">{toastMessage}</p>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -168,37 +168,40 @@ export default function OutboundDN() {
         {/* Connection Info */}
         <UNSConnectionInfo topic={TOPIC_SYNC_STATUS} />
 
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle>Outbound DN - Logistics View</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-lg font-bold text-slate-900">Outbound DN - Logistics View</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className={headerClass}>DN Number</TableHead>
-                  <TableHead className={headerClass}>Destination/Provider</TableHead>
-                  <TableHead className={headerClass}>Order Date</TableHead>
-                  <TableHead className={headerClass}>Status</TableHead>
+                <TableRow className="bg-slate-50 border-b border-slate-200">
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">DN Number</TableHead>
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Destination/Provider</TableHead>
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Order Date</TableHead>
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {dns.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-slate-500 py-8">
-                      No live outbound records found
+                    <TableCell colSpan={4} className="text-center text-slate-500 py-12">
+                      <div className="flex flex-col items-center justify-center">
+                        <ClipboardCheck className="h-10 w-10 text-slate-300 mb-2" />
+                        <p className="text-sm font-medium">No live outbound records found</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
                   dns.map((dn) => (
                     <TableRow 
                       key={dn.id} 
-                      className="bg-white border-b hover:bg-slate-50 cursor-pointer"
+                      className="bg-white border-b border-slate-100 hover:bg-slate-50 cursor-pointer last:border-0 transition-colors"
                       onClick={() => openDetailSheet(dn)}
                     >
-                      <TableCell className="font-medium text-slate-900">{dn.id}</TableCell>
-                      <TableCell className="text-slate-700">{dn.destination}</TableCell>
-                      <TableCell className="text-slate-700">{dn.orderDate}</TableCell>
+                      <TableCell className="font-mono text-xs font-bold text-slate-700">{dn.id}</TableCell>
+                      <TableCell className="text-slate-700 font-medium">{dn.destination}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{dn.orderDate}</TableCell>
                       <TableCell>{getStatusBadge(dn.status)}</TableCell>
                     </TableRow>
                   ))
@@ -243,17 +246,17 @@ export default function OutboundDN() {
                           <div className={`
                             w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
                             ${step.status === 'completed' ? 'bg-green-600 text-white' : ''}
-                            ${step.status === 'active' ? 'bg-[#e60000] text-white ring-4 ring-red-50' : ''}
+                            ${step.status === 'active' ? 'bg-[#a3e635] text-slate-900 ring-4 ring-[#a3e635]/20' : ''}
                             ${step.status === 'pending' ? 'bg-slate-100 text-slate-400' : ''}
                           `}>
                             {step.status === 'completed' ? '✓' : index + 1}
                           </div>
-                          <span className={`text-[10px] mt-1 text-center font-medium ${step.status === 'active' ? 'text-red-600' : 'text-slate-500'}`}>
+                          <span className={`text-[10px] mt-1 text-center font-medium ${step.status === 'active' ? 'text-[#a3e635]' : 'text-slate-500'}`}>
                               {step.label}
                           </span>
                         </div>
                         {index < getProgressSteps().length - 1 && (
-                          <div className={`h-0.5 flex-1 mx-0.5 ${step.status === 'completed' ? 'bg-green-600' : 'bg-slate-200'}`} />
+                          <div className={`h-0.5 flex-1 mx-0.5 ${step.status === 'completed' ? 'bg-[#a3e635]' : 'bg-slate-200'}`} />
                         )}
                       </div>
                     ))}
@@ -275,29 +278,29 @@ export default function OutboundDN() {
                         
                         if (status === 'NEW' || status === 'PENDING') {
                           return (
-                            <Button onClick={handleReleaseToPicking} className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                              <ClipboardCheck className="h-4 w-4 mr-2" /> Release to Picking
+                            <Button onClick={handleReleaseToPicking} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                              <ClipboardCheck className="h-4 w-4" /> Release to Picking
                             </Button>
                           )
                         }
                         if (status === 'PICKING') {
                           return (
-                            <Button onClick={handleConfirmPacking} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-                              <Box className="h-4 w-4 mr-2" /> Confirm Packing
+                            <Button onClick={handleConfirmPacking} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                              <Box className="h-4 w-4" /> Confirm Packing
                             </Button>
                           )
                         }
                         if (status === 'PACKING') {
                           return (
-                            <Button onClick={handleReadyToShip} className="w-full bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
-                              <ArrowRight className="h-4 w-4 mr-2" /> Ready to Ship
+                            <Button onClick={handleReadyToShip} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                              <ArrowRight className="h-4 w-4" /> Ready to Ship
                             </Button>
                           )
                         }
                         if (status === 'READY_TO_SHIP' || status === 'READY TO SHIP') {
                           return (
-                            <Button onClick={handleConfirmShipment} className="w-full bg-green-600 hover:bg-green-700 text-white shadow-sm">
-                              <Truck className="h-4 w-4 mr-2" /> Confirm Shipment
+                            <Button onClick={handleConfirmShipment} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                              <Truck className="h-4 w-4" /> Confirm Shipment
                             </Button>
                           )
                         }

@@ -69,40 +69,40 @@ export default function ShipmentConfirmation() {
 
         {/* KPI */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="border-l-4 border-l-green-600 shadow-sm">
+            <Card className="bg-white border-slate-200 shadow-sm">
                 <CardContent className="p-4 flex justify-between items-center">
                     <div>
-                        <div className="text-2xl font-bold">{readyToShip.length}</div>
-                        <div className="text-xs text-slate-500 uppercase">Ready for Pickup</div>
+                        <div className="text-3xl font-bold text-slate-900">{readyToShip.length}</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Ready for Pickup</div>
                     </div>
-                    <Truck className="h-8 w-8 text-green-600 opacity-20" />
+                    <Truck className="h-8 w-8 text-slate-400 opacity-20" />
                 </CardContent>
             </Card>
-            <Card className="border-l-4 border-l-slate-500 shadow-sm">
+            <Card className="bg-white border-slate-200 shadow-sm">
                 <CardContent className="p-4 flex justify-between items-center">
                     <div>
-                        <div className="text-2xl font-bold">{history.length}</div>
-                        <div className="text-xs text-slate-500 uppercase">Dispatched Today</div>
+                        <div className="text-3xl font-bold text-slate-900">{history.length}</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Dispatched Today</div>
                     </div>
-                    <CheckCircle2 className="h-8 w-8 text-slate-600 opacity-20" />
+                    <CheckCircle2 className="h-8 w-8 text-slate-400 opacity-20" />
                 </CardContent>
             </Card>
         </div>
 
         {/* READY TABLE */}
-        <Card className="border-slate-200 shadow-sm">
-            <div className="p-4 border-b bg-green-50 flex items-center gap-2">
-                <Truck className="h-5 w-5 text-green-700" />
-                <h3 className="font-semibold text-green-900">Loading Bay (Ready for Dispatch)</h3>
+        <Card className="bg-white border-slate-200 shadow-sm">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                <Truck className="h-5 w-5 text-slate-500" />
+                <h3 className="font-semibold text-slate-900">Loading Bay (Ready for Dispatch)</h3>
             </div>
             <Table>
                 <TableHeader>
-                    <TableRow>
-                        <TableHead>DN Number</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Tracking No</TableHead>
-                        <TableHead>Packed At</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
+                    <TableRow className="bg-slate-50 border-b border-slate-200">
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">DN Number</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Customer</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Tracking No</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Packed At</TableHead>
+                        <TableHead className="text-right uppercase text-[11px] font-bold text-slate-500 tracking-wider">Action</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -110,16 +110,16 @@ export default function ShipmentConfirmation() {
                         <TableRow><TableCell colSpan={5} className="text-center py-12 text-slate-400">Bay is empty. Waiting for Packing.</TableCell></TableRow>
                     ) : (
                         readyToShip.map(s => (
-                            <TableRow key={s.dn_id}>
-                                <TableCell className="font-mono font-medium">{s.dn_id}</TableCell>
-                                <TableCell>{s.customer}</TableCell>
-                                <TableCell><Badge variant="outline">{s.tracking_no || 'N/A'}</Badge></TableCell>
+                            <TableRow key={s.dn_id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+                                <TableCell className="font-mono text-xs font-bold text-slate-700">{s.dn_id}</TableCell>
+                                <TableCell className="font-medium text-slate-900">{s.customer}</TableCell>
+                                <TableCell><Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm">{s.tracking_no || 'N/A'}</Badge></TableCell>
                                 <TableCell className="text-xs text-slate-500">
                                     {s.packed_at ? new Date(s.packed_at).toLocaleTimeString() : '-'}
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button 
-                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                        className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
                                         onClick={() => setSelectedShipment(s)}
                                     >
                                         Dispatch Truck
@@ -133,33 +133,33 @@ export default function ShipmentConfirmation() {
         </Card>
 
         {/* HISTORY TABLE */}
-        <Card className="border-slate-200 shadow-sm opacity-80">
-            <div className="p-4 border-b bg-slate-50 flex items-center gap-2">
-                <FileCheck className="h-5 w-5 text-slate-600" />
+        <Card className="bg-white border-slate-200 shadow-sm opacity-80">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                <FileCheck className="h-5 w-5 text-slate-500" />
                 <h3 className="font-semibold text-slate-800">Dispatch History</h3>
             </div>
             <Table>
                 <TableHeader>
-                    <TableRow>
-                        <TableHead>DN Number</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Driver / Plate</TableHead>
-                        <TableHead>Dispatched At</TableHead>
-                        <TableHead>Status</TableHead>
+                    <TableRow className="bg-slate-50 border-b border-slate-200">
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">DN Number</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Customer</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Driver / Plate</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Dispatched At</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {history.map(s => (
-                        <TableRow key={s.dn_id}>
-                            <TableCell className="font-mono text-xs">{s.dn_id}</TableCell>
-                            <TableCell>{s.customer}</TableCell>
-                            <TableCell className="text-xs">
+                        <TableRow key={s.dn_id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+                            <TableCell className="font-mono text-xs font-bold text-slate-700">{s.dn_id}</TableCell>
+                            <TableCell className="font-medium text-slate-900">{s.customer}</TableCell>
+                            <TableCell className="text-xs text-slate-600">
                                 {s.carrier_info?.driver} ({s.carrier_info?.plate})
                             </TableCell>
                             <TableCell className="text-xs text-slate-500">
                                 {s.shipped_at ? new Date(s.shipped_at).toLocaleTimeString() : '-'}
                             </TableCell>
-                            <TableCell><Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100">SHIPPED</Badge></TableCell>
+                            <TableCell><Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm">SHIPPED</Badge></TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
@@ -169,7 +169,7 @@ export default function ShipmentConfirmation() {
         {/* DISPATCH DIALOG */}
         <Dialog open={!!selectedShipment} onOpenChange={(open) => !open && setSelectedShipment(null)}>
             <DialogContent>
-                <DialogHeader>
+                <DialogHeader className="border-b border-slate-100 bg-slate-50/50">
                     <DialogTitle>Confirm Dispatch</DialogTitle>
                     <DialogDescription>
                         Enter carrier details to release shipment {selectedShipment?.dn_id}.
@@ -189,10 +189,10 @@ export default function ShipmentConfirmation() {
                         <span>Warning: This action is irreversible. Inventory will be permanently deducted.</span>
                     </div>
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setSelectedShipment(null)}>Cancel</Button>
+                <DialogFooter className="border-t border-slate-100 bg-slate-50/30">
+                    <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 h-10 px-4" onClick={() => setSelectedShipment(null)}>Cancel</Button>
                     <Button 
-                        className="bg-green-600 hover:bg-green-700 text-white" 
+                        className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" 
                         onClick={handleDispatch}
                         disabled={isSubmitting || !driverName || !plateNo}
                     >

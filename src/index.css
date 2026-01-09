@@ -1,5 +1,33 @@
 @import "tailwindcss";
 
+@theme {
+  /* Tier0 Brand Colors */
+  --color-tier0-brand: #a3e635;        /* The Lime Green */
+  --color-tier0-brand-dark: #65a30d;   /* A darker green for hover states */
+  --color-tier0-brand-fg: #1a2e05;     /* Dark text to sit ON TOP of the lime green */
+  
+  /* Enterprise Shell Colors (The "Tech" Vibe) */
+  --color-sidebar-bg: #0f172a;         /* Slate 900 - Deep, serious dark blue/black */
+  --color-sidebar-fg: #f8fafc;         /* Slate 50 - White text */
+  --color-sidebar-border: #1e293b;     /* Slate 800 - Subtle borders */
+  
+  /* Semantic Overrides for Shadcn */
+  --radius: 0.3rem;                    /* Slightly squarer = more "industrial" */
+}
+
+:root {
+  color-scheme: light; /* Keep content area light */
+}
+
+/* GLOBAL RESET FOR FOCUS RINGS */
+/* This makes every keyboard focus match your green brand */
+button:focus-visible, 
+input:focus-visible, 
+select:focus-visible {
+  outline: 2px solid var(--color-tier0-brand);
+  outline-offset: 2px;
+}
+
 :root {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.5;

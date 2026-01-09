@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '../../../components/ui/label'
 import { Textarea } from '../../../components/ui/textarea'
 import { Select } from '../../../components/ui/select'
-import { Search, AlertTriangle } from 'lucide-react'
+import { Search, AlertTriangle, CheckCircle2, FileText } from 'lucide-react'
 import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
 import PageContainer from '../../../components/PageContainer'
@@ -44,8 +44,6 @@ const MOCK_OFFICIAL_INVOICE = [
   { category: "Outbound Handling", amount: 38000.00 },   // Matches
   { category: "VAS - Labeling", amount: 5500.00 }        // Big Mismatch +3500
 ]
-
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
 
 // Billing Topic
 const BILLING_TOPIC = "Henkelv2/Shanghai/Logistics/Finance/State/Monthly_Billing"
@@ -162,19 +160,19 @@ export default function Reconciliation() {
         </TabsList>
 
         <TabsContent value="inventory" className="mt-6">
-          <Card className="border border-slate-200 shadow-sm">
-            <CardHeader>
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/50">
                {/* 5. Professional Header */}
                <UNSConnectionInfo topic={INTERNAL_TOPIC} />
             </CardHeader>
             <CardContent>
               {/* Search Bar */}
-              <div className="flex items-center gap-2 mb-6">
+              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-2 mb-6">
                 <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
                   <Input 
                     placeholder="Search by SKU or Description..." 
-                    className="pl-8"
+                    className="pl-9 h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -184,28 +182,28 @@ export default function Reconciliation() {
               {/* Main Table */}
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className={headerClass}>SKU</TableHead>
-                    <TableHead className={headerClass}>Description</TableHead>
-                    <TableHead className={headerClass}>Henkel Qty (System)</TableHead>
-                    <TableHead className={headerClass}>3PL Qty (Reported)</TableHead>
-                    <TableHead className={headerClass}>Difference</TableHead>
-                    <TableHead className={headerClass}>Status</TableHead>
-                    <TableHead className={headerClass}>Actions</TableHead>
+                  <TableRow className="bg-slate-50 border-b border-slate-200">
+                    <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">SKU</TableHead>
+                    <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Description</TableHead>
+                    <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Henkel Qty (System)</TableHead>
+                    <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">3PL Qty (Reported)</TableHead>
+                    <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Difference</TableHead>
+                    <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                    <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reconciliationData.map((row) => (
-                    <TableRow key={row.sku} className={row.status === 'MISMATCH' ? 'bg-red-50 hover:bg-red-100' : 'bg-white hover:bg-slate-50'}>
-                      <TableCell className="font-bold text-slate-900">{row.sku}</TableCell>
-                      <TableCell className="text-slate-700">{row.desc}</TableCell>
-                      <TableCell className="font-mono">{row.intQty.toLocaleString()}</TableCell>
-                      <TableCell className="font-mono">{row.extQty.toLocaleString()}</TableCell>
-                      <TableCell className={`font-mono font-bold ${row.diff !== 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                    <TableRow key={row.sku} className={row.status === 'MISMATCH' ? 'bg-red-50 hover:bg-red-100 border-b border-red-100' : 'bg-white border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors'}>
+                      <TableCell className="font-mono text-xs font-bold text-slate-700">{row.sku}</TableCell>
+                      <TableCell className="text-slate-700 font-medium">{row.desc}</TableCell>
+                      <TableCell className="font-mono text-sm">{row.intQty.toLocaleString()}</TableCell>
+                      <TableCell className="font-mono text-sm">{row.extQty.toLocaleString()}</TableCell>
+                      <TableCell className={`font-mono text-sm font-bold ${row.diff !== 0 ? 'text-red-600' : 'text-slate-400'}`}>
                         {row.diff > 0 ? `+${row.diff}` : row.diff}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={row.status === 'MATCH' ? 'green' : 'red'}>
+                        <Badge variant="outline" className={row.status === 'MATCH' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm' : 'bg-red-50 text-red-700 border-red-200 border rounded-sm'}>
                           {row.status}
                         </Badge>
                       </TableCell>
@@ -214,7 +212,7 @@ export default function Reconciliation() {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="border-red-200 text-red-700 hover:bg-red-100"
+                            className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 text-xs"
                             onClick={() => {
                               setSelectedException(row)
                               setIsDialogOpen(true)
@@ -239,8 +237,8 @@ export default function Reconciliation() {
         <TabsContent value="billing" className="mt-6">
           <div className="space-y-6">
             {/* Connection Info */}
-            <Card className="border border-slate-200 shadow-sm">
-              <CardHeader>
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/50">
                 <UNSConnectionInfo topic={BILLING_TOPIC} />
               </CardHeader>
             </Card>
@@ -248,9 +246,9 @@ export default function Reconciliation() {
             {/* Summary Cards */}
             <div className="grid gap-4 md:grid-cols-3">
               {/* Card 1: Internal Calculation */}
-              <Card className="border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-slate-600">Internal Calculation</CardTitle>
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                  <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Internal Calculation</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-slate-900">
@@ -261,9 +259,9 @@ export default function Reconciliation() {
               </Card>
 
               {/* Card 2: Official Invoice Total */}
-              <Card className="border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-slate-600">Official Invoice Total</CardTitle>
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                  <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Official Invoice Total</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-slate-900">
@@ -274,9 +272,9 @@ export default function Reconciliation() {
               </Card>
 
               {/* Card 3: Net Discrepancy */}
-              <Card className="border border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-slate-600">Net Discrepancy</CardTitle>
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                  <CardTitle className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Net Discrepancy</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className={`text-3xl font-bold ${billingSummary.netDiscrepancy !== 0 ? 'text-red-600' : 'text-slate-900'}`}>
@@ -289,21 +287,21 @@ export default function Reconciliation() {
             </div>
 
             {/* Discrepancy Table */}
-            <Card className="border border-slate-200 shadow-sm">
-              <CardHeader>
-                <CardTitle>Line Item Discrepancy</CardTitle>
-                <p className="text-sm text-slate-500 mt-1">Compare calculated vs. invoiced amounts by category</p>
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                <CardTitle className="text-lg font-bold text-slate-900">Line Item Discrepancy</CardTitle>
+                <p className="text-xs text-slate-500 mt-1">Compare calculated vs. invoiced amounts by category</p>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead className={headerClass}>Expense Category</TableHead>
-                      <TableHead className={headerClass}>Internal Calc</TableHead>
-                      <TableHead className={headerClass}>Invoice Amount</TableHead>
-                      <TableHead className={headerClass}>Variance</TableHead>
-                      <TableHead className={headerClass}>Status</TableHead>
-                      <TableHead className={headerClass}>Actions</TableHead>
+                    <TableRow className="bg-slate-50 border-b border-slate-200">
+                      <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Expense Category</TableHead>
+                      <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Internal Calc</TableHead>
+                      <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Invoice Amount</TableHead>
+                      <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Variance</TableHead>
+                      <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                      <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -319,28 +317,28 @@ export default function Reconciliation() {
                         return (
                           <TableRow
                             key={item.category}
-                            className={`border-b hover:bg-slate-50 ${isDiscrepancy ? 'bg-red-50' : 'bg-white'}`}
+                            className={`border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors ${isDiscrepancy ? 'bg-red-50' : 'bg-white'}`}
                           >
                             <TableCell className="font-medium text-slate-900">{item.category}</TableCell>
-                            <TableCell className="font-mono text-slate-700">
+                            <TableCell className="font-mono text-sm text-slate-600">
                               ¥{item.calculatedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </TableCell>
-                            <TableCell className="font-mono text-slate-700">
+                            <TableCell className="font-mono text-sm text-slate-600">
                               ¥{item.invoiceAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </TableCell>
-                            <TableCell className={`font-mono font-bold ${item.variance !== 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                            <TableCell className={`font-mono text-sm font-bold ${item.variance !== 0 ? 'text-red-600' : 'text-slate-400'}`}>
                               {item.variance > 0 ? '+' : ''}
                               ¥{item.variance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </TableCell>
                             <TableCell>
                               {item.status === 'MATCHED' && (
-                                <Badge variant="green" className="uppercase px-3 rounded-full">Matched</Badge>
+                                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm uppercase text-[10px] px-2">Matched</Badge>
                               )}
                               {item.status === 'OVERCHARGED' && (
-                                <Badge variant="red" className="uppercase px-3 rounded-full">Overcharged</Badge>
+                                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 border rounded-sm uppercase text-[10px] px-2">Overcharged</Badge>
                               )}
                               {item.status === 'UNDERCHARGED' && (
-                                <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 uppercase px-3 rounded-full">Undercharged</Badge>
+                                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 border rounded-sm uppercase text-[10px] px-2">Undercharged</Badge>
                               )}
                             </TableCell>
                             <TableCell>
@@ -348,7 +346,7 @@ export default function Reconciliation() {
                                 <Button 
                                   variant="outline" 
                                   size="sm" 
-                                  className="border-red-200 text-red-700 hover:bg-red-100"
+                                  className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 text-xs"
                                   onClick={() => {
                                     // Re-use the same dialog state!
                                     setSelectedException({
@@ -383,9 +381,12 @@ export default function Reconciliation() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <Card className="border border-green-300 bg-green-50">
-          <CardContent className="pt-6">
-            <p className="text-sm text-green-800">{toastMessage}</p>
+        <Card className="bg-white border border-emerald-200 shadow-sm">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <p className="text-sm font-medium text-emerald-800">{toastMessage}</p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -393,7 +394,7 @@ export default function Reconciliation() {
       {/* Exception Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
-          <DialogHeader>
+          <DialogHeader className="border-b border-slate-100 bg-slate-50/50">
             <DialogTitle>
               Raise Dispute for {selectedException?.sku || 'SKU'}
             </DialogTitle>
@@ -471,9 +472,10 @@ export default function Reconciliation() {
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="border-t border-slate-100 bg-slate-50/30">
                 <Button
                   variant="outline"
+                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
                   onClick={() => {
                     setIsDialogOpen(false)
                     setSelectedException(null)
@@ -524,8 +526,7 @@ export default function Reconciliation() {
                     setPriority('')
                     setNotes('')
                   }}
-                  variant="destructive"
-                  className="h-10 px-4"
+                  className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2"
                 >
                   Submit Dispute
                 </Button>

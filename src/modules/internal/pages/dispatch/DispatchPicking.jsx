@@ -39,19 +39,19 @@ export default function DispatchPicking() {
       <div className="space-y-6">
         <UNSConnectionInfo topic={TOPIC_SHIPMENT_LIST} />
 
-        <Card className="border-slate-200 shadow-sm">
-            <div className="p-4 border-b bg-slate-50 flex items-center gap-2">
-                <Package className="h-5 w-5 text-indigo-600" />
+        <Card className="bg-white border-slate-200 shadow-sm">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                <Package className="h-5 w-5 text-slate-500" />
                 <h3 className="font-semibold text-slate-800">Picking Queue</h3>
             </div>
             <Table>
                 <TableHeader>
-                    <TableRow>
-                        <TableHead>DN Number</TableHead>
-                        <TableHead>Destination</TableHead>
-                        <TableHead>Items to Pick</TableHead>
-                        <TableHead>Source Bin</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
+                    <TableRow className="bg-slate-50 border-b border-slate-200">
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">DN Number</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Destination</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Items to Pick</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Source Bin</TableHead>
+                        <TableHead className="text-right uppercase text-[11px] font-bold text-slate-500 tracking-wider">Action</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -59,9 +59,9 @@ export default function DispatchPicking() {
                         <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-400">No tasks pending.</TableCell></TableRow>
                     ) : (
                         pickingTasks.map(task => (
-                            <TableRow key={task.dn_id}>
-                                <TableCell className="font-mono font-medium text-blue-600">{task.dn_id}</TableCell>
-                                <TableCell>{task.destination}</TableCell>
+                            <TableRow key={task.dn_id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+                                <TableCell className="font-mono text-xs font-bold text-slate-700">{task.dn_id}</TableCell>
+                                <TableCell className="font-medium text-slate-900">{task.destination}</TableCell>
                                 <TableCell>
                                     {task.items.map((i, idx) => (
                                         <div key={idx} className="text-sm font-medium">
@@ -71,13 +71,12 @@ export default function DispatchPicking() {
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-1 text-slate-600">
-                                        <MapPin className="h-3 w-3" /> FG-ZONE-01
+                                        <MapPin className="h-4 w-4 text-slate-400" /> FG-ZONE-01
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button 
-                                        size="sm" 
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                        className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-9 px-4 inline-flex items-center gap-2"
                                         disabled={processingId === task.dn_id}
                                         onClick={() => handleConfirmPick(task.dn_id)}
                                     >

@@ -8,7 +8,7 @@ export const DEMO_USERS = {
     role: "ADMIN",
     jobTitle: "Warehouse Manager",
     avatar: "/Selene Morgan.jpg", // Make sure this file exists in /public
-    email: "selene.m@henkel.com"
+    email: "selene.m@tier0.com"
   },
   OPERATOR: {
     id: 'op_01',
@@ -16,7 +16,7 @@ export const DEMO_USERS = {
     role: "OPERATOR",
     jobTitle: "Shift Supervisor",
     avatar: "/Anthony Edwards.jpg",
-    email: "anthony.e@henkel.com"
+    email: "anthony.e@tier0.com"
   },
   APPROVER: {
     id: 'app_01',
@@ -24,7 +24,7 @@ export const DEMO_USERS = {
     role: "APPROVER",
     jobTitle: "Logistics Coordinator",
     avatar: "/Arjun Patel.webp",
-    email: "arjun.p@henkel.com"
+    email: "arjun.p@tier0.com"
   },
   FINANCE: {
     id: 'fin_01',
@@ -32,7 +32,7 @@ export const DEMO_USERS = {
     role: "FINANCE",
     jobTitle: "Financial Controller",
     avatar: "/Roxanne.jpg",
-    email: "roxanne.m@henkel.com"
+    email: "roxanne.m@tier0.com"
   }
 }
 

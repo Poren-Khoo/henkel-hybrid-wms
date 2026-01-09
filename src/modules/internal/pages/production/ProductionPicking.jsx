@@ -43,12 +43,12 @@ export default function ProductionPicking() {
   }
 
   // Helper for KPI Cards
-  const KPICard = ({ title, count, icon: Icon, colorClass, borderClass }) => (
-    <Card className={`shadow-sm border-l-4 ${borderClass} bg-white`}>
+  const KPICard = ({ title, count, icon: Icon, colorClass }) => (
+    <Card className="bg-white border-slate-200 shadow-sm">
       <CardContent className="p-4 flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-slate-500 uppercase">{title}</p>
-          <h3 className="text-2xl font-bold text-slate-900">{count}</h3>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{title}</p>
+          <h3 className="text-3xl font-bold text-slate-900">{count}</h3>
         </div>
         <div className={`h-10 w-10 rounded-full ${colorClass} flex items-center justify-center`}>
           <Icon className="h-5 w-5" />
@@ -61,25 +61,25 @@ export default function ProductionPicking() {
   const TaskTable = ({ tasks, status, showAction }) => (
     <div className="rounded-md border border-slate-200">
       <Table>
-        <TableHeader className="bg-slate-50">
+        <TableHeader className="bg-slate-50 border-b border-slate-200">
           <TableRow>
-            <TableHead>Pick ID</TableHead>
-            <TableHead>Inventory Source</TableHead>
-            <TableHead>Material</TableHead>
-            <TableHead>Qty</TableHead>
-            <TableHead>From Location</TableHead>
-            <TableHead>To Line</TableHead>
-            <TableHead>Order Ref</TableHead>
-            {showAction && <TableHead className="text-right">Action</TableHead>}
+            <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Pick ID</TableHead>
+            <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Inventory Source</TableHead>
+            <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Material</TableHead>
+            <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Qty</TableHead>
+            <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">From Location</TableHead>
+            <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">To Line</TableHead>
+            <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Order Ref</TableHead>
+            {showAction && <TableHead className="text-right uppercase text-[11px] font-bold text-slate-500 tracking-wider">Action</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {tasks.length > 0 ? (
             tasks.map((task) => (
-              <TableRow key={task.task_id} className="hover:bg-slate-50/50">
-                <TableCell className="font-mono font-medium">{task.task_id}</TableCell>
+              <TableRow key={task.task_id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+                <TableCell className="font-mono text-xs font-bold text-slate-700">{task.task_id}</TableCell>
                 <TableCell>
-                    <Badge variant="outline" className="font-mono text-xs bg-slate-50">
+                    <Badge variant="outline" className="font-mono text-xs bg-slate-50 text-slate-600 border-slate-200 border rounded-sm">
                         {task.batch_id}
                     </Badge>
                 </TableCell>
@@ -90,19 +90,19 @@ export default function ProductionPicking() {
                 <TableCell className="font-bold text-slate-900">{task.qty} kg</TableCell>
                 <TableCell>
                     <div className="flex items-center gap-1 text-slate-600">
-                        <MapPin className="h-3 w-3" /> {task.from_loc}
+                        <MapPin className="h-4 w-4 text-slate-400" /> {task.from_loc}
                     </div>
                 </TableCell>
                 <TableCell>
                     <div className="flex items-center gap-1 text-slate-900 font-medium">
-                        <ArrowRight className="h-3 w-3 text-slate-400" /> {task.to_loc}
+                        <ArrowRight className="h-4 w-4 text-slate-400" /> {task.to_loc}
                     </div>
                 </TableCell>
                 <TableCell className="text-xs text-slate-500">{task.order_id}</TableCell>
                 {showAction && (
                   <TableCell className="text-right">
                     <Button 
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-8 px-4"
+                      className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-8 px-4"
                       disabled={processingId === task.task_id}
                       onClick={() => handleConfirm(task.task_id)}
                     >
@@ -143,29 +143,26 @@ export default function ProductionPicking() {
             count={pendingTasks.length} 
             icon={Package} 
             colorClass="bg-blue-50 text-blue-600" 
-            borderClass="border-l-blue-500" 
           />
            <KPICard 
             title="In Progress" 
             count={0} 
             icon={Play} 
             colorClass="bg-amber-50 text-amber-600" 
-            borderClass="border-l-amber-500" 
           />
           <KPICard 
             title="Completed" 
             count={completedTasks.length} 
             icon={CheckCircle2} 
-            colorClass="bg-green-50 text-green-600" 
-            borderClass="border-l-green-500" 
+            colorClass="bg-emerald-50 text-emerald-600" 
           />
         </div>
 
         {/* MAIN TABS */}
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="pb-2">
+        <Card className="bg-white shadow-sm border-slate-200">
+          <CardHeader className="pb-2 border-b border-slate-100 bg-slate-50/50">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <ShoppingCart className="h-5 w-5 text-slate-600" />
+              <ShoppingCart className="h-5 w-5 text-slate-500" />
               Picking Queue
             </CardTitle>
           </CardHeader>

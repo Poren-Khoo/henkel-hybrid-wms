@@ -55,11 +55,11 @@ export default function ProductionConsumption() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="border-l-4 border-l-purple-500 shadow-sm bg-white">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500 uppercase">Ready to Consume</p>
-                <h3 className="text-2xl font-bold text-slate-900">{readyStock.length} Batches</h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ready to Consume</p>
+                <h3 className="text-3xl font-bold text-slate-900">{readyStock.length} Batches</h3>
               </div>
               <div className="h-10 w-10 rounded-full bg-purple-50 flex items-center justify-center">
                 <Zap className="h-5 w-5 text-purple-600" />
@@ -69,10 +69,10 @@ export default function ProductionConsumption() {
         </div>
 
         {/* MAIN TABLE */}
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="pb-2">
+        <Card className="bg-white shadow-sm border-slate-200">
+          <CardHeader className="pb-2 border-b border-slate-100 bg-slate-50/50">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Factory className="h-5 w-5 text-slate-600" />
+              <Factory className="h-5 w-5 text-slate-500" />
               Line-Side Inventory
             </CardTitle>
           </CardHeader>
@@ -86,36 +86,36 @@ export default function ProductionConsumption() {
               <TabsContent value="ready">
                 <div className="rounded-md border border-slate-200">
                   <Table>
-                    <TableHeader className="bg-slate-50">
+                    <TableHeader className="bg-slate-50 border-b border-slate-200">
                       <TableRow>
-                        <TableHead>Inventory ID</TableHead>
-                        <TableHead>Material</TableHead>
-                        <TableHead>Available Qty</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right w-[160px] min-w-[140px]">Action</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Inventory ID</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Material</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Available Qty</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Location</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                        <TableHead className="text-right uppercase text-[11px] font-bold text-slate-500 tracking-wider w-[160px] min-w-[140px]">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {readyStock.length > 0 ? (
                         readyStock.map((item) => (
-                          <TableRow key={item.batch_id} className="hover:bg-slate-50/50">
-                            <TableCell className="font-mono font-medium">{item.batch_id}</TableCell>
+                          <TableRow key={item.batch_id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+                            <TableCell className="font-mono text-xs font-bold text-slate-700">{item.batch_id}</TableCell>
                             <TableCell>
                                 <div className="font-medium text-slate-900">{item.desc}</div>
                                 <div className="text-xs text-slate-500">{item.sku}</div>
                             </TableCell>
-                            <TableCell className="font-bold">{item.qty} kg</TableCell>
+                            <TableCell className="font-bold text-slate-900">{item.qty} kg</TableCell>
                             <TableCell>{item.location}</TableCell>
                             <TableCell>
-                                <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100">
+                                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 border rounded-sm">
                                     {item.status.replace(/_/g, " ")}
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right whitespace-nowrap w-[160px] min-w-[140px]">
                                 <div className="inline-flex items-center justify-end">
                                   <Button 
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-9 px-4 inline-flex items-center gap-2"
+                                    className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-9 px-4 inline-flex items-center gap-2"
                                     disabled={processingId === item.batch_id}
                                     onClick={() => handleConsume(item.batch_id, item.qty, item.allocated_to)}
                                   >

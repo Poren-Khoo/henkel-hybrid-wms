@@ -3,10 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table'
 import { Button } from '../../../components/ui/button'
 import { Input } from '../../../components/ui/input'
-import { Info } from 'lucide-react'
+import { Info, CheckCircle2, Calculator } from 'lucide-react'
 import { useGlobalUNS } from '../../../context/UNSContext'
-
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
 
 // MQTT Topics
 const TOPIC_STATE = "Henkelv2/Shanghai/Logistics/MasterData/State/Rate_Cards"
@@ -148,8 +146,7 @@ export default function RateCard() {
         </div>
         <Button
           onClick={handleSaveChanges}
-          variant="destructive"
-          className="h-10 px-4"
+          className="h-10 px-4 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm inline-flex items-center gap-2"
         >
           Save Changes
         </Button>
@@ -157,20 +154,23 @@ export default function RateCard() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <Card className="border border-green-300 bg-green-50">
-          <CardContent className="pt-6">
-            <p className="text-sm text-green-800">{toastMessage}</p>
+        <Card className="bg-white border border-emerald-200 shadow-sm">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <p className="text-sm font-medium text-emerald-800">{toastMessage}</p>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Section 1: Activity Rates (Basic Transport Rates) */}
-      <Card className="border border-slate-200 shadow-sm">
-        <CardHeader>
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center justify-between">
-            <CardTitle>Activity Rates</CardTitle>
-            <div className="flex items-center gap-2 text-sm text-slate-600">
-              <Info className="h-4 w-4" />
+            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Activity Rates</CardTitle>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Info className="h-4 w-4 text-slate-400" />
               <span>Basic Cost = Inbound + Outbound + Storage</span>
             </div>
           </div>
@@ -178,10 +178,10 @@ export default function RateCard() {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className={headerClass}>Activity Type</TableHead>
-                <TableHead className={headerClass}>Unit</TableHead>
-                <TableHead className={headerClass}>Price (CNY)</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Activity Type</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Unit</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Price (CNY)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -193,7 +193,7 @@ export default function RateCard() {
                 </TableRow>
               ) : (
                 BASIC_RATE_CONFIG.map((config) => (
-                  <TableRow key={config.key} className="bg-white border-b hover:bg-slate-50">
+                  <TableRow key={config.key} className="bg-white border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors">
                     <TableCell className="font-medium text-slate-900">
                       {config.label}
                     </TableCell>
@@ -205,7 +205,7 @@ export default function RateCard() {
                         type="number"
                         value={rates.basic[config.key] || 0}
                         onChange={(e) => handleBasicPriceChange(config.key, e.target.value)}
-                        className="w-32"
+                        className="w-32 h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white"
                         step="0.01"
                         min="0"
                       />
@@ -219,28 +219,31 @@ export default function RateCard() {
       </Card>
 
       {/* Section 2: Value Added Services (Activity List) */}
-      <Card className="border border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle>Value Added Services (Activity List)</CardTitle>
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+          <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Value Added Services (Activity List)</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className={headerClass}>Service Code</TableHead>
-                <TableHead className={headerClass}>Price (CNY)</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Service Code</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Price (CNY)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {VAS_RATE_CONFIG.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2} className="text-center text-slate-500 py-8">
-                    No VAS rates configured
+                    <div className="flex flex-col items-center justify-center">
+                      <Calculator className="h-8 w-8 text-slate-300 mb-2" />
+                      <p className="text-sm font-medium">No VAS rates configured</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 VAS_RATE_CONFIG.map((config) => (
-                  <TableRow key={config.key} className="bg-white border-b hover:bg-slate-50">
+                  <TableRow key={config.key} className="bg-white border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors">
                     <TableCell className="font-medium text-slate-900">
                       {config.label}
                     </TableCell>
@@ -249,7 +252,7 @@ export default function RateCard() {
                         type="number"
                         value={rates.vas[config.key] || 0}
                         onChange={(e) => handleVASPriceChange(config.key, e.target.value)}
-                        className="w-32"
+                        className="w-32 h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white"
                         step="0.01"
                         min="0"
                       />

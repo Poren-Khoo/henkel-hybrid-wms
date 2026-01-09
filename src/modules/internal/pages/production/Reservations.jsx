@@ -55,10 +55,10 @@ export default function Reservations() {
   // Helper for Status Badge
   const getStatusBadge = (status) => {
     switch(status) {
-      case 'OPEN': return <Badge variant="outline">OPEN</Badge>
-      case 'PARTIAL': return <Badge variant="secondary" className="bg-amber-100 text-amber-700">PARTIAL</Badge>
-      case 'ALLOCATED': return <Badge className="bg-green-600">ALLOCATED</Badge>
-      default: return <Badge variant="outline">{status}</Badge>
+      case 'OPEN': return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm">OPEN</Badge>
+      case 'PARTIAL': return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 border rounded-sm">PARTIAL</Badge>
+      case 'ALLOCATED': return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm">ALLOCATED</Badge>
+      default: return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm">{status}</Badge>
     }
   }
 
@@ -71,17 +71,17 @@ export default function Reservations() {
       <div className="space-y-6">
         <UNSConnectionInfo topic={TOPIC_RESERVATIONS} />
 
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="pb-2">
+        <Card className="bg-white shadow-sm border-slate-200">
+          <CardHeader className="pb-2 border-b border-slate-100 bg-slate-50/50">
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Bookmark className="h-5 w-5 text-slate-600" />
+                <Bookmark className="h-5 w-5 text-slate-500" />
                 Material Demand
               </CardTitle>
               <div className="flex gap-2">
                  <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                    <Input placeholder="Search Order..." className="pl-9 w-64" />
+                    <Input placeholder="Search Order..." className="pl-9 h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white transition-colors w-64" />
                  </div>
               </div>
             </div>
@@ -97,15 +97,15 @@ export default function Reservations() {
               <TabsContent value="reservations">
                 <div className="rounded-md border border-slate-200">
                   <Table>
-                    <TableHeader className="bg-slate-50">
+                    <TableHeader className="bg-slate-50 border-b border-slate-200">
                       <TableRow>
-                        <TableHead>Reservation ID</TableHead>
-                        <TableHead>Production Order</TableHead>
-                        <TableHead>Material</TableHead>
-                        <TableHead>Required</TableHead>
-                        <TableHead>Allocated</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right w-[200px] min-w-[180px]">Actions</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Reservation ID</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Production Order</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Material</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Required</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Allocated</TableHead>
+                        <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                        <TableHead className="text-right uppercase text-[11px] font-bold text-slate-500 tracking-wider w-[200px] min-w-[180px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -113,9 +113,9 @@ export default function Reservations() {
                         reservations.map((res) => {
                           console.log("Rendering Row:", res.reservation_id);
                           return (
-                          <TableRow key={res.reservation_id}>
-                            <TableCell className="font-mono font-medium">{res.reservation_id}</TableCell>
-                            <TableCell>{res.order_id}</TableCell>
+                          <TableRow key={res.reservation_id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+                            <TableCell className="font-mono text-xs font-bold text-slate-700">{res.reservation_id}</TableCell>
+                            <TableCell className="font-medium text-slate-900">{res.order_id}</TableCell>
                             <TableCell>
                                 <div>
                                     <div className="font-medium text-slate-900">{res.material_name}</div>
@@ -123,7 +123,7 @@ export default function Reservations() {
                                 </div>
                             </TableCell>
                             <TableCell>{res.qty_required} kg</TableCell>
-                            <TableCell className={res.qty_allocated < res.qty_required ? "text-amber-600 font-bold" : "text-green-600 font-bold"}>
+                            <TableCell className={res.qty_allocated < res.qty_required ? "text-amber-600 font-bold" : "text-emerald-600 font-bold"}>
                                 {res.qty_allocated || 0} kg
                             </TableCell>
                             <TableCell>{getStatusBadge(res.status)}</TableCell>
@@ -132,7 +132,7 @@ export default function Reservations() {
                                 <div className="inline-flex items-center justify-end">
                                   <Button 
                                     size="sm" 
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-9 px-4 inline-flex items-center gap-2"
+                                    className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-9 px-4 inline-flex items-center gap-2"
                                     disabled={processingId === res.reservation_id}
                                     onClick={() => handleAllocate(res.reservation_id)}
                                   >
@@ -146,8 +146,8 @@ export default function Reservations() {
                                 </div>
                               ) : (
                                 <div className="inline-flex items-center justify-end">
-                                  <span className="text-xs text-green-600 font-medium inline-flex items-center gap-1">
-                                    <CheckCircle2 className="h-3 w-3" /> Locked
+                                  <span className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1">
+                                    <CheckCircle2 className="h-4 w-4" /> Locked
                                   </span>
                                 </div>
                               )}

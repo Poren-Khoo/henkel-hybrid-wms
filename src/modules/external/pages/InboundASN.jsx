@@ -9,7 +9,6 @@ import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
 import PageContainer from '../../../components/PageContainer'
 
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
 
 // TOPIC 1: LISTENING (State)
 const TOPIC_SYNC_STATUS = "Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status"
@@ -60,11 +59,11 @@ export default function InboundASN() {
 
   const getStatusBadge = (status) => {
     const s = (status || '').toUpperCase()
-    if (s === 'NEW' || s === 'PENDING') return <Badge variant="amber" className="uppercase px-2">PENDING</Badge>
-    if (s === 'ARRIVED') return <Badge variant="blue" className="uppercase px-2">ARRIVED</Badge>
-    if (s === 'RECEIVING') return <Badge variant="blue" className="uppercase px-2">RECEIVING</Badge>
-    if (s === 'CLOSED' || s === 'COMPLETED') return <Badge variant="green" className="uppercase px-2">CLOSED</Badge>
-    return <Badge variant="gray" className="uppercase px-2">{status}</Badge>
+    if (s === 'NEW' || s === 'PENDING') return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 border rounded-sm uppercase text-[10px] px-2">PENDING</Badge>
+    if (s === 'ARRIVED') return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm uppercase text-[10px] px-2">ARRIVED</Badge>
+    if (s === 'RECEIVING') return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm uppercase text-[10px] px-2">RECEIVING</Badge>
+    if (s === 'CLOSED' || s === 'COMPLETED') return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm uppercase text-[10px] px-2">CLOSED</Badge>
+    return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm uppercase text-[10px] px-2">{status}</Badge>
   }
 
   // --- THE REAL-TIME ACTION HANDLER ---
@@ -137,11 +136,12 @@ export default function InboundASN() {
       <div className="space-y-4">
         {/* Toast Notification */}
         {toastMessage && (
-          <Card className="border border-green-300 bg-green-50">
-            <CardContent className="pt-6">
-              <p className="text-sm text-green-800 flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4"/> {toastMessage}
-              </p>
+          <Card className="bg-white border border-emerald-200 shadow-sm">
+            <CardContent className="pt-6 pb-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600"/> 
+                <p className="text-sm font-medium text-emerald-800">{toastMessage}</p>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -149,20 +149,20 @@ export default function InboundASN() {
         <UNSConnectionInfo topic={TOPIC_SYNC_STATUS} />
 
         {/* Filter Bar */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardContent className="pt-6">
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardContent className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
             <div className="flex gap-4 items-center">
               <input
                 type="text"
                 placeholder="Search ASN ID or Vendor..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+                className="flex-1 h-9 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus:bg-white transition-colors"
               />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+                className="h-9 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus:bg-white transition-colors"
               >
                 <option value="ALL">All Status</option>
                 <option value="PENDING">PENDING</option>
@@ -175,21 +175,21 @@ export default function InboundASN() {
         </Card>
 
         {/* ASN Table */}
-        <Card className="border border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle>Inbound ASN Management</CardTitle>
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+            <CardTitle className="text-lg font-bold text-slate-900">Inbound ASN Management</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className={headerClass}>ASN Number</TableHead>
-                  <TableHead className={headerClass}>Supplier/Provider</TableHead>
-                  <TableHead className={headerClass}>Expected Date</TableHead>
-                  <TableHead className={headerClass}>SKU</TableHead>
-                  <TableHead className={headerClass}>Qty Expected</TableHead>
-                  <TableHead className={headerClass}>Qty Received</TableHead>
-                  <TableHead className={headerClass}>Status</TableHead>
+                <TableRow className="bg-slate-50 border-b border-slate-200">
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">ASN Number</TableHead>
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Supplier/Provider</TableHead>
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Expected Date</TableHead>
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">SKU</TableHead>
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Qty Expected</TableHead>
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Qty Received</TableHead>
+                  <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -211,15 +211,15 @@ export default function InboundASN() {
                   filteredASNs.map((asn) => (
                     <TableRow 
                       key={asn.id} 
-                      className="bg-white border-b hover:bg-slate-50 cursor-pointer"
+                      className="bg-white border-b border-slate-100 hover:bg-slate-50 cursor-pointer last:border-0 transition-colors"
                       onClick={() => setSelectedASN(asn)}
                     >
-                      <TableCell className="font-medium text-slate-900">{asn.id}</TableCell>
-                      <TableCell className="text-slate-700">{asn.vendor}</TableCell>
-                      <TableCell className="text-slate-700">{asn.expectedDate}</TableCell>
-                      <TableCell className="text-slate-700">{asn.sku}</TableCell>
-                      <TableCell className="text-slate-700">{asn.qty_expected}</TableCell>
-                      <TableCell className="text-slate-700">{asn.qty_received}</TableCell>
+                      <TableCell className="font-mono text-xs font-bold text-slate-700">{asn.id}</TableCell>
+                      <TableCell className="text-slate-700 font-medium">{asn.vendor}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{asn.expectedDate}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{asn.sku}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{asn.qty_expected}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{asn.qty_received}</TableCell>
                       <TableCell>{getStatusBadge(asn.status)}</TableCell>
                     </TableRow>
                   ))
@@ -266,18 +266,18 @@ export default function InboundASN() {
                                 <div className="flex flex-col items-center flex-1">
                                     <div className={`
                                         w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
-                                        ${step.status === 'completed' ? 'bg-green-600 text-white' : ''}
-                                        ${step.status === 'active' ? 'bg-blue-600 text-white ring-4 ring-blue-50' : ''}
+                                        ${step.status === 'completed' ? 'bg-[#a3e635] text-slate-900' : ''}
+                                        ${step.status === 'active' ? 'bg-[#a3e635] text-slate-900 ring-4 ring-[#a3e635]/20' : ''}
                                         ${step.status === 'pending' ? 'bg-slate-100 text-slate-400' : ''}
                                     `}>
                                         {step.status === 'completed' ? '✓' : index + 1}
                                     </div>
-                                    <span className={`text-[10px] mt-1 text-center font-medium ${step.status === 'active' ? 'text-blue-600' : 'text-slate-500'}`}>
+                                    <span className={`text-[10px] mt-1 text-center font-medium ${step.status === 'active' ? 'text-[#a3e635]' : 'text-slate-500'}`}>
                                         {step.label}
                                     </span>
                                 </div>
                                 {index < getProgressSteps().length - 1 && (
-                                    <div className={`h-0.5 flex-1 mx-0.5 ${step.status === 'completed' ? 'bg-green-600' : 'bg-slate-200'}`} />
+                                    <div className={`h-0.5 flex-1 mx-0.5 ${step.status === 'completed' ? 'bg-[#a3e635]' : 'bg-slate-200'}`} />
                                 )}
                             </div>
                         ))}
@@ -295,22 +295,22 @@ export default function InboundASN() {
                             const status = (currentStatus || selectedASN.status || '').toUpperCase()
                             if (status === 'NEW' || status === 'PENDING') {
                                 return (
-                                <Button onClick={handleConfirmArrival} className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                                    <Truck className="h-4 w-4 mr-2" /> Confirm Arrival
+                                <Button onClick={handleConfirmArrival} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                    <Truck className="h-4 w-4" /> Confirm Arrival
                                 </Button>
                                 )
                             }
                             if (status === 'ARRIVED') {
                                 return (
-                                <Button onClick={handleStartReceiving} className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                                    <ClipboardCheck className="h-4 w-4 mr-2" /> Start Receiving
+                                <Button onClick={handleStartReceiving} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                    <ClipboardCheck className="h-4 w-4" /> Start Receiving
                                 </Button>
                                 )
                             }
                             if (status === 'RECEIVING') {
                                 return (
-                                <Button onClick={handleFinishPutaway} className="w-full bg-green-600 hover:bg-green-700 text-white shadow-sm">
-                                    <PackageCheck className="h-4 w-4 mr-2" /> Finish Putaway
+                                <Button onClick={handleFinishPutaway} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                    <PackageCheck className="h-4 w-4" /> Finish Putaway
                                 </Button>
                                 )
                             }
