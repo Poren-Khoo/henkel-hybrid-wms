@@ -35,7 +35,8 @@ import {
   Lightbulb,
   Lock,
   XCircle,
-  Layers
+  Layers,
+  Box
 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import PageContainer from '../../../../components/PageContainer'

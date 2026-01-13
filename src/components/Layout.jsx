@@ -102,7 +102,7 @@ const menuItems = [
     icon: LayoutGrid,
     path: '/dashboard-group', // Virtual path for grouping
     children: [
-      { path: '/', label: 'Executive View (Ext)' },
+      { path: '/dashboard', label: 'Executive View (Ext)' },
       { path: '/internal-dashboard', label: 'Operations View (Int)' }
     ]
   },

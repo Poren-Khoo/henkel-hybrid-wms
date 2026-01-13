@@ -17,6 +17,9 @@ const GLOBAL_SUBSCRIPTIONS = [
   
   // --- 3. MASTER DATA (Control) ---
   "Henkelv2/Shanghai/Logistics/MasterData/State/Rate_Cards",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/Materials",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/Locations",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/Containers",
 
   // --- 4. INTERNAL WAREHOUSE (Manufacturing Support) ---
   "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level", // Real-time Stock
@@ -84,9 +87,16 @@ export const UNSProvider = ({ children }) => {
         // Check if client is still connected before subscribing
         if (client.connected && clientRef.current === client) {
           console.log("Subscribing to topics...", GLOBAL_SUBSCRIPTIONS);
+          // Log MasterData subscriptions specifically
+          const masterDataTopics = GLOBAL_SUBSCRIPTIONS.filter(t => t.includes("MasterData"));
+          console.log("📋 MasterData topics to subscribe:", masterDataTopics);
+          
           client.subscribe(GLOBAL_SUBSCRIPTIONS, (err) => {
             if (err) console.error("❌ Subscription Error:", err);
-            else console.log(`📩 Subscribed successfully`);
+            else {
+              console.log(`📩 Subscribed successfully to ${GLOBAL_SUBSCRIPTIONS.length} topics`);
+              console.log(`📋 MasterData subscriptions:`, masterDataTopics);
+            }
           });
         }
       }, 100);
@@ -96,6 +106,12 @@ export const UNSProvider = ({ children }) => {
       try {
         const messageStr = payload.toString();
         const parsed = JSON.parse(messageStr);
+        
+        // DEBUG: Log ALL MasterData topics to see what's coming in
+        if (topic.includes("MasterData")) {
+          console.log(`📨 [MasterData] Received on topic:`, topic);
+          console.log(`📨 [MasterData] RAW payload:`, parsed);
+        }
         
         // Extract the "Real" Value (handling the Tier0 Envelope)
         let cleanValue = parsed;
@@ -142,6 +158,28 @@ export const UNSProvider = ({ children }) => {
         // DEBUG: Log new topics to ensure they are working
         if (topic.includes("Dispute_List") || topic.includes("Monthly_Billing")) {
             console.log(`🔔 NEW DATA [${topic.split('/').pop()}]:`, cleanValue);
+        }
+
+        // DEBUG: Log Materials messages to debug
+        if (topic.includes("Materials")) {
+            console.log(`🔔 Materials RAW:`, parsed);
+            console.log(`🔔 Materials CLEAN:`, cleanValue);
+            console.log(`🔔 Materials Topic:`, topic);
+            console.log(`🔔 Materials cleanValue type:`, typeof cleanValue, Array.isArray(cleanValue));
+        }
+
+        // DEBUG: Log Locations messages to debug
+        if (topic.includes("Locations")) {
+            console.log(`🔔 Locations RAW:`, parsed);
+            console.log(`🔔 Locations CLEAN:`, cleanValue);
+            console.log(`🔔 Locations Topic:`, topic);
+        }
+
+        // DEBUG: Log Containers messages to debug
+        if (topic.includes("Containers")) {
+            console.log(`🔔 Containers RAW:`, parsed);
+            console.log(`🔔 Containers CLEAN:`, cleanValue);
+            console.log(`🔔 Containers Topic:`, topic);
         }
 
         // Route the data to the right "Bucket"
