@@ -1,5 +1,5 @@
 // A robust configuration that forces the correct WSS protocol
-export const MQTT_URL = "wss://supos-ce-instance1.supos.app:8084/mqtt";
+export const MQTT_URL = "wss://tier0-edge-demo.tier0.app:8084/mqtt";
 
 export const MQTT_OPTIONS = {
   // Generate a random Client ID so the broker doesn't kick us off for being a duplicate
