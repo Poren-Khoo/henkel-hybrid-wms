@@ -101,19 +101,19 @@ export default function ProductionOrders() {
   // Helper: Source Badge
   const getSourceBadge = (source) => {
     if (source === 'SAP') {
-      return <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 gap-1"><CloudDownload className="h-3 w-3" /> SAP ERP</Badge>
+      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm gap-1"><CloudDownload className="h-3 w-3" /> SAP ERP</Badge>
     }
-    return <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 gap-1"><UserCog className="h-3 w-3" /> Manual</Badge>
+    return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 border rounded-sm gap-1"><UserCog className="h-3 w-3" /> Manual</Badge>
   }
 
   // Helper: Status Badge
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'Released': return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Released</Badge>
+      case 'Released': return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm">Released</Badge>
       case 'In Progress': 
-      case 'IN_PROGRESS': return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">In Progress</Badge>
-      case 'PLANNED': return <Badge className="bg-blue-100 text-blue-700">Planned</Badge>
-      default: return <Badge variant="outline" className="text-slate-500">{status}</Badge>
+      case 'IN_PROGRESS': return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm">In Progress</Badge>
+      case 'PLANNED': return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 border rounded-sm">Planned</Badge>
+      default: return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm">{status}</Badge>
     }
   }
 
@@ -128,75 +128,75 @@ export default function ProductionOrders() {
 
         {/* KPI CARDS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="border-l-4 border-l-blue-500 shadow-sm">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-slate-900">{orders.length}</div>
-              <div className="text-xs font-medium text-slate-500 uppercase mt-1">Total Active Orders</div>
+              <div className="text-3xl font-bold text-slate-900">{orders.length}</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Total Active Orders</div>
             </CardContent>
           </Card>
-          <Card className="border-l-4 border-l-green-500 shadow-sm">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-slate-900">{orders.filter(o => o.status === 'Released').length}</div>
-              <div className="text-xs font-medium text-slate-500 uppercase mt-1">Released to Floor</div>
+              <div className="text-3xl font-bold text-slate-900">{orders.filter(o => o.status === 'Released').length}</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Released to Floor</div>
             </CardContent>
           </Card>
-          <Card className="border-l-4 border-l-purple-500 shadow-sm">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-slate-900">{orders.filter(o => o.status === 'In Progress').length}</div>
-              <div className="text-xs font-medium text-slate-500 uppercase mt-1">In Production</div>
+              <div className="text-3xl font-bold text-slate-900">{orders.filter(o => o.status === 'In Progress').length}</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">In Production</div>
             </CardContent>
           </Card>
-          <Card className="border-l-4 border-l-amber-500 shadow-sm">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-slate-900">{orders.filter(o => o.source === 'MANUAL').length}</div>
-              <div className="text-xs font-medium text-slate-500 uppercase mt-1">Manual / Ad-hoc</div>
+              <div className="text-3xl font-bold text-slate-900">{orders.filter(o => o.source === 'MANUAL').length}</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Manual / Ad-hoc</div>
             </CardContent>
           </Card>
         </div>
 
         {/* MAIN ACTIONS & TABLE */}
-        <Card className="border-slate-200 shadow-sm">
-          <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex justify-between items-center">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
               <Input 
                 placeholder="Search orders, products..." 
-                className="pl-8" 
+                className="pl-9 h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white transition-colors" 
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
               />
             </div>
             
-            <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="flex items-center gap-2">
               {/* SYNC BUTTON */}
               <Button 
                 variant="outline" 
                 onClick={handleSimulateSync} 
                 disabled={isSyncing}
-                className="border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
                 {isSyncing ? 'Syncing SAP...' : 'Sync from SAP'}
               </Button>
 
               {/* MANUAL CREATE BUTTON */}
-              <Button className="bg-slate-900 text-white" onClick={() => setIsCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" /> Create Ad-hoc
+              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={() => setIsCreateOpen(true)}>
+                <Plus className="h-4 w-4" /> Create Ad-hoc
               </Button>
             </div>
           </div>
 
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>Order ID</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead>Production Line</TableHead>
-                <TableHead>Start Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Order ID</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Source</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Product</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Qty</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Production Line</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Start Date</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                <TableHead className="text-right uppercase text-[11px] font-bold text-slate-500 tracking-wider">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -211,9 +211,9 @@ export default function ProductionOrders() {
                  </TableRow>
               ) : (
                   orders.map((order, idx) => (
-                    <TableRow key={order.order_id || idx}>
-                      <TableCell className="font-mono text-xs font-medium text-blue-600 flex items-center gap-2">
-                        <Factory className="h-3 w-3" /> {order.order_id}
+                    <TableRow key={order.order_id || idx} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+                      <TableCell className="font-mono text-xs font-bold text-slate-700 flex items-center gap-2">
+                        <Factory className="h-4 w-4 text-slate-400" /> {order.order_id}
                       </TableCell>
                       <TableCell>
                         {getSourceBadge(order.source)}
@@ -224,7 +224,7 @@ export default function ProductionOrders() {
                       <TableCell className="text-slate-500 text-sm">{order.start_date}</TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-500">View Details</Button>
+                        <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-500 hover:text-slate-900">View Details</Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -236,7 +236,7 @@ export default function ProductionOrders() {
         {/* --- MANUAL ORDER DIALOG (YOUR ORIGINAL UI RESTORED) --- */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
+            <DialogHeader className="border-b border-slate-100 bg-slate-50/50">
               <DialogTitle>Create Manual Production Order</DialogTitle>
               <DialogDescription>
                 For ad-hoc runs, rework, or emergency orders not in SAP.
@@ -286,9 +286,9 @@ export default function ProductionOrders() {
               </div>
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-              <Button className="bg-slate-900 text-white" onClick={handleManualSubmit}>Create Order</Button>
+            <DialogFooter className="border-t border-slate-100 bg-slate-50/30">
+              <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 h-10 px-4" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={handleManualSubmit}>Create Order</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

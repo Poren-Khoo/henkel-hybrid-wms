@@ -24,6 +24,17 @@ export default function Locations() {
   const { data, publish } = useGlobalUNS()
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [editingLocation, setEditingLocation] = useState(null)
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    wh: '',
+    zone: '',
+    type: '',
+    temp: '',
+    status: ''
+  })
 
   // --- FORM STATE ---
   const [formData, setFormData] = useState({
@@ -55,13 +66,36 @@ export default function Locations() {
 
   // 2. FILTER LOGIC
   const filtered = useMemo(() => {
-    if (!searchTerm) return locations
-    return locations.filter(l => 
-      (l.code && l.code.toLowerCase().includes(searchTerm.toLowerCase())) || 
-      (l.zone && l.zone.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (l.type && l.type.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-  }, [locations, searchTerm])
+    let filtered = locations
+    
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(l => 
+        (l.code && l.code.toLowerCase().includes(searchTerm.toLowerCase())) || 
+        (l.zone && l.zone.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (l.type && l.type.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    }
+    
+    // Advanced filters
+    if (filters.wh) {
+      filtered = filtered.filter(l => l.wh === filters.wh)
+    }
+    if (filters.zone) {
+      filtered = filtered.filter(l => l.zone === filters.zone)
+    }
+    if (filters.type) {
+      filtered = filtered.filter(l => l.type === filters.type)
+    }
+    if (filters.temp) {
+      filtered = filtered.filter(l => l.temp === filters.temp)
+    }
+    if (filters.status) {
+      filtered = filtered.filter(l => l.status === filters.status)
+    }
+    
+    return filtered
+  }, [locations, searchTerm, filters])
 
   // 3. ACTIONS
   const handleSave = () => {
@@ -69,9 +103,9 @@ export default function Locations() {
 
     // Format payload for Node-RED
     const payload = {
-      type: 'ADD',
+      type: editingLocation ? 'UPDATE' : 'ADD',
       data: { 
-        code: formData.code, 
+        code: editingLocation ? editingLocation.code : formData.code, 
         wh: formData.wh, 
         zone: formData.zone.toUpperCase(), 
         type: formData.type, 
@@ -87,14 +121,71 @@ export default function Locations() {
     
     publish(TOPIC_ACTION, payload)
     setIsModalOpen(false)
+    setEditingLocation(null)
     
     // Reset Form (Optional: keep WH code for easier consecutive entry)
-    setFormData(prev => ({
-        ...prev, 
-        code: '', 
-        zone: '',
-        utilization: '0'
-    }))
+    if (!editingLocation) {
+      setFormData(prev => ({
+          ...prev, 
+          code: '', 
+          zone: '',
+          utilization: '0'
+      }))
+    }
+  }
+
+  const handleEdit = (location) => {
+    setEditingLocation(location)
+    // Parse capacity (split "1000 KG" into number and unit)
+    const capacityMatch = (location.capacity || '').match(/(\d+)\s*(.+)/)
+    const capacityNum = capacityMatch ? capacityMatch[1] : '1000'
+    const capacityUnit = capacityMatch ? capacityMatch[2] : 'KG'
+    
+    setFormData({
+      wh: location.wh || 'WH01',
+      zone: location.zone || '',
+      code: location.code || '',
+      type: location.type || 'Storage',
+      capacity: capacityNum,
+      capacityUom: capacityUnit,
+      temp: location.temp || 'Ambient',
+      utilization: '0',
+      mixedMat: location.allow_mixed_mat || false,
+      mixedBatch: location.allow_mixed_batch || false,
+      status: location.status === 'Active'
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleExport = () => {
+    const headers = ['Bin Code', 'Warehouse', 'Zone', 'Type', 'Temp', 'Capacity', 'Status']
+    const csvContent = [
+      headers.join(','),
+      ...filtered.map(l => [
+        l.code || '',
+        l.wh || '',
+        l.zone || '',
+        l.type || '',
+        l.temp || '',
+        l.capacity || '',
+        l.status || ''
+      ].join(','))
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `locations_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleClearFilters = () => {
+    setFilters({ wh: '', zone: '', type: '', temp: '', status: '' })
+    setSearchTerm('')
   }
 
   const handleDeleteLocation = (code) => {
@@ -139,20 +230,31 @@ export default function Locations() {
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" className="px-3 border-slate-200 text-slate-600 hover:bg-slate-50 h-9">
+            <Button 
+              variant="outline" 
+              className="px-3 border-slate-200 text-slate-600 hover:bg-slate-50 h-9"
+              onClick={() => setIsFilterOpen(true)}
+            >
               <Filter className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-             <Button variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-50 hidden sm:flex h-9 text-xs">
+             <Button 
+               variant="outline" 
+               className="border-slate-200 text-slate-600 hover:bg-slate-50 hidden sm:flex h-9 text-xs"
+               onClick={handleExport}
+             >
                <Download className="h-4 w-4 mr-2" /> Export
              </Button>
              
              {/* Primary Action */}
              <Button 
                 className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-semibold w-full sm:w-auto h-9 text-xs"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setEditingLocation(null)
+                  setIsModalOpen(true)
+                }}
              >
                <Plus className="h-4 w-4 mr-2" /> Add Location
              </Button>
@@ -203,7 +305,12 @@ export default function Locations() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100"
+                            onClick={() => handleEdit(loc)}
+                          >
                               <Edit2 className="h-4 w-4" />
                           </Button>
                           <Button 
@@ -227,7 +334,7 @@ export default function Locations() {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="sm:max-w-[600px] bg-white">
             <DialogHeader className="border-b border-slate-100 pb-4">
-              <DialogTitle className="text-lg font-bold text-slate-900">Create Location</DialogTitle>
+              <DialogTitle className="text-lg font-bold text-slate-900">{editingLocation ? 'Edit Location' : 'Create Location'}</DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
                 Define warehouse topology. This controls inventory placement strategies.
               </DialogDescription>
@@ -264,6 +371,7 @@ export default function Locations() {
                             className="h-9"
                             value={formData.code}
                             onChange={e => setFormData({...formData, code: e.target.value})}
+                            disabled={!!editingLocation}
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -362,8 +470,99 @@ export default function Locations() {
             </div>
 
             <DialogFooter className="border-t border-slate-100 pt-4">
-              <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold" onClick={handleSave}>Save Location</Button>
+              <Button variant="ghost" onClick={() => {
+                setIsModalOpen(false)
+                setEditingLocation(null)
+              }}>Cancel</Button>
+              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold" onClick={handleSave}>
+                {editingLocation ? 'Update Location' : 'Save Location'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* --- FILTER DIALOG --- */}
+        <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+          <DialogContent className="sm:max-w-[400px] bg-white">
+            <DialogHeader className="border-b border-slate-100 pb-4">
+              <DialogTitle className="text-lg font-bold text-slate-900">Filter Locations</DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Filter locations by various criteria
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Warehouse</Label>
+                <Select value={filters.wh} onValueChange={v => setFilters({...filters, wh: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All warehouses" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    {Array.from(new Set(locations.map(l => l.wh))).map(wh => (
+                      <SelectItem key={wh} value={wh}>{wh}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Zone</Label>
+                <Select value={filters.zone} onValueChange={v => setFilters({...filters, zone: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All zones" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    {Array.from(new Set(locations.map(l => l.zone))).map(zone => (
+                      <SelectItem key={zone} value={zone}>{zone}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Type</Label>
+                <Select value={filters.type} onValueChange={v => setFilters({...filters, type: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All types" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="Storage">Storage</SelectItem>
+                    <SelectItem value="Receiving">Receiving</SelectItem>
+                    <SelectItem value="Production">Production</SelectItem>
+                    <SelectItem value="QA Hold">QA Hold</SelectItem>
+                    <SelectItem value="Picking">Picking Face</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Temperature</Label>
+                <Select value={filters.temp} onValueChange={v => setFilters({...filters, temp: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All temperatures" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="Ambient">Ambient</SelectItem>
+                    <SelectItem value="Cool">Cool</SelectItem>
+                    <SelectItem value="Cold">Cold</SelectItem>
+                    <SelectItem value="Frozen">Frozen</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Status</Label>
+                <Select value={filters.status} onValueChange={v => setFilters({...filters, status: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All statuses" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Maintenance">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter className="border-t border-slate-100 pt-4">
+              <Button variant="ghost" onClick={handleClearFilters}>Clear All</Button>
+              <Button variant="ghost" onClick={() => setIsFilterOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

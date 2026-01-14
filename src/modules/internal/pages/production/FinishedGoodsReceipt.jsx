@@ -91,10 +91,10 @@ export default function FinishedGoodsReceipt() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* LEFT: RECEIPT FORM */}
-            <Card className="border-slate-200 shadow-md">
-                <div className="p-6 border-b border-slate-100 bg-slate-50">
+            <Card className="bg-white border-slate-200 shadow-sm">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <Factory className="h-5 w-5 text-indigo-600" />
+                        <Factory className="h-5 w-5 text-slate-500" />
                         Production Declaration
                     </h3>
                 </div>
@@ -122,14 +122,14 @@ export default function FinishedGoodsReceipt() {
                     </div>
 
                     {selectedOrder && (
-                        <div className="p-4 bg-indigo-50 rounded-md border border-indigo-100 text-sm space-y-1">
+                        <div className="p-4 bg-blue-50 rounded-md border border-blue-200 text-sm space-y-1">
                             <div className="flex justify-between">
                                 <span className="text-slate-500">Target Product:</span>
-                                <span className="font-bold text-indigo-700">{selectedOrder.productCode}</span>
+                                <span className="font-bold text-blue-700">{selectedOrder.productCode}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-slate-500">Target Qty:</span>
-                                <span className="font-bold">{selectedOrder.qty}</span>
+                                <span className="font-bold text-slate-900">{selectedOrder.qty}</span>
                             </div>
                         </div>
                     )}
@@ -163,7 +163,7 @@ export default function FinishedGoodsReceipt() {
                     </div>
 
                     <Button 
-                        className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white text-lg shadow-sm"
+                        className="w-full h-12 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
                         disabled={!selectedOrder || isSubmitting}
                         onClick={handlePostReceipt}
                     >
@@ -174,21 +174,21 @@ export default function FinishedGoodsReceipt() {
             </Card>
 
             {/* RIGHT: LIVE OUTPUT LOG (Simulated for Demo) */}
-            <Card className="border-slate-200 shadow-sm">
-                <div className="p-6 border-b border-slate-100">
+            <Card className="bg-white border-slate-200 shadow-sm">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <PackageCheck className="h-5 w-5 text-green-600" />
+                        <PackageCheck className="h-5 w-5 text-slate-500" />
                         Recent Receipts
                     </h3>
                 </div>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>HU ID</TableHead>
-                                <TableHead>Product</TableHead>
-                                <TableHead>Qty</TableHead>
-                                <TableHead className="text-right">Action</TableHead>
+                            <TableRow className="bg-slate-50 border-b border-slate-200">
+                                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">HU ID</TableHead>
+                                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Product</TableHead>
+                                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Qty</TableHead>
+                                <TableHead className="text-right uppercase text-[11px] font-bold text-slate-500 tracking-wider">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

@@ -10,7 +10,6 @@ import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
 import PageContainer from '../../../components/PageContainer'
 
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
 
 // MQTT Topic
 const TOPIC_STATE = "Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB"
@@ -136,15 +135,15 @@ export default function MonthlyBilling() {
   }, [approvedDNs])
 
   const getStatusBadge = (status) => {
-    if (!status) return <Badge variant="gray" className="uppercase px-2">-</Badge>
+    if (!status) return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm uppercase text-[10px] px-2">-</Badge>
     const statusUpper = String(status).toUpperCase()
     if (statusUpper === 'APPROVED') {
-      return <Badge variant="green" className="uppercase px-2">APPROVED</Badge>
+      return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm uppercase text-[10px] px-2">APPROVED</Badge>
     }
     if (statusUpper === 'ARCHIVED') {
-      return <Badge variant="gray" className="uppercase px-2">ARCHIVED</Badge>
+      return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm uppercase text-[10px] px-2">ARCHIVED</Badge>
     }
-    return <Badge variant="gray" className="uppercase px-2">{statusUpper}</Badge>
+    return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm uppercase text-[10px] px-2">{statusUpper}</Badge>
   }
 
   const handleExportCSV = () => {
@@ -205,20 +204,20 @@ export default function MonthlyBilling() {
     >
       <div className="space-y-6">
         {/* Filter Section */}
-      <Card className="border border-slate-200 shadow-sm">
-        <CardContent className="pt-6">
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardContent className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Month</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Month</label>
               <Input
                 type="month"
                 value={monthFilter}
                 onChange={(e) => setMonthFilter(e.target.value)}
-                className="w-full"
+                className="w-full h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Warehouse</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Warehouse</label>
               <Select
                 value={warehouseFilter}
                 onChange={(e) => setWarehouseFilter(e.target.value)}
@@ -230,23 +229,23 @@ export default function MonthlyBilling() {
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Destination City</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Destination City</label>
               <Input
                 type="text"
                 value={cityFilter}
                 onChange={(e) => setCityFilter(e.target.value)}
                 placeholder="Filter by city..."
-                className="w-full"
+                className="w-full h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Customer</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Customer</label>
               <Input
                 type="text"
                 value={customerFilter}
                 onChange={(e) => setCustomerFilter(e.target.value)}
                 placeholder="Filter by customer..."
-                className="w-full"
+                className="w-full h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white"
               />
             </div>
           </div>
@@ -256,21 +255,21 @@ export default function MonthlyBilling() {
       {/* KPI Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Total DNs Card */}
-        <Card className="border border-slate-200 shadow-sm">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-600">Total DNs</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total DNs</p>
               <p className="text-3xl font-bold text-slate-900">{totalDNs}</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Basic Cost Card */}
-        <Card className="border border-slate-200 shadow-sm">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-600">Basic Cost</p>
-              <p className="text-3xl font-bold text-emerald-600">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Basic Cost</p>
+              <p className="text-3xl font-bold text-slate-900">
                 ¥{basicCostSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
@@ -278,11 +277,11 @@ export default function MonthlyBilling() {
         </Card>
 
         {/* VAS Cost Card */}
-        <Card className="border border-slate-200 shadow-sm">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-600">VAS Cost</p>
-              <p className="text-3xl font-bold text-purple-600">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">VAS Cost</p>
+              <p className="text-3xl font-bold text-slate-900">
                 ¥{vasCostSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
@@ -290,11 +289,11 @@ export default function MonthlyBilling() {
         </Card>
 
         {/* Total Cost Card */}
-        <Card className="border border-slate-200 shadow-sm">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-600">Total Cost</p>
-              <p className="text-3xl font-bold text-orange-600">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Cost</p>
+              <p className="text-3xl font-bold text-[#a3e635]">
                 ¥{totalCostSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
@@ -303,19 +302,18 @@ export default function MonthlyBilling() {
       </div>
 
       {/* Action Bar */}
-      <div className="flex gap-3 mt-4">
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex gap-3">
         <Button
           onClick={handleExportCSV}
           variant="outline"
-          className="border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+          className="border-slate-200 text-slate-700 hover:bg-slate-50 h-10"
         >
           <Download className="mr-2 h-4 w-4" />
           Export CSV
         </Button>
         <Button
           onClick={handleArchiveMonth}
-          variant="destructive"
-          className="h-10 px-4 inline-flex items-center gap-2"
+          className="h-10 px-4 inline-flex items-center gap-2 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
         >
           <Archive className="h-4 w-4" />
           Archive Month
@@ -323,31 +321,34 @@ export default function MonthlyBilling() {
       </div>
 
       {/* Billing Details Table */}
-      <Card className="border border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle>Billing Details</CardTitle>
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+          <CardTitle className="text-lg font-bold text-slate-900">Billing Details</CardTitle>
           <UNSConnectionInfo topic={TOPIC_STATE} />
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className={headerClass}>DN No</TableHead>
-                <TableHead className={headerClass}>City</TableHead>
-                <TableHead className={headerClass}>Customer</TableHead>
-                <TableHead className={headerClass}>Basic</TableHead>
-                <TableHead className={headerClass}>VAS</TableHead>
-                <TableHead className={headerClass}>Total</TableHead>
-                <TableHead className={headerClass}>Status</TableHead>
-                <TableHead className={headerClass}>Approved By</TableHead>
-                <TableHead className={headerClass}>Approved At</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">DN No</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">City</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Customer</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Basic</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">VAS</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Total</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Approved By</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Approved At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-slate-500 py-8">
-                    No records found
+                  <TableCell colSpan={9} className="text-center text-slate-500 py-12">
+                    <div className="flex flex-col items-center justify-center">
+                      <Download className="h-10 w-10 text-slate-300 mb-2" />
+                      <p className="text-sm font-medium">No records found</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -372,22 +373,22 @@ export default function MonthlyBilling() {
                   const formattedDate = formatDateSafe(approvedAt)
                   
                   return (
-                    <TableRow key={dnNo} className="bg-white border-b hover:bg-slate-50">
-                      <TableCell className="font-medium text-slate-900">{dnNo}</TableCell>
-                      <TableCell className="text-slate-700">{city}</TableCell>
-                      <TableCell className="text-slate-700">{customer}</TableCell>
-                      <TableCell className="text-slate-900">
+                    <TableRow key={dnNo} className="bg-white border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors">
+                      <TableCell className="font-mono text-xs font-bold text-slate-700">{dnNo}</TableCell>
+                      <TableCell className="text-slate-700 font-medium">{city}</TableCell>
+                      <TableCell className="text-slate-700 font-medium">{customer}</TableCell>
+                      <TableCell className="text-slate-900 font-bold">
                         ¥{(isNaN(basicCost) ? 0 : basicCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
-                      <TableCell className="text-slate-900">
+                      <TableCell className="text-slate-900 font-bold">
                         ¥{(isNaN(vasCost) ? 0 : vasCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
-                      <TableCell className="text-slate-900 font-semibold">
+                      <TableCell className="text-slate-900 font-bold">
                         ¥{(isNaN(totalCost) ? 0 : totalCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
                       <TableCell>{getStatusBadge(status)}</TableCell>
-                      <TableCell className="text-slate-700">{approvedBy}</TableCell>
-                      <TableCell className="text-slate-700">{formattedDate}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{approvedBy}</TableCell>
+                      <TableCell className="text-slate-500 text-xs">{formattedDate}</TableCell>
                     </TableRow>
                   )
                 }).filter(Boolean) // Remove any null entries

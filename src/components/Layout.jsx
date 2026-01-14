@@ -1,5 +1,5 @@
 import React from 'react'
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { 
   ClipboardList, 
   ArrowDownCircle, 
@@ -42,7 +42,15 @@ import {
   // GOVERNANCE ICONS
   ShieldCheck,
   GitCommit,
-  ScrollText
+  ScrollText,
+  // NEW HEADER ICONS
+  Wifi,
+  Server,
+  Clock,
+  Command,
+  // TOGGLE ICONS
+  Sun,
+  Moon
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
@@ -50,13 +58,11 @@ import UserSwitcher from './UserSwitcher'
 import { useAuth } from '../context/AuthContext'
 
 // Role-based permissions configuration
-// NOTE: I added the new "Parent Groups" here so they are visible to Operators
 const ROLE_PERMISSIONS = {
   OPERATOR: [
     '/',                    // Dashboard
     '/internal-dashboard',  // Internal Dashboard
     '/inbound-group',       // PARENT: Inbound
-    
     '/inventory/receipt',   // Goods Receipt
     '/inventory/putaway',   // Putaway
     '/outbound-group',      // PARENT: Outbound
@@ -125,14 +131,7 @@ const menuItems = [
     icon: ArrowDownLeft, 
     path: '/inbound-group',
     children: [
-      // 1. REMOVE: { path: '/inbound', label: 'ASN List (Docs)' }, 
-      //    Reason: This page is for External/Integration view. 
-      //            Internal Ops should use the Receipt page which now has the list.
-      
-      // 2. RENAME: Give it a broader name since it now includes the list
       { path: '/inventory/receipt', label: 'Receipts & ASNs' },
-      
-      // 3. KEEP:
       { path: '/inventory/putaway', label: 'Putaway Tasks' } 
     ]
   },
@@ -149,21 +148,13 @@ const menuItems = [
   },
 
   // --- SECTION 6: QUALITY ---
-  // ... inside menuItems ...
-
-  // --- SECTION 6: QUALITY ---
   { 
     label: 'Quality', 
     icon: FlaskConical,
     path: '/quality',
     children: [
-      // 1. INPUT: Take a sample
       { path: '/qc/samples', label: 'QA Samples' }, 
-      
-      // 2. DECISION: Pass/Fail (Replaces Worklist & Decision)
       { path: '/qc/worklist', label: 'QA Decisions' }, 
-      
-      // 3. CONSEQUENCE: Handle bad stuff
       { path: '/qc/disposition', label: 'Disposition' }
     ]
   },
@@ -177,9 +168,10 @@ const menuItems = [
       { path: '/production/orders', label: 'Prod. Orders' },
       { path: '/production/requests', label: 'Material Requests' },
       { path: '/production/reservations', label: 'Reservations' },
-      { path: '/production/picking', label: 'Staging / Picking', },
+      { path: '/production/picking', label: 'Picking' },
+      { path: '/production/staging', label: 'Line Staging' },
       { path: '/production/consumption', label: 'Goods Issued' },
-      { path: '/production/fg-receipt', label: 'FG Receipt', icon: PackageCheck }
+      { path: '/production/fg-receipt', label: 'FG Receipt',  }
     ]
   },
 
@@ -189,10 +181,10 @@ const menuItems = [
     icon: Truck,
     path: '/dispatch',
     children: [
-      { path: '/dispatch/orders', label: 'Transfer Orders', icon: ClipboardList },
+      { path: '/dispatch/orders', label: 'Transfer Orders', },
       { path: '/dispatch/picking', label: 'Picking Tasks' },
       { path: '/dispatch/packing', label: 'Packing Station' },
-      { path: '/dispatch/ship', label: 'Ship / Dispatch', icon: Send }
+      { path: '/dispatch/ship', label: 'Ship / Dispatch', }
     ]
   },
 
@@ -216,10 +208,7 @@ const menuItems = [
     path: '/finance',
     children: [
       { path: '/external', label: 'Sync Status' },
-      
-      
       { path: '/inbound', label: 'Global ASN Logs' }, 
-      
       { path: '/costing', label: 'Daily Costing' },
       { path: '/monthly-billing', label: 'Monthly Billing' },
       { path: '/reconciliation', label: 'Reconciliation' },
@@ -234,8 +223,8 @@ const menuItems = [
     icon: ShieldCheck,
     path: '/governance',
     children: [
-      { path: '/governance/traceability', label: 'Traceability', icon: GitCommit },
-      { path: '/governance/audit', label: 'Audit Log', icon: ScrollText },
+      { path: '/governance/traceability', label: 'Traceability', },
+      { path: '/governance/audit', label: 'Audit Log', },
       { path: '/admin/users', label: 'User Management' },
       { path: '/reports', label: 'KPI Reports' },
       { path: '/warehouses', label: 'Warehouse Admin' }
@@ -246,10 +235,16 @@ const menuItems = [
 export default function Layout() {
   const location = useLocation()
   const { user } = useAuth()
-
-  // Default open menus for better UX
+  
+  // --- STATE ---
   const [openMenus, setOpenMenus] = React.useState(['Dashboards', 'Inbound', 'Outbound']) 
+  // SEARCH STATE
+  const navigate = useNavigate()
+  const [globalSearch, setGlobalSearch] = React.useState('')
+  // THEME STATE (Default: Dark Sidebar)
+  const [isSidebarDark, setIsSidebarDark] = React.useState(true)
 
+  // --- HANDLERS ---
   const toggleMenu = (label) => {
     setOpenMenus(prev => 
       prev.includes(label) 
@@ -258,20 +253,22 @@ export default function Layout() {
     )
   }
 
+  const handleGlobalSearch = (e) => {
+    if (e.key === 'Enter' && globalSearch.trim()) {
+      navigate(`/search?q=${encodeURIComponent(globalSearch)}`)
+    }
+  }
+
   // Filter menu items based on role permissions
   const filteredMenuItems = React.useMemo(() => {
     const userRole = (user.role || 'ADMIN').toUpperCase()
     
-    // ADMIN sees everything
     if (userRole === 'ADMIN') {
       return menuItems
     }
 
-    // Get allowed paths for the current role
     const allowedPaths = ROLE_PERMISSIONS[userRole] || []
     
-    // Filter menu items to only show allowed paths
-    // NOTE: For items with children, we check if the PARENT path is allowed OR if any child is allowed
     return menuItems.filter(item => {
       if (allowedPaths.includes(item.path)) return true;
       if (item.children) {
@@ -281,22 +278,55 @@ export default function Layout() {
     })
   }, [user.role])
 
+  // Helper to find current page label
+  const currentPageLabel = React.useMemo(() => {
+    const flatList = menuItems.flatMap(i => i.children ? [i, ...i.children] : [i])
+    return flatList.find(i => i.path === location.pathname)?.label || "Dashboard"
+  }, [location.pathname])
+
   return (
-    <div className="flex h-screen w-full bg-white font-sans text-slate-900 relative">
-      {/* Sidebar */}
-      <aside className="w-[280px] flex-col bg-white border-r border-slate-200 hidden md:flex">
-        <div className="flex h-[80px] items-center gap-3 pl-8 pr-6 bg-white">
-          <img src="/Henkel logo transparent png.png" alt="Henkel" className="h-10 w-auto" />
-          <div className="flex flex-col">
-            <span className="font-bold text-base leading-none tracking-tight text-slate-900">Henkel</span>
-            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-widest mt-1">Hybrid WMS</span>
+    <div className="flex h-screen w-full bg-slate-50 font-sans text-slate-900 relative">
+      
+      {/* SIDEBAR: Dynamic Theme (Dark/Light) */}
+      <aside className={cn(
+        "w-[280px] flex-col border-r hidden md:flex transition-colors duration-300",
+        isSidebarDark ? "bg-slate-900 border-slate-800 text-slate-300" : "bg-white border-slate-200 text-slate-600"
+      )}>
+        
+        {/* Logo Area */}
+        <div className={cn(
+          "flex h-[80px] items-center gap-4 pl-6 pr-4 border-b shrink-0 transition-colors duration-300",
+          isSidebarDark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"
+        )}>
+          <div className="h-9 w-auto min-w-[100px] flex items-center">
+             <img 
+               src={isSidebarDark ? "/tier0logowhite.svg" : "/tier0logo.png"} 
+               alt="Tier0" 
+               className="h-full w-full object-contain object-left" 
+               onError={(e) => {
+                   e.target.onerror = null; 
+                   e.target.style.display = 'none';
+                   e.target.nextSibling.style.display = 'flex'; // Show fallback
+               }}
+             />
+             <div className="hidden h-9 px-3 bg-[#a3e635] rounded-sm items-center justify-center font-bold text-slate-900 text-lg tracking-tighter">
+               TIER<span className="font-light">0</span>
+             </div>
+          </div>
+          
+          <div className={cn("flex flex-col justify-center border-l pl-4 h-8 transition-colors duration-300", isSidebarDark ? "border-slate-700" : "border-slate-200")}>
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest leading-none">
+              Unified
+            </span>
+            <span className="text-[15px] font-bold text-[#a3e635] uppercase tracking-widest leading-none mt-1">
+              WMS
+            </span>
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {/* Navigation */}
+        <nav className="flex-1 py-4 space-y-0 overflow-y-auto">
           {filteredMenuItems.map((item) => {
-            
-            // CASE A: Item with Submenu
             if (item.children) {
               const isOpen = openMenus.includes(item.label)
               const isActiveParent = item.children.some(child => location.pathname === child.path)
@@ -309,24 +339,30 @@ export default function Layout() {
                     variant="ghost"
                     onClick={() => toggleMenu(item.label)}
                     className={cn(
-                      "w-full justify-between h-11 px-4 rounded-lg hover:bg-slate-50",
-                      isActiveParent ? "text-slate-900 font-semibold bg-slate-50" : "text-slate-600"
+                      "w-full justify-between h-10 px-4 mb-1 transition-all group",
+                      isActiveParent 
+                        ? (isSidebarDark ? "text-white bg-slate-800/50" : "text-slate-900 bg-slate-100") 
+                        : (isSidebarDark ? "text-slate-400 hover:bg-slate-800 hover:text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900")
                     )}
                   >
                     <div className="flex items-center">
-                      <Icon className={cn("mr-3 h-5 w-5", isActiveParent ? "text-[#e60000]" : "text-slate-400")} />
-                      <span className="text-sm">{item.label}</span>
+                      <Icon className={cn(
+                        "mr-3 h-4 w-4 transition-colors", 
+                        isActiveParent 
+                          ? "text-[#a3e635]" 
+                          : (isSidebarDark ? "text-slate-500 group-hover:text-slate-300" : "text-slate-400 group-hover:text-slate-600")
+                      )} />
+                      <span className={cn("text-sm", isActiveParent ? "font-medium" : "")}>{item.label}</span>
                     </div>
-                    {/* Tiny Arrow Icon */}
-                    <span className={cn("transition-transform text-slate-400 text-xs", isOpen ? "rotate-180" : "")}>▼</span>
+                    <span className={cn("transition-transform text-slate-500 text-xs", isOpen ? "rotate-180" : "")}>▼</span>
                   </Button>
 
-                  {/* Children Links (Collapsible Area) */}
+                  {/* Children Links */}
                   {isOpen && (
-                    <div className="mt-1 ml-4 space-y-1 pl-4 border-l-2 border-slate-100">
+                    <div className={cn("mt-1 ml-4 space-y-1 pl-4 border-l", isSidebarDark ? "border-slate-700" : "border-slate-200")}>
                       {item.children.map(child => {
                         const isChildActive = location.pathname === child.path
-                        const ChildIcon = child.icon // Optional child icon
+                        const ChildIcon = child.icon 
                         
                         return (
                           <Button
@@ -334,19 +370,18 @@ export default function Layout() {
                             asChild
                             variant="ghost"
                             className={cn(
-                              "w-full justify-start h-9 px-4 rounded-lg text-sm",
+                              "w-full justify-start h-9 px-4 rounded-md text-sm transition-all border-l-2",
                               isChildActive 
-                                ? "bg-red-50 text-[#e60000] font-medium" 
-                                : "text-slate-500 hover:text-slate-900 hover:bg-transparent"
+                                // Active state (Always Tier0 Green)
+                                ? "bg-[#a3e635]/10 text-[#a3e635] border-[#a3e635]" 
+                                // Inactive state (Dynamic)
+                                : (isSidebarDark 
+                                    ? "text-slate-400 border-transparent hover:text-white hover:bg-slate-800"
+                                    : "text-slate-500 border-transparent hover:text-slate-900 hover:bg-slate-50")
                             )}
                           >
-                            <Link to={child.path} className="flex items-center">
-                              {/* Icon or dot indicator */}
-                              {ChildIcon ? (
-                                <ChildIcon className={cn("h-3.5 w-3.5 mr-2", isChildActive ? "text-[#e60000]" : "text-slate-400")} />
-                              ) : (
-                                <div className={cn("h-1.5 w-1.5 rounded-full mr-2", isChildActive ? "bg-[#e60000]" : "bg-slate-300")} />
-                              )}
+                            <Link to={child.path} className="flex items-center w-full">
+                              {ChildIcon ? <ChildIcon className="h-3.5 w-3.5 mr-2" /> : <div className={cn("h-1.5 w-1.5 rounded-full mr-2 transition-colors", isChildActive ? "bg-[#a3e635]" : (isSidebarDark ? "bg-slate-600" : "bg-slate-300"))} />}
                               {child.label}
                             </Link>
                           </Button>
@@ -358,7 +393,7 @@ export default function Layout() {
               )
             }
 
-            // CASE B: Standard Item (No Children)
+            // Standard Item
             const isActive = location.pathname === item.path
             const Icon = item.icon
             return (
@@ -367,39 +402,104 @@ export default function Layout() {
                 asChild
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start h-11 px-4 mb-1 rounded-lg transition-colors duration-200",
+                  "w-full justify-start h-11 px-4 mb-1 rounded-md transition-all duration-200 border-l-4",
                   isActive
-                    ? "bg-red-50 text-[#e60000] font-bold shadow-sm hover:bg-red-100"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-[#a3e635]/10 text-[#a3e635] border-[#a3e635] font-medium" 
+                    : (isSidebarDark 
+                        ? "text-slate-400 border-transparent hover:bg-slate-800 hover:text-white"
+                        : "text-slate-500 border-transparent hover:bg-slate-50 hover:text-slate-900")
                 )}
               >
-                <Link to={item.path} className="flex items-center">
-                  <Icon className={cn("mr-3 h-5 w-5", isActive ? "text-[#e60000]" : "text-slate-400")} />
+                <Link to={item.path} className="flex items-center w-full">
+                  <Icon className="mr-3 h-5 w-5" /> 
                   <span className="text-sm">{item.label}</span>
                 </Link>
               </Button>
             )
           })}
         </nav>
+        
+        <div className={cn("p-4 border-t", isSidebarDark ? "border-slate-800" : "border-slate-200")}>
+            <div className={cn("text-[10px] text-center font-mono", isSidebarDark ? "text-slate-600" : "text-slate-400")}>TIER0 EDGE v2.4.0</div>
+        </div>
       </aside>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-8 shadow-sm z-50">
-          <div className="flex items-center gap-2 text-sm">
-            <Link to="/" className="text-slate-500 hover:text-slate-900 transition-colors">Home</Link>
-            <span className="text-slate-300">/</span>
-            <span className="font-semibold text-slate-900">
-              {/* Logic to find label even in children */}
-              {(() => {
-                const flatList = menuItems.flatMap(i => i.children ? [i, ...i.children] : [i])
-                return flatList.find(i => i.path === location.pathname)?.label || "Dashboard"
-              })()}
-            </span>
+        
+        {/* HEADER */}
+        <header className="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm border-t-4 border-t-[#a3e635]">
+          
+          {/* LEFT: Context & Breadcrumbs */}
+          <div className="flex flex-col justify-center gap-0.5">
+            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+              <Link to="/" className="hover:text-slate-600 transition-colors">Home</Link>
+              <span>/</span>
+              <span>{currentPageLabel}</span>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg font-bold text-slate-900 leading-none">
+                {currentPageLabel}
+              </h1>
+              
+              {/* THEME TOGGLE BUTTON (Replaced Context Chips) */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsSidebarDark(!isSidebarDark)}
+                className="hidden md:flex h-6 w-6 p-0 rounded-full border border-slate-200 hover:bg-slate-100 items-center justify-center text-slate-500"
+                title="Toggle Sidebar Theme"
+              >
+                {isSidebarDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
           </div>
-          <UserSwitcher />
+
+          {/* CENTER: Global Search Bar */}
+          <div className="flex-1 max-w-xl mx-6 hidden md:block">
+            <div className="relative group">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 group-focus-within:text-[#a3e635] transition-colors" />
+              <input 
+                type="text"
+                placeholder="Search DN, ASN, SKU, Lot, Container..."
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+                onKeyDown={handleGlobalSearch}
+                className="w-full h-9 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#a3e635] focus:border-[#a3e635] focus:bg-white transition-all placeholder:text-slate-400"
+              />
+              <div className="absolute right-2 top-2">
+                <kbd className="hidden lg:inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] font-medium text-slate-500">
+                  <Command className="h-3 w-3" /> K
+                </kbd>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: Status & User */}
+          <div className="flex items-center gap-5">
+            
+            {/* Status Rail */}
+            <div className="hidden xl:flex flex-col items-end gap-0.5 text-[10px] font-medium text-slate-500 border-r border-slate-100 pr-5 h-8 justify-center">
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400">Broker:</span>
+                <span className="text-emerald-600 font-bold flex items-center gap-1">
+                  <Wifi className="h-3 w-3" /> Online
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400">Latency:</span>
+                <span className="text-slate-700 font-mono">24ms</span>
+              </div>
+            </div>
+
+            {/* User Profile */}
+            <UserSwitcher />
+          </div>
         </header>
-        <div className="flex-1 overflow-auto p-8">
+        
+        {/* Page Content */}
+        <div className="flex-1 overflow-auto p-6 md:p-8">
           <Outlet />
         </div>
       </main>

@@ -6,9 +6,7 @@ import { Button } from '../../../components/ui/button'
 import { Sheet, SheetHeader, SheetTitle, SheetContent, SheetFooter } from '../../../components/ui/sheet'
 import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
-import { CheckCircle, XCircle, Truck, Package, Clock, AlertCircle } from 'lucide-react'
-
-const headerClass = "text-xs uppercase text-slate-500 font-semibold"
+import { CheckCircle, XCircle, Truck, Package, Clock, AlertCircle, CheckCircle2, FileText } from 'lucide-react'
 
 // MQTT Topics
 const TOPIC_STATE = "Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB"
@@ -83,21 +81,21 @@ export default function DnApproval() {
           <h1 className="text-3xl font-bold text-slate-900">DN Approval Queue</h1>
           <p className="text-slate-500">Review and approve calculated costs based on active Rate Cards.</p>
         </div>
-        <Badge variant="outline" className="text-lg px-4 py-1">
+        <Badge variant="outline" className="bg-white text-slate-600 border-slate-200 font-mono text-sm px-4 py-1.5">
           {approverQueueDNs.length} Pending
         </Badge>
       </div>
 
-      <Card className="border border-slate-200 shadow-sm">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className={headerClass}>DN Number</TableHead>
-                <TableHead className={headerClass}>Destination</TableHead>
-                <TableHead className={headerClass}>Total Cost</TableHead>
-                <TableHead className={headerClass}>Submitted By</TableHead>
-                <TableHead className={headerClass}>Action</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">DN Number</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Destination</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Total Cost</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Submitted By</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -105,8 +103,8 @@ export default function DnApproval() {
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-slate-500 py-12">
                     <div className="flex flex-col items-center justify-center">
-                        <CheckCircle className="h-10 w-10 text-slate-200 mb-2" />
-                        <p>All caught up! No DNs pending approval.</p>
+                        <CheckCircle2 className="h-10 w-10 text-slate-300 mb-2" />
+                        <p className="text-sm font-medium">All caught up! No DNs pending approval.</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -118,20 +116,20 @@ export default function DnApproval() {
                   return (
                     <TableRow 
                       key={dnNo}
-                      className="bg-white border-b hover:bg-slate-50"
+                      className="bg-white border-b border-slate-100 hover:bg-slate-50 last:border-0 transition-colors"
                     >
-                      <TableCell className="font-mono font-medium text-slate-900">{dnNo}</TableCell>
-                      <TableCell className="text-slate-700">{dn.destination}</TableCell>
+                      <TableCell className="font-mono text-xs font-bold text-slate-700">{dnNo}</TableCell>
+                      <TableCell className="text-slate-700 font-medium">{dn.destination}</TableCell>
                       <TableCell className="text-slate-900 font-bold text-lg">
                         ¥{Number(totalCost).toFixed(2)}
                       </TableCell>
-                      <TableCell className="text-slate-700">{submittedBy}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{submittedBy}</TableCell>
                       <TableCell>
                         <Button
                           onClick={() => openCostReviewSheet(dn)}
                           variant="outline"
                           size="sm"
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                          className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 text-xs"
                         >
                           Review Cost
                         </Button>
@@ -156,26 +154,26 @@ export default function DnApproval() {
         <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
           {selectedDN && (
             <>
-              <SheetHeader className="mb-6">
-                <SheetTitle>Cost Review: {selectedDN.dn_no}</SheetTitle>
+              <SheetHeader className="mb-6 border-b border-slate-100 pb-4">
+                <SheetTitle className="text-lg font-bold text-slate-900">Cost Review: {selectedDN.dn_no}</SheetTitle>
               </SheetHeader>
               
               <div className="space-y-6">
                 
                 {/* Header Info */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-slate-50 rounded-lg">
-                        <span className="text-xs text-slate-500 uppercase font-semibold">Destination</span>
-                        <div className="font-medium text-slate-900">{selectedDN.destination}</div>
+                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Destination</span>
+                        <div className="font-medium text-slate-900 mt-1">{selectedDN.destination}</div>
                     </div>
-                    <div className="p-3 bg-slate-50 rounded-lg">
-                        <span className="text-xs text-slate-500 uppercase font-semibold">Qty</span>
-                        <div className="font-medium text-slate-900">{selectedDN.qty || 0} Units</div>
+                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Qty</span>
+                        <div className="font-medium text-slate-900 mt-1">{selectedDN.qty || 0} Units</div>
                     </div>
                 </div>
 
                 <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
-                  <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide">Cost Breakdown</h3>
+                  <h3 className="text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">Cost Breakdown</h3>
                   <div className="space-y-4">
                     
                     {/* 1. INBOUND */}
@@ -245,7 +243,7 @@ export default function DnApproval() {
                         </div>
                         <div className="flex justify-between text-lg pt-3 border-t border-slate-200">
                             <span className="font-bold text-slate-900">Total Billable:</span>
-                            <span className="font-bold text-henkel-red text-xl">¥{Number(selectedDN.total_cost).toFixed(2)}</span>
+                            <span className="font-bold text-[#a3e635] text-xl">¥{Number(selectedDN.total_cost).toFixed(2)}</span>
                         </div>
                     </div>
 
@@ -274,14 +272,14 @@ export default function DnApproval() {
                     <>
                         <Button 
                             onClick={handleApprove}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg shadow-sm"
+                            className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold h-12 shadow-sm px-4 inline-flex items-center gap-2"
                         >
-                            <CheckCircle className="mr-2 h-5 w-5" /> Approve & Bill
+                            <CheckCircle className="h-5 w-5" /> Approve & Bill
                         </Button>
                         <Button 
                             onClick={() => setShowRejectDialog(true)}
-                            variant="ghost"
-                            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                            variant="outline"
+                            className="w-full border-slate-200 text-slate-700 hover:bg-slate-50"
                         >
                             Dispute / Reject
                         </Button>
@@ -291,7 +289,7 @@ export default function DnApproval() {
                         <Button 
                             onClick={() => setShowRejectDialog(false)}
                             variant="outline"
-                            className="flex-1"
+                            className="flex-1 border-slate-200 text-slate-700 hover:bg-slate-50"
                         >
                             Cancel
                         </Button>

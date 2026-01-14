@@ -123,9 +123,9 @@ export default function ProductionRequests() {
   }
 
   const getStatusBadge = (status) => {
-    if (status === 'ALLOCATED') return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Allocated</Badge>
-    if (status === 'PARTIAL') return <Badge className="bg-amber-100 text-amber-700">Partial</Badge>
-    return <Badge variant="secondary">{status || 'OPEN'}</Badge>
+    if (status === 'ALLOCATED') return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 border rounded-sm">Allocated</Badge>
+    if (status === 'PARTIAL') return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 border rounded-sm">Partial</Badge>
+    return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 border rounded-sm">{status || 'OPEN'}</Badge>
   }
 
   return (
@@ -140,34 +140,34 @@ export default function ProductionRequests() {
 
         {/* KPI Summary (Preserved) */}
         <div className="grid grid-cols-4 gap-4">
-          <Card><CardContent className="p-4"><div className="text-2xl font-bold">{liveRequests.filter(r => r.status === 'OPEN').length}</div><div className="text-xs text-slate-500">Open Requests</div></CardContent></Card>
-          <Card><CardContent className="p-4"><div className="text-2xl font-bold text-blue-600">{liveRequests.filter(r => r.status === 'PARTIAL').length}</div><div className="text-xs text-slate-500">Partial</div></CardContent></Card>
-          <Card><CardContent className="p-4"><div className="text-2xl font-bold text-green-600">{liveRequests.filter(r => r.status === 'ALLOCATED').length}</div><div className="text-xs text-slate-500">Ready for Picking</div></CardContent></Card>
-          <Card><CardContent className="p-4"><div className="text-2xl font-bold">{orders.length}</div><div className="text-xs text-slate-500">Available Orders</div></CardContent></Card>
+          <Card className="bg-white border-slate-200 shadow-sm"><CardContent className="p-4"><div className="text-3xl font-bold text-slate-900">{liveRequests.filter(r => r.status === 'OPEN').length}</div><div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Open Requests</div></CardContent></Card>
+          <Card className="bg-white border-slate-200 shadow-sm"><CardContent className="p-4"><div className="text-3xl font-bold text-slate-900">{liveRequests.filter(r => r.status === 'PARTIAL').length}</div><div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Partial</div></CardContent></Card>
+          <Card className="bg-white border-slate-200 shadow-sm"><CardContent className="p-4"><div className="text-3xl font-bold text-slate-900">{liveRequests.filter(r => r.status === 'ALLOCATED').length}</div><div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Ready for Picking</div></CardContent></Card>
+          <Card className="bg-white border-slate-200 shadow-sm"><CardContent className="p-4"><div className="text-3xl font-bold text-slate-900">{orders.length}</div><div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Available Orders</div></CardContent></Card>
         </div>
 
         {/* Main List - SWITCHED TO LIVE DATA */}
-        <Card className="border-slate-200 shadow-sm">
-          <div className="p-4 border-b border-slate-100 flex justify-between items-center">
-            <div className="relative w-72">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
-              <Input placeholder="Search requests..." className="pl-8" />
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex justify-between items-center">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+              <Input placeholder="Search requests..." className="pl-9 h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white transition-colors" />
             </div>
-            <Button className="bg-slate-900 text-white" onClick={() => setIsCreateOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" /> New Request
+            <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={() => setIsCreateOpen(true)}>
+              <Plus className="h-4 w-4" /> New Request
             </Button>
           </div>
 
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>Request ID</TableHead>
-                <TableHead>SAP Order</TableHead>
-                <TableHead>Material</TableHead>
-                <TableHead>Qty Required</TableHead>
-                <TableHead>Allocated</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="bg-slate-50 border-b border-slate-200">
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Request ID</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">SAP Order</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Material</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Qty Required</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Allocated</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Status</TableHead>
+                <TableHead className="text-right uppercase text-[11px] font-bold text-slate-500 tracking-wider">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -182,9 +182,9 @@ export default function ProductionRequests() {
                  </TableRow>
               ) : (
                 liveRequests.map((req, idx) => (
-                  <TableRow key={req.reservation_id || idx}>
-                    <TableCell className="font-mono text-xs font-medium text-blue-600 flex items-center gap-2">
-                      <ClipboardList className="h-3 w-3" /> {req.reservation_id}
+                  <TableRow key={req.reservation_id || idx} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+                    <TableCell className="font-mono text-xs font-bold text-slate-700 flex items-center gap-2">
+                      <ClipboardList className="h-4 w-4 text-slate-400" /> {req.reservation_id}
                     </TableCell>
                     <TableCell className="font-medium text-slate-900">{req.order_id}</TableCell>
                     <TableCell>
@@ -192,13 +192,13 @@ export default function ProductionRequests() {
                         <div className="text-xs text-slate-500">{req.material_code}</div>
                     </TableCell>
                     <TableCell>{req.qty_required} kg</TableCell>
-                    <TableCell className={req.qty_allocated >= req.qty_required ? "text-green-600 font-bold" : "text-slate-500"}>
+                    <TableCell className={req.qty_allocated >= req.qty_required ? "text-emerald-600 font-bold" : "text-slate-500"}>
                         {req.qty_allocated || 0} kg
                     </TableCell>
                     <TableCell>{getStatusBadge(req.status)}</TableCell>
                     <TableCell className="text-right">
                       {/* Placeholder Action */}
-                      <Button size="sm" variant="ghost" className="h-8 text-xs">View</Button>
+                      <Button size="sm" variant="ghost" className="h-8 text-xs text-slate-500 hover:text-slate-900">View</Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -210,7 +210,7 @@ export default function ProductionRequests() {
         {/* --- CREATE REQUEST DIALOG --- */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogContent className="sm:max-w-[700px]">
-            <DialogHeader>
+            <DialogHeader className="border-b border-slate-100 bg-slate-50/50">
               <DialogTitle>New Production Request</DialogTitle>
             </DialogHeader>
             
@@ -241,20 +241,20 @@ export default function ProductionRequests() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <Label className="text-base font-semibold">Materials Required</Label>
-                  <Button size="sm" variant="outline" onClick={handleAddRow} className="h-8">
+                  <Button size="sm" variant="outline" onClick={handleAddRow} className="h-8 border-slate-200 text-slate-700 hover:bg-slate-50">
                     <Plus className="h-3 w-3 mr-1" /> Add Material
                   </Button>
                 </div>
                 <div className="border rounded-md overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-slate-50 h-9">
-                        <TableHead className="h-9">Material</TableHead>
-                        <TableHead className="h-9">Qty</TableHead>
-                        <TableHead className="h-9">UoM</TableHead>
-                        <TableHead className="h-9 w-10"></TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-slate-50 border-b border-slate-200">
+                          <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Material</TableHead>
+                          <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Qty</TableHead>
+                          <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">UoM</TableHead>
+                          <TableHead className="w-10"></TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {items.map((item) => (
                         <TableRow key={item.id}>
@@ -276,9 +276,9 @@ export default function ProductionRequests() {
               </div>
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-              <Button className="bg-slate-900 text-white" onClick={handleSubmitRequest} disabled={items.length === 0}>
+            <DialogFooter className="border-t border-slate-100 bg-slate-50/30">
+              <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 h-10 px-4" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={handleSubmitRequest} disabled={items.length === 0}>
                 Submit Request
               </Button>
             </DialogFooter>
