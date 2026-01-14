@@ -24,6 +24,16 @@ export default function Materials() {
   const { data, publish } = useGlobalUNS()
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [editingMaterial, setEditingMaterial] = useState(null)
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    hazard: '',
+    storage: '',
+    status: '',
+    fefo: ''
+  })
 
   // --- FORM STATE ---
   const [formData, setFormData] = useState({
@@ -48,19 +58,39 @@ const materials = useMemo(() => {
 
   // 2. FILTER LOGIC
   const filteredMaterials = useMemo(() => {
-    if (!searchTerm) return materials
-    return materials.filter(m => 
-      (m.code && m.code.toLowerCase().includes(searchTerm.toLowerCase())) || 
-      (m.desc && m.desc.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-  }, [materials, searchTerm])
+    let filtered = materials
+    
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(m => 
+        (m.code && m.code.toLowerCase().includes(searchTerm.toLowerCase())) || 
+        (m.desc && m.desc.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    }
+    
+    // Advanced filters
+    if (filters.hazard) {
+      filtered = filtered.filter(m => m.hazard === filters.hazard)
+    }
+    if (filters.storage) {
+      filtered = filtered.filter(m => m.storage === filters.storage)
+    }
+    if (filters.status) {
+      filtered = filtered.filter(m => m.status === filters.status)
+    }
+    if (filters.fefo) {
+      filtered = filtered.filter(m => m.fefo === filters.fefo)
+    }
+    
+    return filtered
+  }, [materials, searchTerm, filters])
 
   // 3. ACTIONS
   const handleSave = () => {
     if (!formData.code || !formData.desc) return alert("Code and Description are required")
 
     const payload = {
-      type: 'ADD',
+      type: editingMaterial ? 'UPDATE' : 'ADD',
       data: { 
         ...formData,
         shelf: formData.shelf + " days", // Format for display
@@ -68,14 +98,68 @@ const materials = useMemo(() => {
       }
     }
     
-    console.log("📤 Creating Material:", payload)
+    if (editingMaterial) {
+      payload.data.code = editingMaterial.code // Keep original code for update
+    }
+    
+    console.log(editingMaterial ? "📤 Updating Material:" : "📤 Creating Material:", payload)
     publish(TOPIC_ACTION, payload)
     setIsModalOpen(false)
+    setEditingMaterial(null)
     
     // Reset Form
     setFormData({
         code: '', desc: '', uom: 'KG', shelf: '365', hazard: 'None', storage: 'Ambient', fefo: true, status: 'Active'
     })
+  }
+
+  const handleEdit = (material) => {
+    setEditingMaterial(material)
+    // Parse shelf life (remove " days" if present)
+    const shelfDays = material.shelf ? material.shelf.replace(' days', '').replace(' days', '') : '365'
+    setFormData({
+      code: material.code,
+      desc: material.desc || '',
+      uom: material.uom || 'KG',
+      shelf: shelfDays,
+      hazard: material.hazard || 'None',
+      storage: material.storage || 'Ambient',
+      fefo: material.fefo === 'Active',
+      status: material.status || 'Active'
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleExport = () => {
+    const headers = ['Material Code', 'Description', 'UoM', 'Shelf Life', 'Hazard Class', 'Storage', 'FEFO', 'Status']
+    const csvContent = [
+      headers.join(','),
+      ...filteredMaterials.map(m => [
+        m.code || '',
+        `"${(m.desc || '').replace(/"/g, '""')}"`,
+        m.uom || '',
+        m.shelf || '',
+        m.hazard || '',
+        m.storage || '',
+        m.fefo || '',
+        m.status || ''
+      ].join(','))
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `materials_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleClearFilters = () => {
+    setFilters({ hazard: '', storage: '', status: '', fefo: '' })
+    setSearchTerm('')
   }
 
   const handleDeleteMaterial = (code) => {
@@ -115,14 +199,33 @@ const materials = useMemo(() => {
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
+            <Button 
+              variant="outline" 
+              className="px-3 border-slate-200 text-slate-600 hover:bg-slate-50 h-9"
+              onClick={() => setIsFilterOpen(true)}
+            >
+              <Filter className="h-4 w-4" />
+            </Button>
           </div>
 
-          <Button 
-            className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-semibold h-9 text-xs"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" /> Add Material
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              className="border-slate-200 text-slate-600 hover:bg-slate-50 hidden sm:flex h-9 text-xs"
+              onClick={handleExport}
+            >
+              <Download className="h-4 w-4 mr-2" /> Export
+            </Button>
+            <Button 
+              className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-semibold h-9 text-xs"
+              onClick={() => {
+                setEditingMaterial(null)
+                setIsModalOpen(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" /> Add Material
+            </Button>
+          </div>
         </div>
 
         {/* DATA TABLE */}
@@ -165,9 +268,24 @@ const materials = useMemo(() => {
                       {item.fefo === 'Active' && <Badge variant="outline" className="text-[10px] border-green-200 text-green-700 bg-green-50">Active</Badge>}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600" onClick={() => handleDeleteMaterial(item.code)}>
+                      <div className="flex justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => handleDeleteMaterial(item.code)}
+                        >
                           <Trash2 className="h-4 w-4" />
-                      </Button>
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -180,7 +298,7 @@ const materials = useMemo(() => {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="sm:max-w-[600px] bg-white">
             <DialogHeader className="border-b border-slate-100 pb-4">
-              <DialogTitle className="text-lg font-bold text-slate-900">Create Material</DialogTitle>
+              <DialogTitle className="text-lg font-bold text-slate-900">{editingMaterial ? 'Edit Material' : 'Create Material'}</DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
                 Define master data parameters. This controls putaway and safety logic.
               </DialogDescription>
@@ -196,6 +314,7 @@ const materials = useMemo(() => {
                             className="h-9"
                             value={formData.code}
                             onChange={e => setFormData({...formData, code: e.target.value})}
+                            disabled={!!editingMaterial}
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -280,8 +399,86 @@ const materials = useMemo(() => {
             </div>
 
             <DialogFooter className="border-t border-slate-100 pt-4">
-              <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold" onClick={handleSave}>Save Material</Button>
+              <Button variant="ghost" onClick={() => {
+                setIsModalOpen(false)
+                setEditingMaterial(null)
+              }}>Cancel</Button>
+              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold" onClick={handleSave}>
+                {editingMaterial ? 'Update Material' : 'Save Material'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* --- FILTER DIALOG --- */}
+        <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+          <DialogContent className="sm:max-w-[400px] bg-white">
+            <DialogHeader className="border-b border-slate-100 pb-4">
+              <DialogTitle className="text-lg font-bold text-slate-900">Filter Materials</DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Filter materials by various criteria
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Hazard Class</Label>
+                <Select value={filters.hazard} onValueChange={v => setFilters({...filters, hazard: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All hazards" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="Flammable">Flammable</SelectItem>
+                    <SelectItem value="Corrosive">Corrosive</SelectItem>
+                    <SelectItem value="Toxic">Toxic</SelectItem>
+                    <SelectItem value="Irritant">Irritant</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Storage Condition</Label>
+                <Select value={filters.storage} onValueChange={v => setFilters({...filters, storage: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All storage" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="Ambient">Ambient</SelectItem>
+                    <SelectItem value="Cool">Cool</SelectItem>
+                    <SelectItem value="Cold">Cold</SelectItem>
+                    <SelectItem value="Frozen">Frozen</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Status</Label>
+                <Select value={filters.status} onValueChange={v => setFilters({...filters, status: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All statuses" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Review">Review</SelectItem>
+                    <SelectItem value="WLAN">WLAN</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">FEFO</Label>
+                <Select value={filters.fefo} onValueChange={v => setFilters({...filters, fefo: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All FEFO" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter className="border-t border-slate-100 pt-4">
+              <Button variant="ghost" onClick={handleClearFilters}>Clear All</Button>
+              <Button variant="ghost" onClick={() => setIsFilterOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

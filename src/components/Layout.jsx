@@ -168,7 +168,8 @@ const menuItems = [
       { path: '/production/orders', label: 'Prod. Orders' },
       { path: '/production/requests', label: 'Material Requests' },
       { path: '/production/reservations', label: 'Reservations' },
-      { path: '/production/picking', label: 'Staging / Picking', },
+      { path: '/production/picking', label: 'Picking' },
+      { path: '/production/staging', label: 'Line Staging' },
       { path: '/production/consumption', label: 'Goods Issued' },
       { path: '/production/fg-receipt', label: 'FG Receipt',  }
     ]

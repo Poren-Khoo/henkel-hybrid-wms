@@ -39,6 +39,7 @@ import ProductionOrders from './modules/internal/pages/production/ProductionOrde
 import ProductionRequests from './modules/internal/pages/production/ProductionRequests';
 import Reservations from './modules/internal/pages/production/Reservations';
 import ProductionPicking from './modules/internal/pages/production/ProductionPicking';
+import LineStaging from './modules/internal/pages/production/LineStaging';
 import ProductionConsumption from './modules/internal/pages/production/ProductionConsumption';
 import FinishedGoodsReceipt from './modules/internal/pages/production/FinishedGoodsReceipt';
 import DispatchOrders from './modules/internal/pages/dispatch/DispatchOrders';
@@ -97,6 +98,7 @@ function App() {
             <Route path="production/requests" element={<ProductionRequests />} />
             <Route path="production/reservations" element={<Reservations />} />
             <Route path="production/picking" element={<ProductionPicking />} />
+            <Route path="production/staging" element={<LineStaging />} />
             <Route path="production/consumption" element={<ProductionConsumption />} />
             <Route path="production/fg-receipt" element={<FinishedGoodsReceipt />} />
 

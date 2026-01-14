@@ -24,6 +24,15 @@ export default function Containers() {
   const { data, publish } = useGlobalUNS()
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [editingContainer, setEditingContainer] = useState(null)
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    type: '',
+    cleaning: '',
+    status: ''
+  })
 
   // --- FORM STATE ---
   const [formData, setFormData] = useState({
@@ -52,21 +61,38 @@ export default function Containers() {
 
   // 2. FILTER LOGIC
   const filtered = useMemo(() => {
-    if (!searchTerm) return containers
-    return containers.filter(c => 
-      (c.id && c.id.toLowerCase().includes(searchTerm.toLowerCase())) || 
-      (c.type && c.type.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-  }, [containers, searchTerm])
+    let filtered = containers
+    
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(c => 
+        (c.id && c.id.toLowerCase().includes(searchTerm.toLowerCase())) || 
+        (c.type && c.type.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    }
+    
+    // Advanced filters
+    if (filters.type) {
+      filtered = filtered.filter(c => c.type === filters.type)
+    }
+    if (filters.cleaning) {
+      filtered = filtered.filter(c => c.cleaning === filters.cleaning)
+    }
+    if (filters.status) {
+      filtered = filtered.filter(c => c.status === filters.status)
+    }
+    
+    return filtered
+  }, [containers, searchTerm, filters])
 
   // 3. ACTIONS
   const handleSave = () => {
     if (!formData.id) return alert("Container ID is required")
 
     const payload = {
-      type: 'ADD',
+      type: editingContainer ? 'UPDATE' : 'ADD',
       data: { 
-        id: formData.id, 
+        id: editingContainer ? editingContainer.id : formData.id, 
         type: formData.type, 
         capacity: `${formData.capacity} ${formData.capacityUom}`, 
         tare: `${formData.tare} ${formData.tareUom}`, 
@@ -76,9 +102,66 @@ export default function Containers() {
     }
     publish(TOPIC_ACTION, payload)
     setIsModalOpen(false)
+    setEditingContainer(null)
     
     // Reset minimal
-    setFormData(prev => ({ ...prev, id: '' }))
+    if (!editingContainer) {
+      setFormData(prev => ({ ...prev, id: '' }))
+    }
+  }
+
+  const handleEdit = (container) => {
+    setEditingContainer(container)
+    // Parse capacity and tare (split "1000 L" into number and unit)
+    const capacityMatch = (container.capacity || '').match(/(\d+)\s*(.+)/)
+    const capacityNum = capacityMatch ? capacityMatch[1] : '1000'
+    const capacityUnit = capacityMatch ? capacityMatch[2] : 'L'
+    
+    const tareMatch = (container.tare || '').match(/(\d+)\s*(.+)/)
+    const tareNum = tareMatch ? tareMatch[1] : '60'
+    const tareUnit = tareMatch ? tareMatch[2] : 'KG'
+    
+    setFormData({
+      id: container.id || '',
+      type: container.type || 'IBC',
+      capacity: capacityNum,
+      capacityUom: capacityUnit,
+      tare: tareNum,
+      tareUom: tareUnit,
+      cleaning: container.cleaning || 'Clean',
+      status: container.status || 'Available'
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleExport = () => {
+    const headers = ['Container ID', 'Type', 'Capacity', 'Tare Weight', 'Cleaning Status', 'Status']
+    const csvContent = [
+      headers.join(','),
+      ...filtered.map(c => [
+        c.id || '',
+        c.type || '',
+        c.capacity || '',
+        c.tare || '',
+        c.cleaning || '',
+        c.status || ''
+      ].join(','))
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `containers_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleClearFilters = () => {
+    setFilters({ type: '', cleaning: '', status: '' })
+    setSearchTerm('')
   }
 
   const handleDeleteContainer = (id) => {
@@ -107,20 +190,31 @@ export default function Containers() {
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" className="px-3 border-slate-200 text-slate-600 hover:bg-slate-50 h-9">
+            <Button 
+              variant="outline" 
+              className="px-3 border-slate-200 text-slate-600 hover:bg-slate-50 h-9"
+              onClick={() => setIsFilterOpen(true)}
+            >
               <Filter className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-             <Button variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-50 hidden sm:flex h-9 text-xs">
+             <Button 
+               variant="outline" 
+               className="border-slate-200 text-slate-600 hover:bg-slate-50 hidden sm:flex h-9 text-xs"
+               onClick={handleExport}
+             >
                <Download className="h-4 w-4 mr-2" /> Export
              </Button>
              
              {/* Primary Action */}
              <Button 
                 className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-semibold w-full sm:w-auto h-9 text-xs"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setEditingContainer(null)
+                  setIsModalOpen(true)
+                }}
              >
                <Plus className="h-4 w-4 mr-2" /> Add Container
              </Button>
@@ -174,7 +268,12 @@ export default function Containers() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100"
+                            onClick={() => handleEdit(cont)}
+                          >
                               <Edit2 className="h-4 w-4" />
                           </Button>
                           <Button 
@@ -198,7 +297,7 @@ export default function Containers() {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="sm:max-w-[500px] bg-white">
             <DialogHeader className="border-b border-slate-100 pb-4">
-              <DialogTitle className="text-lg font-bold text-slate-900">Create Container</DialogTitle>
+              <DialogTitle className="text-lg font-bold text-slate-900">{editingContainer ? 'Edit Container' : 'Create Container'}</DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
                 Register new reusable packaging assets.
               </DialogDescription>
@@ -214,6 +313,7 @@ export default function Containers() {
                             className="h-9"
                             value={formData.id}
                             onChange={e => setFormData({...formData, id: e.target.value})}
+                            disabled={!!editingContainer}
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -279,8 +379,72 @@ export default function Containers() {
             </div>
 
             <DialogFooter className="border-t border-slate-100 pt-4">
-              <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold" onClick={handleSave}>Save Container</Button>
+              <Button variant="ghost" onClick={() => {
+                setIsModalOpen(false)
+                setEditingContainer(null)
+              }}>Cancel</Button>
+              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold" onClick={handleSave}>
+                {editingContainer ? 'Update Container' : 'Save Container'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* --- FILTER DIALOG --- */}
+        <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+          <DialogContent className="sm:max-w-[400px] bg-white">
+            <DialogHeader className="border-b border-slate-100 pb-4">
+              <DialogTitle className="text-lg font-bold text-slate-900">Filter Containers</DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Filter containers by various criteria
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Type</Label>
+                <Select value={filters.type} onValueChange={v => setFilters({...filters, type: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All types" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="IBC">IBC Tank</SelectItem>
+                    <SelectItem value="Drum">Steel Drum</SelectItem>
+                    <SelectItem value="Pallet">Wooden Pallet</SelectItem>
+                    <SelectItem value="Box">Plastic Tote</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Cleaning Status</Label>
+                <Select value={filters.cleaning} onValueChange={v => setFilters({...filters, cleaning: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All cleaning statuses" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="Clean">Clean</SelectItem>
+                    <SelectItem value="Dirty">Dirty</SelectItem>
+                    <SelectItem value="Maintenance">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Status</Label>
+                <Select value={filters.status} onValueChange={v => setFilters({...filters, status: v})}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All statuses" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="Available">Available</SelectItem>
+                    <SelectItem value="In Use">In Use</SelectItem>
+                    <SelectItem value="Maintenance">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter className="border-t border-slate-100 pt-4">
+              <Button variant="ghost" onClick={handleClearFilters}>Clear All</Button>
+              <Button variant="ghost" onClick={() => setIsFilterOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
