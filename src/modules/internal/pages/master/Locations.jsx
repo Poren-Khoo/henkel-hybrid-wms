@@ -15,6 +15,7 @@ import { MapPin, Plus, Edit2, Trash2, Search, Filter, Download, Snowflake, Sun }
 import PageContainer from '../../../../components/PageContainer'
 import { useGlobalUNS } from '../../../../context/UNSContext'
 import UNSConnectionInfo from '../../../../components/UNSConnectionInfo'
+import { LocationValidator, LocationValidationError } from '../../../../domain/location/LocationValidator' 
 
 // TOPICS
 const TOPIC_LOC = "Henkelv2/Shanghai/Logistics/MasterData/State/Locations"
@@ -99,38 +100,46 @@ export default function Locations() {
 
   // 3. ACTIONS
   const handleSave = () => {
-    if (!formData.code || !formData.zone) return alert("Bin Code and Zone are required")
-
-    // Format payload for Node-RED
-    const payload = {
-      type: editingLocation ? 'UPDATE' : 'ADD',
-      data: { 
-        code: editingLocation ? editingLocation.code : formData.code, 
-        wh: formData.wh, 
-        zone: formData.zone.toUpperCase(), 
-        type: formData.type, 
-        temp: formData.temp, 
-        // Combine capacity number and unit for display (e.g., "1000 KG")
-        capacity: `${formData.capacity} ${formData.capacityUom}`, 
-        status: formData.status ? 'Active' : 'Maintenance',
-        // Additional flags for logic
-        allow_mixed_mat: formData.mixedMat,
-        allow_mixed_batch: formData.mixedBatch
+    try {
+      // Use the validator
+      LocationValidator.validateAll(formData);
+  
+      // If validation passes, proceed as before
+      const payload = {
+        type: editingLocation ? 'UPDATE' : 'ADD',
+        data: { 
+          code: editingLocation ? editingLocation.code : formData.code, 
+          wh: formData.wh, 
+          zone: formData.zone.toUpperCase(), 
+          type: formData.type, 
+          temp: formData.temp, 
+          capacity: `${formData.capacity} ${formData.capacityUom}`, 
+          status: formData.status ? 'Active' : 'Maintenance',
+          allow_mixed_mat: formData.mixedMat,
+          allow_mixed_batch: formData.mixedBatch
+        }
       }
-    }
-    
-    publish(TOPIC_ACTION, payload)
-    setIsModalOpen(false)
-    setEditingLocation(null)
-    
-    // Reset Form (Optional: keep WH code for easier consecutive entry)
-    if (!editingLocation) {
-      setFormData(prev => ({
-          ...prev, 
-          code: '', 
-          zone: '',
-          utilization: '0'
-      }))
+      
+      publish(TOPIC_ACTION, payload)
+      setIsModalOpen(false)
+      setEditingLocation(null)
+      
+      // Reset Form
+      if (!editingLocation) {
+        setFormData(prev => ({
+            ...prev, 
+            code: '', 
+            zone: '',
+            utilization: '0'
+        }))
+      }
+    } catch (error) {
+      if (error instanceof LocationValidationError) {
+        alert(error.message);
+      } else {
+        console.error('Unexpected error:', error);
+        alert('An unexpected error occurred');
+      }
     }
   }
 

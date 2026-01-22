@@ -15,6 +15,7 @@ import { Box, Plus, Edit2, Trash2, Droplets, Search, Filter, Download } from 'lu
 import PageContainer from '../../../../components/PageContainer'
 import { useGlobalUNS } from '../../../../context/UNSContext'
 import UNSConnectionInfo from '../../../../components/UNSConnectionInfo'
+import { ContainerValidator, ContainerValidationError } from '../../../../domain/container/ContainerValidator'
 
 // TOPICS
 const TOPIC_CONT = "Henkelv2/Shanghai/Logistics/MasterData/State/Containers"
@@ -87,26 +88,38 @@ export default function Containers() {
 
   // 3. ACTIONS
   const handleSave = () => {
-    if (!formData.id) return alert("Container ID is required")
+    try {
+      // Use the validator
+      ContainerValidator.validateAll(formData);
 
-    const payload = {
-      type: editingContainer ? 'UPDATE' : 'ADD',
-      data: { 
-        id: editingContainer ? editingContainer.id : formData.id, 
-        type: formData.type, 
-        capacity: `${formData.capacity} ${formData.capacityUom}`, 
-        tare: `${formData.tare} ${formData.tareUom}`, 
-        cleaning: formData.cleaning, 
-        status: formData.status 
+      // Format payload for Node-RED
+      const payload = {
+        type: editingContainer ? 'UPDATE' : 'ADD',
+        data: { 
+          id: editingContainer ? editingContainer.id : formData.id, 
+          type: formData.type, 
+          capacity: `${formData.capacity} ${formData.capacityUom}`, 
+          tare: `${formData.tare} ${formData.tareUom}`, 
+          cleaning: formData.cleaning, 
+          status: formData.status 
+        }
       }
-    }
-    publish(TOPIC_ACTION, payload)
-    setIsModalOpen(false)
-    setEditingContainer(null)
-    
-    // Reset minimal
-    if (!editingContainer) {
-      setFormData(prev => ({ ...prev, id: '' }))
+      
+      publish(TOPIC_ACTION, payload)
+      setIsModalOpen(false)
+      setEditingContainer(null)
+      
+      // Reset minimal
+      if (!editingContainer) {
+        setFormData(prev => ({ ...prev, id: '' }))
+      }
+    } catch (error) {
+      if (error instanceof ContainerValidationError) {
+        alert(error.message);
+      } else {
+        console.error('Unexpected error:', error);
+        alert('An unexpected error occurred');
+      }
     }
   }
 
@@ -123,7 +136,7 @@ export default function Containers() {
     
     setFormData({
       id: container.id || '',
-      type: container.type || 'IBC',
+      type: (container.type || 'IBC').toUpperCase(),
       capacity: capacityNum,
       capacityUom: capacityUnit,
       tare: tareNum,
@@ -322,9 +335,10 @@ export default function Containers() {
                             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="IBC">IBC Tank</SelectItem>
-                                <SelectItem value="Drum">Steel Drum</SelectItem>
-                                <SelectItem value="Pallet">Wooden Pallet</SelectItem>
-                                <SelectItem value="Box">Plastic Tote</SelectItem>
+                                <SelectItem value="DRUM">Steel Drum</SelectItem>
+                                <SelectItem value="TOTE">Plastic Tote</SelectItem>
+                                <SelectItem value="PALLET">Wooden Pallet</SelectItem>
+                                <SelectItem value="CAGE">Cage</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -348,6 +362,7 @@ export default function Containers() {
                             <SelectContent>
                                 <SelectItem value="L">Liters</SelectItem>
                                 <SelectItem value="KG">Kilograms</SelectItem>
+                                <SelectItem value="M3">Cubic Meters</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -370,8 +385,8 @@ export default function Containers() {
                             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Clean">Clean</SelectItem>
-                                <SelectItem value="Dirty">Dirty</SelectItem>
-                                <SelectItem value="Maintenance">Maintenance</SelectItem>
+                                <SelectItem value="Requires Cleaning">Requires Cleaning</SelectItem>
+                                <SelectItem value="Quarantine">Quarantine</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -408,9 +423,10 @@ export default function Containers() {
                   <SelectContent>
                     <SelectItem value="">All</SelectItem>
                     <SelectItem value="IBC">IBC Tank</SelectItem>
-                    <SelectItem value="Drum">Steel Drum</SelectItem>
-                    <SelectItem value="Pallet">Wooden Pallet</SelectItem>
-                    <SelectItem value="Box">Plastic Tote</SelectItem>
+                    <SelectItem value="DRUM">Steel Drum</SelectItem>
+                    <SelectItem value="TOTE">Plastic Tote</SelectItem>
+                    <SelectItem value="PALLET">Wooden Pallet</SelectItem>
+                    <SelectItem value="CAGE">Cage</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -422,8 +438,8 @@ export default function Containers() {
                   <SelectContent>
                     <SelectItem value="">All</SelectItem>
                     <SelectItem value="Clean">Clean</SelectItem>
-                    <SelectItem value="Dirty">Dirty</SelectItem>
-                    <SelectItem value="Maintenance">Maintenance</SelectItem>
+                    <SelectItem value="Requires Cleaning">Requires Cleaning</SelectItem>
+                    <SelectItem value="Quarantine">Quarantine</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -437,6 +453,7 @@ export default function Containers() {
                     <SelectItem value="Available">Available</SelectItem>
                     <SelectItem value="In Use">In Use</SelectItem>
                     <SelectItem value="Maintenance">Maintenance</SelectItem>
+                    <SelectItem value="Quarantine">Quarantine</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -20,6 +20,8 @@ const GLOBAL_SUBSCRIPTIONS = [
   "Henkelv2/Shanghai/Logistics/MasterData/State/Materials",
   "Henkelv2/Shanghai/Logistics/MasterData/State/Locations",
   "Henkelv2/Shanghai/Logistics/MasterData/State/Containers",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/Warehouses",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/BusinessPartners",
 
   // --- 4. INTERNAL WAREHOUSE (Manufacturing Support) ---
   "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level", // Real-time Stock
@@ -35,6 +37,7 @@ const GLOBAL_SUBSCRIPTIONS = [
   "Henkelv2/Shanghai/Logistics/Exceptions/State/Dispute_List",      // [NEW] For 3PL Exceptions Page
   "Henkelv2/Shanghai/Logistics/Exceptions/State/Audit_Log",
   "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Trace_Result",
+  "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Exceptions",       // [NEW] For Internal Exception Management
 
 
   // --- 6. UPCOMING FEATURES (Pre-loading for next phase) ---

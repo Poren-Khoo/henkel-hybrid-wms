@@ -116,7 +116,7 @@ export default function InternalDashboard() {
             </CardHeader>
             <CardContent className="p-0">
                 <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-slate-100">
-                    <QuickActionTile label="Receive Goods" icon={Truck} path="/inventory/receipt" />
+                    <QuickActionTile label="Receive Goods" icon={Truck} path="/inbound/receipt" />
                     <QuickActionTile label="QA Decisions" icon={FlaskConical} path="/qc/worklist" />
                     <QuickActionTile label="Create Order" icon={Factory} path="/production/orders" />
                     <QuickActionTile label="Picking" icon={ShoppingCart} path="/production/picking" />

@@ -63,8 +63,8 @@ const ROLE_PERMISSIONS = {
     '/',                    // Dashboard
     '/internal-dashboard',  // Internal Dashboard
     '/inbound-group',       // PARENT: Inbound
-    '/inventory/receipt',   // Goods Receipt
-    '/inventory/putaway',   // Putaway
+    '/inbound/receipt',     // Goods Receipt
+    '/inbound/putaway',     // Putaway
     '/outbound-group',      // PARENT: Outbound
     '/outbound',            // Outbound (DN)
     '/dn-operator',         // Operator Queue
@@ -119,8 +119,18 @@ const menuItems = [
     icon: Database,
     path: '/master',
     children: [
-      { path: '/master/materials', label: 'Materials' },
-      { path: '/master/locations', label: 'Locations' },
+      { 
+        label: 'Materials',
+        path: '/master/materials'
+      },
+      { 
+        label: 'Warehouses',
+        path: '/master/warehouses'
+      },
+      { 
+        label: 'Partners',
+        path: '/master/partners'
+      },
       { path: '/master/containers', label: 'Containers' }
     ]
   },
@@ -131,8 +141,10 @@ const menuItems = [
     icon: ArrowDownLeft, 
     path: '/inbound-group',
     children: [
-      { path: '/inventory/receipt', label: 'Receipts & ASNs' },
-      { path: '/inventory/putaway', label: 'Putaway Tasks' } 
+      { path: '/inbound/orders', label: 'Inbound Orders' },
+      { path: '/inbound/receipt', label: 'Receipts & ASNs' },
+      { path: '/inbound/putaway', label: 'Putaway Tasks' },
+      { path: '/inbound/exceptions', label: 'Exceptions' } 
     ]
   },
 
@@ -143,7 +155,7 @@ const menuItems = [
     path: '/inventory',
     children: [
       { path: '/inventory/list', label: 'Stock List' },
-      { path: '/inventory/move', label: 'Internal Moves' } 
+      { path: '/inbound/putaway', label: 'Internal Moves' } 
     ]
   },
 
@@ -329,7 +341,19 @@ export default function Layout() {
           {filteredMenuItems.map((item) => {
             if (item.children) {
               const isOpen = openMenus.includes(item.label)
-              const isActiveParent = item.children.some(child => location.pathname === child.path)
+              const isActiveParent = item.children.some(child => {
+                // Check if child path matches
+                if (location.pathname === child.path || location.pathname.startsWith(child.path + '/')) {
+                  return true
+                }
+                // Check if child has nested children that match
+                if (child.children) {
+                  return child.children.some(grandchild => 
+                    location.pathname === grandchild.path || location.pathname.startsWith(grandchild.path + '/')
+                  )
+                }
+                return false
+              })
               const Icon = item.icon
 
               return (
@@ -361,7 +385,63 @@ export default function Layout() {
                   {isOpen && (
                     <div className={cn("mt-1 ml-4 space-y-1 pl-4 border-l", isSidebarDark ? "border-slate-700" : "border-slate-200")}>
                       {item.children.map(child => {
-                        const isChildActive = location.pathname === child.path
+                        // Check if child has nested children (e.g., Materials with Material List/Details)
+                        if (child.children) {
+                          const isChildOpen = openMenus.includes(child.label)
+                          const isChildActiveParent = child.children.some(grandchild => 
+                            location.pathname === grandchild.path || location.pathname.startsWith(grandchild.path + '/')
+                          )
+                          
+                          return (
+                            <div key={child.label} className="mb-1">
+                              <Button
+                                variant="ghost"
+                                onClick={() => toggleMenu(child.label)}
+                                className={cn(
+                                  "w-full justify-between h-9 px-4 rounded-md text-sm transition-all",
+                                  isChildActiveParent
+                                    ? (isSidebarDark ? "text-white bg-slate-800/30" : "text-slate-900 bg-slate-100")
+                                    : (isSidebarDark ? "text-slate-400 hover:bg-slate-800 hover:text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900")
+                                )}
+                              >
+                                <span className="text-xs font-medium">{child.label}</span>
+                                <span className={cn("transition-transform text-slate-500 text-[10px]", isChildOpen ? "rotate-180" : "")}>▼</span>
+                              </Button>
+                              
+                              {/* Nested Children (Grandchildren) */}
+                              {isChildOpen && (
+                                <div className={cn("mt-1 ml-4 space-y-1 pl-4 border-l", isSidebarDark ? "border-slate-700" : "border-slate-200")}>
+                                  {child.children.map(grandchild => {
+                                    const isGrandchildActive = location.pathname === grandchild.path || location.pathname.startsWith(grandchild.path + '/')
+                                    return (
+                                      <Button
+                                        key={grandchild.path}
+                                        asChild
+                                        variant="ghost"
+                                        className={cn(
+                                          "w-full justify-start h-8 px-3 rounded-md text-xs transition-all border-l-2",
+                                          isGrandchildActive
+                                            ? "bg-[#a3e635]/10 text-[#a3e635] border-[#a3e635]"
+                                            : (isSidebarDark
+                                                ? "text-slate-400 border-transparent hover:text-white hover:bg-slate-800"
+                                                : "text-slate-500 border-transparent hover:text-slate-900 hover:bg-slate-50")
+                                        )}
+                                      >
+                                        <Link to={grandchild.path} className="flex items-center w-full">
+                                          <div className={cn("h-1 w-1 rounded-full mr-2 transition-colors", isGrandchildActive ? "bg-[#a3e635]" : (isSidebarDark ? "bg-slate-600" : "bg-slate-300"))} />
+                                          {grandchild.label}
+                                        </Link>
+                                      </Button>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        }
+                        
+                        // Regular child (no nested children)
+                        const isChildActive = location.pathname === child.path || location.pathname.startsWith(child.path + '/')
                         const ChildIcon = child.icon 
                         
                         return (

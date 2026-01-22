@@ -99,8 +99,8 @@ export default function GlobalSearchResults() {
   // --- HELPER: Navigation ---
   const handleNavigate = (type, id) => {
     if (type === 'INVENTORY') navigate('/inventory/list') // Ideally navigate to detail
-    if (type === 'INBOUND') navigate('/inventory/receipt')
-    if (type === 'TASK') navigate('/inventory/putaway') // Or task list
+    if (type === 'INBOUND') navigate('/inbound/receipt')
+    if (type === 'TASK') navigate('/inbound/putaway') // Or task list
   }
 
   return (

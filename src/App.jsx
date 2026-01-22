@@ -25,11 +25,18 @@ import OutboundVAS from './modules/external/pages/OutboundVAS';
 // --- 3. INTERNAL MODULE (Manufacturing) ---
 import InternalDashboard from './modules/internal/pages/InternalDashboard';
 import Materials from './modules/internal/pages/master/Materials';
+import MaterialsDetails from './modules/internal/pages/master/MaterialsDetails';
 import Locations from './modules/internal/pages/master/Locations';
 import Containers from './modules/internal/pages/master/Containers';
+import WarehouseList from './modules/internal/pages/master/warehouse/WarehouseList';
+import WarehouseDetail from './modules/internal/pages/master/warehouse/WarehouseDetail';
+import PartnerList from './modules/internal/pages/master/partner/PartnerList';
+import PartnerDetail from './modules/internal/pages/master/partner/PartnerDetail';
 import InventoryList from './modules/internal/pages/inventory/InventoryList';
-import GoodsReceipt from './modules/internal/pages/inventory/GoodsReceipt';
-import PutawayMove from './modules/internal/pages/inventory/PutawayMove';
+import InboundOrders from './modules/internal/pages/inbound/InboundOrders';
+import Receiving from './modules/internal/pages/inbound/Receiving';
+import PutawayMove from './modules/internal/pages/inbound/PutawayMove';
+import Exceptions from './modules/internal/pages/inbound/Exceptions';
 import InternalOps from './modules/internal/pages/InternalOps';
 import QualityControl from './modules/internal/pages/QualityControl';
 import QASamples from './modules/internal/pages/QASamples';
@@ -77,13 +84,26 @@ function App() {
             <Route path="outbound-vas" element={<OutboundVAS />} />
 
             {/* --- Internal Module Routes --- */}
+            <Route path="master/material" element={<Navigate to="/master/materials" replace />} />
             <Route path="master/materials" element={<Materials />} />
+            <Route path="master/material/:id" element={<MaterialsDetails />} />
+            <Route path="master/warehouse" element={<Navigate to="/master/warehouses" replace />} />
+            <Route path="master/warehouses" element={<WarehouseList />} />
+            <Route path="master/warehouse/:id" element={<WarehouseDetail />} />
+            <Route path="master/partner" element={<Navigate to="/master/partners" replace />} />
+            <Route path="master/partners" element={<PartnerList />} />
+            <Route path="master/partner/:id" element={<PartnerDetail />} />
             <Route path="master/locations" element={<Locations />} />
             <Route path="master/containers" element={<Containers />} />
             <Route path="inventory/list" element={<InventoryList />} />
-            <Route path="inventory/receipt" element={<GoodsReceipt />} />
-            <Route path="inventory/move" element={<PutawayMove />} />
-            <Route path="inventory/putaway" element={<PutawayMove />} />
+            <Route path="inbound/orders" element={<InboundOrders />} />
+            <Route path="inbound/receipt" element={<Receiving />} />
+            <Route path="inbound/putaway" element={<PutawayMove />} />
+            <Route path="inbound/exceptions" element={<Exceptions />} />
+            {/* Legacy routes - redirect to new inbound paths */}
+            <Route path="inventory/receipt" element={<Navigate to="/inbound/receipt" replace />} />
+            <Route path="inventory/move" element={<Navigate to="/inbound/putaway" replace />} />
+            <Route path="inventory/putaway" element={<Navigate to="/inbound/putaway" replace />} />
             <Route path="internal" element={<InternalOps />} />
             <Route path="qc" element={<QualityControl />} />
             

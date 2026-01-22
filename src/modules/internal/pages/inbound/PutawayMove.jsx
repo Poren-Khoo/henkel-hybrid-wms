@@ -36,7 +36,9 @@ import {
   Lock,
   XCircle,
   Layers,
-  Box
+  Box,
+  Factory,
+  Truck
 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import PageContainer from '../../../../components/PageContainer'
@@ -46,6 +48,7 @@ import UNSConnectionInfo from '../../../../components/UNSConnectionInfo'
 // TOPICS
 const TOPIC_TASK_QUEUE = "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Task_Queue"
 const TOPIC_ACTION_CONFIRM = "Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Confirm_Putaway"
+const TOPIC_ACTION_REPORT_EX = "Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Report_Exception"
 
 // --- MOCK STRATEGY ENGINE ---
 const STRATEGY_EXPLAINER = "We filter bins by hard constraints (status/zone, hazmat, temperature, capacity) then rank by proximity + consolidation."
@@ -97,6 +100,7 @@ export default function PutawayTasks() {
   const [confirmedTarget, setConfirmedTarget] = useState(null)
   const [overrideMode, setOverrideMode] = useState(false)
   const [exceptionReason, setExceptionReason] = useState('')
+  const [exceptionNotes, setExceptionNotes] = useState('')
 
   // DEBUG: Track when MQTT data arrives
   useEffect(() => {
@@ -138,6 +142,7 @@ export default function PutawayTasks() {
       desc: task.desc || task.description || task.material_name || task.materialName || '',
       qty: task.qty || task.quantity || task.qty_required || task.qtyRequired || '0',
       status: task.status || task.task_status || task.taskStatus || 'AVAILABLE',
+      type: task.type || task.task_type || task.taskType || 'PUTAWAY', // Expecting 'PUTAWAY' or 'INTERNAL_MOVE'
       source: task.source || task.source_location || task.sourceLocation || task.from_location || task.fromLocation || 'UNKNOWN',
       hazmat: task.hazmat || task.is_hazmat || task.isHazmat || false,
       temp: task.temp || task.temperature || task.temp_requirement || task.tempRequirement || 'Ambient',
@@ -157,16 +162,16 @@ export default function PutawayTasks() {
       // 2. CONTEXT FILTER (The Logic Fix)
       if (isPutaway) {
         // PUTAWAY MODE:
-        // Must be at DOCK.
-        // Can be QUARANTINE (standard) or AVAILABLE (direct release).
-        return matchesSearch && matchesStatus && t.source.includes('DOCK')
+        // Show tasks originating from DOCKS (External) OR LINES (Internal)
+        // OR simply rely on the task type being 'PUTAWAY'
+        return matchesSearch && matchesStatus && (
+            t.type === 'PUTAWAY' || 
+            t.source.includes('DOCK') || 
+            t.source.includes('LINE')
+        )
       } else {
         // INTERNAL MOVES MODE:
-        // Must NOT be at DOCK.
-        // Should generally NOT be QUARANTINE (unless moving to a different cage).
-        return matchesSearch && matchesStatus && 
-               !t.source.includes('DOCK') && 
-               t.status !== 'QUARANTINE' 
+        return matchesSearch && matchesStatus && t.type !== 'PUTAWAY'
       }
     })
   }, [data.raw, filterText, statusFilter, isPutaway])
@@ -195,6 +200,8 @@ export default function PutawayTasks() {
     setScanHu('')
     setOverrideMode(false)
     setShowAudit(false)
+    setExceptionReason('')
+    setExceptionNotes('')
   }
 
   const handleConfirmPutaway = () => {
@@ -220,9 +227,29 @@ export default function PutawayTasks() {
   }
 
   const handleException = () => {
+    if (!exceptionReason) {
+      alert("Please select a reason for the exception")
+      return
+    }
+    
+    // Publish exception report to MQTT
+    const payload = {
+      reason: exceptionReason,
+      notes: exceptionNotes || "Exception raised from Putaway Task",
+      operator: "Current_User", // TODO: Get from auth context
+      task_id: selectedTask?.id,
+      hu: selectedTask?.hu,
+      timestamp: Date.now()
+    }
+    
+    publish(TOPIC_ACTION_REPORT_EX, payload)
+    console.log(`📤 Published Exception Report:`, payload)
+    
+    // Close modal and reset state
     setIsExceptionOpen(false)
     setSelectedTask(null)
-    alert(`Audit Logged: EXCEPTION_RAISED\nReason: ${exceptionReason}`)
+    setExceptionReason('')
+    setExceptionNotes('')
   }
 
   return (
@@ -425,7 +452,11 @@ export default function PutawayTasks() {
                   <TableCell>
                         <div className="font-mono font-medium text-blue-600 text-sm">{task.hu}</div>
                         <div className="font-medium text-slate-900 text-sm">{task.material}</div>
-                        <div className="text-xs text-slate-500">{task.qty} • {task.source}</div>
+                        <div className="text-xs text-slate-500 flex items-center gap-1">
+                          {/* Dynamic Icon */}
+                          {task.source.includes('LINE') ? <Factory className="h-3 w-3"/> : <Truck className="h-3 w-3"/>}
+                          {task.qty} • {task.source}
+                        </div>
                   </TableCell>
                   <TableCell>
                         <div className="flex flex-col gap-1">
@@ -672,7 +703,13 @@ export default function PutawayTasks() {
         </Dialog>
 
         {/* --- EXCEPTION MODAL --- */}
-        <Dialog open={isExceptionOpen} onOpenChange={setIsExceptionOpen}>
+        <Dialog open={isExceptionOpen} onOpenChange={(open) => {
+          setIsExceptionOpen(open)
+          if (!open) {
+            setExceptionReason('')
+            setExceptionNotes('')
+          }
+        }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="text-red-600 flex items-center gap-2">
@@ -697,7 +734,11 @@ export default function PutawayTasks() {
               </div>
               <div className="grid gap-2">
                 <Label>Notes</Label>
-                <Textarea placeholder="Describe the issue..." />
+                <Textarea 
+                  placeholder="Describe the issue..." 
+                  value={exceptionNotes}
+                  onChange={e => setExceptionNotes(e.target.value)}
+                />
               </div>
             </div>
             <DialogFooter>
