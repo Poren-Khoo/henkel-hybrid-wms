@@ -61,7 +61,7 @@ import { useAuth } from '../context/AuthContext'
 const ROLE_PERMISSIONS = {
   OPERATOR: [
     '/',                    // Dashboard
-    '/internal-dashboard',  // Internal Dashboard
+    '/internal-dashboard',  // Manufacturing Dashboard
     '/inbound-group',       // PARENT: Inbound
     '/inbound/receipt',     // Goods Receipt
     '/inbound/putaway',     // Putaway
@@ -75,7 +75,7 @@ const ROLE_PERMISSIONS = {
     '/inventory/list',      // Inventory List
     '/internal',            // Tasks (Work Queue)
     '/finance',             // PARENT: 3PL Mgmt (for Sync)
-    '/external',            // External 3PL Sync
+    '/external',            // 3PL Integration Sync
   ],
   APPROVER: [
     '/',                    
@@ -108,8 +108,9 @@ const menuItems = [
     icon: LayoutGrid,
     path: '/dashboard-group', // Virtual path for grouping
     children: [
-      { path: '/dashboard', label: 'Executive View (Ext)' },
-      { path: '/internal-dashboard', label: 'Operations View (Int)' }
+      { path: '/dashboard', label: 'Logistics Dashboard' },
+      { path: '/internal-dashboard', label: 'Manufacturing Operations' },
+      { path: '/internal', label: 'Task Queue' }
     ]
   },
 
@@ -155,7 +156,7 @@ const menuItems = [
     path: '/inventory',
     children: [
       { path: '/inventory/list', label: 'Stock List' },
-      { path: '/inbound/putaway', label: 'Internal Moves' } 
+      { path: '/inbound/putaway', label: 'Putaway Moves' } 
     ]
   },
 
@@ -206,10 +207,12 @@ const menuItems = [
     icon: ArrowUpRight, 
     path: '/outbound-group',
     children: [
-      { path: '/outbound', label: 'DN List (Docs)' },
-      { path: '/dn-operator', label: 'DN Operator Queue' },
-      { path: '/dn-approval', label: 'DN Approval' },
-      { path: '/production/picking', label: 'Picking Tasks' } 
+      { path: '/outbound', label: 'Outbound Orders' },
+      { path: '/outbound-vas', label: 'VAS Services' },
+      { path: '/dispatch/orders', label: 'Transfer Orders' },
+      { path: '/dispatch/picking', label: 'Picking Tasks' },
+      { path: '/dispatch/packing', label: 'Packing Station' },
+      { path: '/dispatch/ship', label: 'Ship / Dispatch' }
     ]
   },
 

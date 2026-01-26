@@ -48,6 +48,25 @@ export class WarehouseValidator {
     return status;
   }
 
+  // Check if warehouse is internal (manufacturing) or external (3PL)
+  // Business rule: Plant = Internal, Distribution Center = External
+  static isInternalWarehouse(warehouse) {
+    return warehouse?.type === 'Plant';
+  }
+
+  static isExternalWarehouse(warehouse) {
+    return warehouse?.type === 'Distribution Center';
+  }
+
+  // Add warehouse type attribute validation
+  static validateWarehouseTypeAttribute(warehouse) {
+    // Ensure warehouse has type attribute for filtering
+    if (!warehouse || !warehouse.type) {
+      throw new WarehouseValidationError("Warehouse type attribute is required");
+    }
+    return warehouse;
+  }
+
   static validateAll(formData) {
     const errors = [];
     

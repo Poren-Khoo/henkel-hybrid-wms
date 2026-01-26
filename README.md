@@ -1,16 +1,97 @@
-# React + Vite
+# Henkel WMS v2
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Warehouse Management System built with React, Vite, and Domain-Driven Design (DDD) principles.
 
-Currently, two official plugins are available:
+## Architecture
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This application follows **Domain-Driven Design (DDD)** principles with a **capability-based module organization**.
 
-## React Compiler
+### Module Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Modules are organized by **business capabilities** (bounded contexts), not by entity attributes:
 
-## Expanding the ESLint configuration
+```
+src/modules/
+├── inbound/        # Inbound operations (receiving, ASN, putaway)
+├── outbound/       # Outbound operations (DN, dispatch, shipping)
+├── production/     # Manufacturing operations
+├── master/         # Master data (materials, locations, warehouses, partners)
+├── finance/        # Financial operations (costing, billing, reconciliation)
+├── quality/        # Quality control and inspection
+├── inventory/      # Inventory management
+├── integration/    # External system integration (3PL sync)
+├── governance/     # Audit logs, traceability, compliance
+├── dashboard/      # Dashboard views
+└── reports/        # Reporting and analytics
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Key Principles
+
+- **Capability-Based Organization**: Modules represent business capabilities, not entity attributes
+- **Domain Layer Separation**: Business logic lives in `src/domain/`, UI logic in `src/modules/`
+- **Warehouse Type Agnostic**: Domain services handle both internal and external warehouses
+- **Filter in UI**: Warehouse type filtering happens in the presentation layer, not architectural boundaries
+
+### Documentation
+
+For detailed architecture guidance, see:
+- **Module Architecture Skill**: `.cursor/skills/module-architecture/SKILL.md` - Complete guide on module organization
+- **Decision Tree**: `.cursor/skills/module-architecture/references/MODULE_DECISION_TREE.md` - Quick reference for where pages go
+- **DDD Patterns**: `.cursor/skills/ddd-frontend-refactor/SKILL.md` - Domain layer patterns (validators, services)
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+```bash
+npm install
+```
+
+### Development
+
+```bash
+npm run dev
+```
+
+### Build
+
+```bash
+npm run build
+```
+
+## Technology Stack
+
+- **React** - UI framework
+- **Vite** - Build tool and dev server
+- **React Router** - Routing
+- **Tailwind CSS** - Styling
+- **MQTT** - Real-time communication (Unified Namespace pattern)
+
+## Project Structure
+
+```
+src/
+├── components/     # Shared UI components
+├── context/        # React context providers (Auth, UNS)
+├── domain/         # Domain layer (validators, services)
+├── hooks/          # Custom React hooks
+├── lib/            # Utility functions
+├── modules/        # Feature modules (capability-based)
+└── pages/          # Global pages (search, etc.)
+```
+
+## Contributing
+
+When adding new pages or features:
+
+1. **Identify the business capability** - What business process does this support?
+2. **Place in the correct module** - Use the module-architecture skill to determine location
+3. **Follow DDD patterns** - Extract business logic to domain layer
+4. **Keep domain services type-agnostic** - Filter by warehouse type in UI, not in domain
+
+See `.cursor/skills/module-architecture/SKILL.md` for detailed guidance.

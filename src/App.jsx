@@ -6,55 +6,76 @@ import { UNSProvider } from './context/UNSContext';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout'; // <--- Much cleaner path
 
-// --- 2. EXTERNAL MODULE (Logistics) ---
-import ExternalDashboard from './modules/external/pages/ExternalDashboard'; 
-import InboundASN from './modules/external/pages/InboundASN';
-import OutboundDN from './modules/external/pages/OutboundDN';
-import DnOperatorQueue from './modules/external/pages/DnOperatorQueue';
-import DnApproval from './modules/external/pages/DnApproval';
-import CostingEngine from './modules/external/pages/CostingEngine';
-import RateCard from './modules/external/pages/RateCard';
-import Reports from './modules/external/pages/Reports';
-import MonthlyBilling from './modules/external/pages/MonthlyBilling';
-import Warehouses from './modules/external/pages/Warehouses';
-import Reconciliation from './modules/external/pages/Reconciliation';
-import ThreePLExceptions from './modules/external/pages/ThreePLExceptions';
-import ExternalSync from './modules/external/pages/ExternalSync';
-import OutboundVAS from './modules/external/pages/OutboundVAS';
+// --- DASHBOARD MODULE ---
+import Dashboard from './modules/dashboard/pages/Dashboard';
+import InternalDashboard from './modules/dashboard/pages/InternalDashboard';
+import InternalOps from './modules/dashboard/pages/InternalOps';
 
-// --- 3. INTERNAL MODULE (Manufacturing) ---
-import InternalDashboard from './modules/internal/pages/InternalDashboard';
-import Materials from './modules/internal/pages/master/Materials';
-import MaterialsDetails from './modules/internal/pages/master/MaterialsDetails';
-import Locations from './modules/internal/pages/master/Locations';
-import Containers from './modules/internal/pages/master/Containers';
-import WarehouseList from './modules/internal/pages/master/warehouse/WarehouseList';
-import WarehouseDetail from './modules/internal/pages/master/warehouse/WarehouseDetail';
-import PartnerList from './modules/internal/pages/master/partner/PartnerList';
-import PartnerDetail from './modules/internal/pages/master/partner/PartnerDetail';
-import InventoryList from './modules/internal/pages/inventory/InventoryList';
-import InboundOrders from './modules/internal/pages/inbound/InboundOrders';
-import Receiving from './modules/internal/pages/inbound/Receiving';
-import PutawayMove from './modules/internal/pages/inbound/PutawayMove';
-import Exceptions from './modules/internal/pages/inbound/Exceptions';
-import InternalOps from './modules/internal/pages/InternalOps';
-import QualityControl from './modules/internal/pages/QualityControl';
-import QASamples from './modules/internal/pages/QASamples';
-import QADecisions from './modules/internal/pages/QADecisions';
-import QCDisposition from './modules/internal/pages/QCDisposition';
-import ProductionOrders from './modules/internal/pages/production/ProductionOrders';
-import ProductionRequests from './modules/internal/pages/production/ProductionRequests';
-import Reservations from './modules/internal/pages/production/Reservations';
-import ProductionPicking from './modules/internal/pages/production/ProductionPicking';
-import LineStaging from './modules/internal/pages/production/LineStaging';
-import ProductionConsumption from './modules/internal/pages/production/ProductionConsumption';
-import FinishedGoodsReceipt from './modules/internal/pages/production/FinishedGoodsReceipt';
-import DispatchOrders from './modules/internal/pages/dispatch/DispatchOrders';
-import DispatchPicking from './modules/internal/pages/dispatch/DispatchPicking';
-import DispatchPacking from './modules/internal/pages/dispatch/DispatchPacking';
-import ShipmentConfirmation from './modules/internal/pages/dispatch/ShipmentConfirmation';
-import AuditLog from './modules/internal/pages/audit/AuditLog';
-import Traceability from './modules/internal/pages/traceability/Traceability';
+// --- INBOUND MODULE ---
+import InboundASN from './modules/inbound/pages/InboundASN';
+import InboundOrders from './modules/inbound/pages/InboundOrders';
+import Receiving from './modules/inbound/pages/Receiving';
+import PutawayMove from './modules/inbound/pages/PutawayMove';
+import Exceptions from './modules/inbound/pages/Exceptions';
+
+// --- OUTBOUND MODULE ---
+import OutboundOrders from './modules/outbound/pages/OutboundOrders';
+import OutboundDN from './modules/outbound/pages/OutboundDN';
+import DnOperatorQueue from './modules/outbound/pages/DnOperatorQueue';
+import DnApproval from './modules/outbound/pages/DnApproval';
+import OutboundVAS from './modules/outbound/pages/OutboundVAS';
+import DispatchOrders from './modules/outbound/pages/DispatchOrders';
+import DispatchPicking from './modules/outbound/pages/DispatchPicking';
+import DispatchPacking from './modules/outbound/pages/DispatchPacking';
+import ShipmentConfirmation from './modules/outbound/pages/ShipmentConfirmation';
+
+// --- MASTER DATA MODULE ---
+import Materials from './modules/master/pages/Materials';
+import MaterialsDetails from './modules/master/pages/MaterialsDetails';
+import Locations from './modules/master/pages/Locations';
+import Containers from './modules/master/pages/Containers';
+import WarehouseList from './modules/master/pages/warehouse/WarehouseList';
+import WarehouseDetail from './modules/master/pages/warehouse/WarehouseDetail';
+import PartnerList from './modules/master/pages/partner/PartnerList';
+import PartnerDetail from './modules/master/pages/partner/PartnerDetail';
+import Warehouses from './modules/master/pages/Warehouses';
+
+// --- FINANCE MODULE ---
+import CostingEngine from './modules/finance/pages/CostingEngine';
+import RateCard from './modules/finance/pages/RateCard';
+import MonthlyBilling from './modules/finance/pages/MonthlyBilling';
+import Reconciliation from './modules/finance/pages/Reconciliation';
+
+// --- PRODUCTION MODULE ---
+import ProductionOrders from './modules/production/pages/ProductionOrders';
+import ProductionRequests from './modules/production/pages/ProductionRequests';
+import Reservations from './modules/production/pages/Reservations';
+import ProductionPicking from './modules/production/pages/ProductionPicking';
+import LineStaging from './modules/production/pages/LineStaging';
+import ProductionConsumption from './modules/production/pages/ProductionConsumption';
+import FinishedGoodsReceipt from './modules/production/pages/FinishedGoodsReceipt';
+
+// --- QUALITY MODULE ---
+import QualityControl from './modules/quality/pages/QualityControl';
+import QASamples from './modules/quality/pages/QASamples';
+import QADecisions from './modules/quality/pages/QADecisions';
+import QCDisposition from './modules/quality/pages/QCDisposition';
+
+// --- INVENTORY MODULE ---
+import InventoryList from './modules/inventory/pages/InventoryList';
+
+// --- INTEGRATION MODULE ---
+import ExternalSync from './modules/integration/pages/ExternalSync';
+import ThreePLExceptions from './modules/integration/pages/ThreePLExceptions';
+
+// --- GOVERNANCE MODULE ---
+import AuditLog from './modules/governance/pages/AuditLog';
+import Traceability from './modules/governance/pages/Traceability';
+
+// --- REPORTS MODULE ---
+import Reports from './modules/reports/pages/Reports';
+
+// --- ADMIN MODULE ---
 import UserManagement from './modules/admin/pages/UserManagement';
 
 function App() {
@@ -66,11 +87,15 @@ function App() {
             {/* Redirect Root to Dashboard */}
             <Route index element={<Navigate to="/dashboard" replace />} />
             
-            {/* --- External Module Routes --- */}
-            <Route path="dashboard" element={<ExternalDashboard />} />
+            {/* --- Dashboard Routes --- */}
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="internal-dashboard" element={<InternalDashboard />} />
+            {/* --- Inbound Routes --- */}
             <Route path="inbound" element={<InboundASN />} />
-            <Route path="outbound" element={<OutboundDN />} />
+            {/* --- Outbound Routes --- */}
+            <Route path="outbound" element={<OutboundOrders />} />
+            {/* Legacy routes - kept for backward compatibility, will be deprecated */}
+            <Route path="outbound-dn" element={<OutboundDN />} />
             <Route path="dn-operator" element={<DnOperatorQueue />} />
             <Route path="dn-approval" element={<DnApproval />} />
             <Route path="costing" element={<CostingEngine />} />
@@ -83,7 +108,7 @@ function App() {
             <Route path="external" element={<ExternalSync />} />
             <Route path="outbound-vas" element={<OutboundVAS />} />
 
-            {/* --- Internal Module Routes --- */}
+            {/* --- Master Data Routes --- */}
             <Route path="master/material" element={<Navigate to="/master/materials" replace />} />
             <Route path="master/materials" element={<Materials />} />
             <Route path="master/material/:id" element={<MaterialsDetails />} />
