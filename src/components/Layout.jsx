@@ -208,6 +208,7 @@ const menuItems = [
     path: '/outbound-group',
     children: [
       { path: '/outbound', label: 'Outbound Orders' },
+      { path: '/outbound/picking-tasks', label: 'Picking Tasks' },
       { path: '/outbound-vas', label: 'VAS Services' },
       { path: '/dispatch/orders', label: 'Transfer Orders' },
       { path: '/dispatch/picking', label: 'Picking Tasks' },

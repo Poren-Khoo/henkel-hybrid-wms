@@ -47,10 +47,29 @@ export class OutboundOrderService {
     // Handle cost (only for costing source)
     const cost = source === 'costing' ? (rawData.total_cost || rawData.cost || 0) : null;
     
-    // Handle breakdown (only for costing source)
-    const breakdown = source === 'costing' ? (rawData.breakdown || null) : null;
-    const basic_cost = source === 'costing' ? (rawData.basic_cost || null) : null;
-    const vas_cost = source === 'costing' ? (rawData.vas_cost || null) : null;
+    // Handle breakdown (only for costing source) - normalize breakdown structure
+    let breakdown = null;
+    if (source === 'costing' && rawData.breakdown) {
+      breakdown = {
+        // Inbound costs
+        inbound_total: rawData.breakdown.inbound_total || rawData.breakdown.inboundTotal || 0,
+        inbound_unit_price: rawData.breakdown.inbound_unit_price || rawData.breakdown.inboundUnitPrice || rawData.breakdown.inbound_unit || 0,
+        
+        // Outbound costs
+        outbound_total: rawData.breakdown.outbound_total || rawData.breakdown.outboundTotal || 0,
+        outbound_unit_price: rawData.breakdown.outbound_unit_price || rawData.breakdown.outboundUnitPrice || rawData.breakdown.outbound_unit || 0,
+        
+        // Storage costs
+        storage_total: rawData.breakdown.storage_total || rawData.breakdown.storageTotal || 0,
+        storage_unit_price: rawData.breakdown.storage_unit_price || rawData.breakdown.storageUnitPrice || rawData.breakdown.storage_unit || 0,
+        storage_days: rawData.breakdown.storage_days || rawData.breakdown.storageDays || 10,
+        
+        // Preserve any additional breakdown fields
+        ...rawData.breakdown
+      };
+    }
+    const basic_cost = source === 'costing' ? (rawData.basic_cost || rawData.basicCost || null) : null;
+    const vas_cost = source === 'costing' ? (rawData.vas_cost || rawData.vasCost || null) : null;
     
     // Handle carrier and tracking (for sync source)
     const carrier = rawData.carrier || '';
@@ -94,10 +113,23 @@ export class OutboundOrderService {
       }
     });
 
-    // Then, add sync orders (only if not already in map)
+    // Then, merge sync orders - preserve breakdown from costing if exists
     syncOrders.forEach(order => {
-      if (order && order.id && !orderMap.has(order.id)) {
-        orderMap.set(order.id, order);
+      if (order && order.id) {
+        if (orderMap.has(order.id)) {
+          // Merge: keep costing breakdown, update other fields from sync
+          const existing = orderMap.get(order.id);
+          orderMap.set(order.id, {
+            ...order,
+            // Preserve breakdown, cost, basic_cost, vas_cost from costing
+            breakdown: existing.breakdown || order.breakdown,
+            cost: existing.cost || order.cost,
+            basic_cost: existing.basic_cost || order.basic_cost,
+            vas_cost: existing.vas_cost || order.vas_cost,
+          });
+        } else {
+          orderMap.set(order.id, order);
+        }
       }
     });
 

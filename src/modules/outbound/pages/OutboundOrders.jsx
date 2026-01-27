@@ -21,6 +21,7 @@ import { WarehouseSelect } from '../../../components/selectors/WarehouseSelect'
 import { MaterialSelect } from '../../../components/selectors/Material'
 import { OutboundOrderValidator, OutboundOrderValidationError } from '../../../domain/outbound/OutboundOrderValidator'
 import { OutboundOrderService } from '../../../domain/outbound/OutboundOrderService'
+import OutboundOrderDetail from './OutboundOrderDetail'
 
 // TOPICS - Unified Control Tower subscribes to multiple sources
 const TOPIC_COST_DB = "Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB"
@@ -133,7 +134,21 @@ export default function OutboundOrders() {
       .filter(order => order !== null)
 
     // 5. Merge all orders (prioritizes costing for cost info)
-    return OutboundOrderService.mergeOrders(costingOrders, syncDNs, formattedShipments)
+    const merged = OutboundOrderService.mergeOrders(costingOrders, syncDNs, formattedShipments)
+    
+    // Debug logging for orders with PENDING_APPROVAL status
+    const pendingApproval = merged.filter(o => (o.status || '').toUpperCase() === 'PENDING_APPROVAL')
+    if (pendingApproval.length > 0) {
+      console.log('[OutboundOrders] PENDING_APPROVAL orders found:', pendingApproval.map(o => ({
+        id: o.id,
+        hasBreakdown: !!o.breakdown,
+        breakdown: o.breakdown,
+        hasCost: !!o.cost,
+        source: o.raw ? 'has raw data' : 'no raw data'
+      })))
+    }
+    
+    return merged
   }, [data.dns, data.raw])
 
   // --- FILTERING (using activeQuery) ---
@@ -612,185 +627,16 @@ export default function OutboundOrders() {
           </Table>
         </Card>
 
-        {/* --- VIEW DETAILS MODAL (Read-only) --- */}
-        <Dialog open={!!viewDetailsOrder} onOpenChange={() => setViewDetailsOrder(null)}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle className="font-mono">{viewDetailsOrder?.id}</DialogTitle>
-              <DialogDescription>
-                {viewDetailsOrder?.customer || viewDetailsOrder?.destination} • {BUSINESS_TYPES[viewDetailsOrder?.type]?.label || viewDetailsOrder?.type}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-6 py-4">
-              {/* Header Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Customer</span>
-                  <div className="font-medium text-slate-900 mt-1">{viewDetailsOrder?.customer || viewDetailsOrder?.destination}</div>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Qty</span>
-                  <div className="font-medium text-slate-900 mt-1">{viewDetailsOrder?.qty || 0} Units</div>
-                </div>
-              </div>
-
-              {/* Progress Stepper (for workflow orders) */}
-              {viewDetailsOrder && viewDetailsOrder.status !== 'PENDING_APPROVAL' && viewDetailsOrder.type === 'SALES_ORDER' && (
-                <div className="py-4">
-                  <p className="text-sm font-semibold text-slate-700 mb-4">Workflow Progress</p>
-                  <div className="flex items-center space-x-1">
-                    {getProgressSteps(viewDetailsOrder).map((step, index) => (
-                      <div key={index} className="flex items-center flex-1">
-                        <div className="flex flex-col items-center flex-1">
-                          <div className={`
-                            w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
-                            ${step.status === 'completed' ? 'bg-green-600 text-white' : ''}
-                            ${step.status === 'active' ? 'bg-[#a3e635] text-slate-900 ring-4 ring-[#a3e635]/20' : ''}
-                            ${step.status === 'pending' ? 'bg-slate-100 text-slate-400' : ''}
-                          `}>
-                            {step.status === 'completed' ? '✓' : index + 1}
-                          </div>
-                          <span className={`text-[10px] mt-1 text-center font-medium ${step.status === 'active' ? 'text-[#a3e635]' : 'text-slate-500'}`}>
-                            {step.label}
-                          </span>
-                        </div>
-                        {index < getProgressSteps(viewDetailsOrder).length - 1 && (
-                          <div className={`h-0.5 flex-1 mx-0.5 ${step.status === 'completed' ? 'bg-[#a3e635]' : 'bg-slate-200'}`} />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Cost Breakdown (for PENDING_APPROVAL orders) */}
-              {viewDetailsOrder && viewDetailsOrder.status === 'PENDING_APPROVAL' && viewDetailsOrder.breakdown && (
-                <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
-                  <h3 className="text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">Cost Breakdown</h3>
-                  <div className="space-y-4">
-                    {/* Inbound */}
-                    {viewDetailsOrder.breakdown.inbound_total && (
-                      <div className="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 text-blue-600 rounded-md">
-                            <Truck size={18} />
-                          </div>
-                          <div>
-                            <div className="font-medium text-slate-900">Inbound (入库)</div>
-                            <div className="text-xs text-slate-500">
-                              {viewDetailsOrder.qty} Units × ¥{Number(viewDetailsOrder.breakdown.inbound_unit_price || 0).toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="font-mono font-semibold text-slate-900">
-                          ¥{Number(viewDetailsOrder.breakdown.inbound_total || 0).toFixed(2)}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Outbound */}
-                    {viewDetailsOrder.breakdown.outbound_total && (
-                      <div className="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-purple-100 text-purple-600 rounded-md">
-                            <Package size={18} />
-                          </div>
-                          <div>
-                            <div className="font-medium text-slate-900">Outbound (出库)</div>
-                            <div className="text-xs text-slate-500">
-                              {viewDetailsOrder.qty} Units × ¥{Number(viewDetailsOrder.breakdown.outbound_unit_price || 0).toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="font-mono font-semibold text-slate-900">
-                          ¥{Number(viewDetailsOrder.breakdown.outbound_total || 0).toFixed(2)}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Storage */}
-                    {viewDetailsOrder.breakdown.storage_total && (
-                      <div className="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-orange-100 text-orange-600 rounded-md">
-                            <Clock size={18} />
-                          </div>
-                          <div>
-                            <div className="font-medium text-slate-900">Storage (仓储)</div>
-                            <div className="text-xs text-slate-500">
-                              {viewDetailsOrder.qty} Units × {viewDetailsOrder.breakdown.storage_days || 10} Days × ¥{Number(viewDetailsOrder.breakdown.storage_unit_price || 0).toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="font-mono font-semibold text-slate-900">
-                          ¥{Number(viewDetailsOrder.breakdown.storage_total || 0).toFixed(2)}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Totals */}
-                    <div className="pt-2">
-                      {viewDetailsOrder.basic_cost !== undefined && (
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-slate-500">Basic Cost Total:</span>
-                          <span className="font-mono text-slate-700">¥{Number(viewDetailsOrder.basic_cost).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {viewDetailsOrder.vas_cost !== undefined && (
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-slate-500">VAS Cost:</span>
-                          <span className="font-mono text-slate-700">¥{Number(viewDetailsOrder.vas_cost).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {viewDetailsOrder.cost && (
-                        <div className="flex justify-between text-lg pt-3 border-t border-slate-200">
-                          <span className="font-bold text-slate-900">Total Billable:</span>
-                          <span className="font-bold text-[#a3e635] text-xl">¥{Number(viewDetailsOrder.cost).toFixed(2)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Line Items (if available) */}
-              {viewDetailsOrder?.items && viewDetailsOrder.items.length > 0 && (
-                <div className="border-t pt-4">
-                  <h3 className="text-sm font-semibold text-slate-700 mb-3">Line Items</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Material</TableHead>
-                        <TableHead className="text-right">Qty</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {viewDetailsOrder.items.map((item, i) => (
-                        <TableRow key={i}>
-                          <TableCell className="font-bold text-slate-700">{item.sku || item.code || 'Unknown'}</TableCell>
-                          <TableCell className="text-right font-mono">{item.qty || 0}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setViewDetailsOrder(null)}>Close</Button>
-              <Button onClick={() => {
-                if (viewDetailsOrder) {
-                  openActions(viewDetailsOrder)
-                  setViewDetailsOrder(null)
-                }
-              }} className="bg-[#a3e635] text-slate-900 font-bold hover:bg-[#8cd121]">
-                Actions
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* --- VIEW DETAILS SHEET (Read-only) --- */}
+        <OutboundOrderDetail
+          order={viewDetailsOrder}
+          open={!!viewDetailsOrder}
+          onClose={() => setViewDetailsOrder(null)}
+          onAction={(order) => {
+            openActions(order)
+            setViewDetailsOrder(null)
+          }}
+        />
 
         {/* --- ACTIONS SHEET (Workflow Actions) --- */}
         <Sheet open={!!actionOrder} onOpenChange={(open) => !open && closeActionSheet()}>

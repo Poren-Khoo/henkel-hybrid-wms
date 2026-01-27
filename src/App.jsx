@@ -20,6 +20,7 @@ import Exceptions from './modules/inbound/pages/Exceptions';
 
 // --- OUTBOUND MODULE ---
 import OutboundOrders from './modules/outbound/pages/OutboundOrders';
+import PickingTasks from './modules/outbound/pages/PickingTask';
 import OutboundDN from './modules/outbound/pages/OutboundDN';
 import DnOperatorQueue from './modules/outbound/pages/DnOperatorQueue';
 import DnApproval from './modules/outbound/pages/DnApproval';
@@ -94,6 +95,7 @@ function App() {
             <Route path="inbound" element={<InboundASN />} />
             {/* --- Outbound Routes --- */}
             <Route path="outbound" element={<OutboundOrders />} />
+            <Route path="outbound/picking-tasks" element={<PickingTasks />} />
             {/* Legacy routes - kept for backward compatibility, will be deprecated */}
             <Route path="outbound-dn" element={<OutboundDN />} />
             <Route path="dn-operator" element={<DnOperatorQueue />} />
