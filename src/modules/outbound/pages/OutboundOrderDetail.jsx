@@ -241,7 +241,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
           {currentOrder.cost && (
             <div className="flex justify-between text-lg pt-3 border-t border-slate-200">
               <span className="font-bold text-slate-900">Total Billable:</span>
-              <span className="font-bold text-[#a3e635] text-xl">¥{Number(currentOrder.cost).toFixed(2)}</span>
+              <span className="font-bold text-[#b2ed1d] text-xl">¥{Number(currentOrder.cost).toFixed(2)}</span>
             </div>
           )}
         </div>
@@ -271,7 +271,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
                 <Printer className="w-4 h-4 mr-2" /> Print
               </Button>
               {onAction && (
-                <Button size="sm" className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121]" onClick={() => onAction(currentOrder)}>
+                <Button size="sm" className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121]" onClick={() => onAction(currentOrder)}>
                   Actions
                 </Button>
               )}
@@ -287,14 +287,14 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
 
           <Tabs defaultValue="overview" className="w-full flex flex-col flex-1 min-h-0">
             <TabsList className="w-full justify-start border-b rounded-none h-12 bg-transparent p-0 space-x-6 flex-shrink-0">
-              <TabsTrigger value="overview" className="data-[state=active]:border-b-2 data-[state=active]:border-[#a3e635] data-[state=active]:shadow-none rounded-none px-0 pb-2">Overview</TabsTrigger>
-              <TabsTrigger value="lines" className="data-[state=active]:border-b-2 data-[state=active]:border-[#a3e635] data-[state=active]:shadow-none rounded-none px-0 pb-2">
+              <TabsTrigger value="overview" className="data-[state=active]:border-b-2 data-[state=active]:border-[#b2ed1d] data-[state=active]:shadow-none rounded-none px-0 pb-2">Overview</TabsTrigger>
+              <TabsTrigger value="lines" className="data-[state=active]:border-b-2 data-[state=active]:border-[#b2ed1d] data-[state=active]:shadow-none rounded-none px-0 pb-2">
                 Line Items ({lineItems.length})
               </TabsTrigger>
               {currentOrder.type === 'SALES_ORDER' && (
-                <TabsTrigger value="financials" className="data-[state=active]:border-b-2 data-[state=active]:border-[#a3e635] data-[state=active]:shadow-none rounded-none px-0 pb-2">Financials</TabsTrigger>
+                <TabsTrigger value="financials" className="data-[state=active]:border-b-2 data-[state=active]:border-[#b2ed1d] data-[state=active]:shadow-none rounded-none px-0 pb-2">Financials</TabsTrigger>
               )}
-              <TabsTrigger value="documents" className="data-[state=active]:border-b-2 data-[state=active]:border-[#a3e635] data-[state=active]:shadow-none rounded-none px-0 pb-2">Documents</TabsTrigger>
+              <TabsTrigger value="documents" className="data-[state=active]:border-b-2 data-[state=active]:border-[#b2ed1d] data-[state=active]:shadow-none rounded-none px-0 pb-2">Documents</TabsTrigger>
             </TabsList>
 
             {/* --- TAB 1: OVERVIEW (Progress & Context) --- */}
@@ -312,18 +312,18 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
                       <div className="flex flex-col items-center flex-1">
                         <div className={`
                           w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
-                          ${step.status === 'completed' ? 'bg-[#a3e635] text-slate-900' : ''}
-                          ${step.status === 'active' ? 'bg-[#a3e635] text-slate-900 ring-4 ring-[#a3e635]/20' : ''}
+                          ${step.status === 'completed' ? 'bg-[#b2ed1d] text-slate-900' : ''}
+                          ${step.status === 'active' ? 'bg-[#b2ed1d] text-slate-900 ring-4 ring-[#b2ed1d]/20' : ''}
                           ${step.status === 'pending' ? 'bg-slate-100 text-slate-400' : ''}
                         `}>
                           {step.status === 'completed' ? <CheckCircle2 className="w-3.5 h-3.5" /> : index + 1}
                       </div>
-                        <span className={`text-[10px] mt-1 text-center font-medium ${step.status === 'active' ? 'text-[#a3e635]' : 'text-slate-500'}`}>
+                        <span className={`text-[10px] mt-1 text-center font-medium ${step.status === 'active' ? 'text-[#b2ed1d]' : 'text-slate-500'}`}>
                         {step.label}
                       </span>
                       </div>
                       {index < progressSteps.length - 1 && (
-                        <div className={`h-0.5 flex-1 mx-0.5 ${step.status === 'completed' ? 'bg-[#a3e635]' : 'bg-slate-200'}`} />
+                        <div className={`h-0.5 flex-1 mx-0.5 ${step.status === 'completed' ? 'bg-[#b2ed1d]' : 'bg-slate-200'}`} />
                       )}
                     </div>
                   ))}
@@ -448,7 +448,7 @@ function DocCard({ title, type, status }) {
           <div className="text-xs text-slate-500">{type} • {status}</div>
         </div>
       </div>
-      <FileCheck className="w-4 h-4 text-slate-300 group-hover:text-[#a3e635]" />
+      <FileCheck className="w-4 h-4 text-slate-300 group-hover:text-[#b2ed1d]" />
     </div>
   )
 }

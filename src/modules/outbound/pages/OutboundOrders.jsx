@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table'
 import { Badge } from '../../../components/ui/badge'
@@ -9,10 +10,11 @@ import { Sheet, SheetHeader, SheetTitle, SheetContent, SheetFooter } from '../..
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../../components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../components/ui/tabs'
-import { 
-  Search, Filter, FileText, Truck, Factory, 
+import {
+  Search, Filter, FileText, Truck, Factory,
   CheckCircle, AlertCircle, Clock, Package, CheckCircle2,
-  ClipboardCheck, Box, ArrowRight, Plus, FileDown, RotateCcw, User, Trash2
+  ClipboardCheck, Box, ArrowRight, Plus, FileDown, RotateCcw, User, Trash2,
+  Pause, Play, Layers, Target, XCircle
 } from 'lucide-react'
 import PageContainer from '../../../components/PageContainer'
 import { useGlobalUNS } from '../../../context/UNSContext'
@@ -30,6 +32,14 @@ const TOPIC_SHIPMENT_LIST = "Henkelv2/Shanghai/Logistics/Outbound/State/Shipment
 const TOPIC_ACTION_REVIEW = "Henkelv2/Shanghai/Logistics/Costing/Action/Review_DN"
 const TOPIC_UPDATE_ACTION = "Henkelv2/Shanghai/Logistics/External/Integration/Action/Update_Status"
 const TOPIC_CREATE_ACTION = "Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Order"
+
+// Enterprise Outbound Topics (from enterprise_outbound_flows.json)
+const TOPIC_HOLD_ORDER = "Henkelv2/Shanghai/Logistics/Outbound/Action/Hold_Order"
+const TOPIC_RELEASE_HOLD = "Henkelv2/Shanghai/Logistics/Outbound/Action/Release_Hold"
+const TOPIC_ADD_TO_WAVE = "Henkelv2/Shanghai/Logistics/Outbound/Action/Add_To_Wave"
+const TOPIC_REMOVE_FROM_WAVE = "Henkelv2/Shanghai/Logistics/Outbound/Action/Remove_From_Wave"
+const TOPIC_ALLOCATE_DN = "Henkelv2/Shanghai/Logistics/Outbound/Action/Allocate_DN"
+const TOPIC_DN_STATE = "Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow"
 
 // --- ENTERPRISE CONSTANTS ---
 const BUSINESS_TYPES = {
@@ -58,23 +68,29 @@ const INITIAL_ORDER_STATE = {
 
 export default function OutboundOrders() {
   const { data, publish } = useGlobalUNS()
-  
+  const navigate = useNavigate()
+
   // --- FILTER STATE (separate input vs active query) ---
   const [filterInputs, setFilterInputs] = useState(INITIAL_FILTER_STATE)
   const [activeQuery, setActiveQuery] = useState(INITIAL_FILTER_STATE)
-  
+
   // --- MODAL STATES ---
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [viewDetailsOrder, setViewDetailsOrder] = useState(null) // For view-only modal
   const [actionOrder, setActionOrder] = useState(null) // For workflow actions sheet
   const [newOrder, setNewOrder] = useState(INITIAL_ORDER_STATE)
-  
+
   // --- APPROVAL & WORKFLOW STATE (for action sheet) ---
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [currentStatus, setCurrentStatus] = useState(null)
   const [carrier, setCarrier] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
+
+  // --- ENTERPRISE ACTION STATES ---
+  const [holdReason, setHoldReason] = useState('')
+  const [selectedWaveId, setSelectedWaveId] = useState('')
+  const [activeTab, setActiveTab] = useState('all')
 
   // Sync currentStatus with actionOrder
   useEffect(() => {
@@ -87,7 +103,7 @@ export default function OutboundOrders() {
   const orders = useMemo(() => {
     // 1. Commercial DNs (from costing workflow)
     const rawCostDNs = Array.isArray(data.dns) ? data.dns : []
-    
+
     // 2. Commercial DNs (from sync status - for logistics view)
     // Handle UNS envelope unwrapping
     const syncRaw = data.raw[TOPIC_SYNC_STATUS]
@@ -95,12 +111,12 @@ export default function OutboundOrders() {
     if (syncRaw?.topics && Array.isArray(syncRaw.topics) && syncRaw.topics.length > 0) {
       syncPacket = syncRaw.topics[0].value || syncRaw.topics[0]
     }
-    
+
     // Handle different data structures
-    const syncRecords = Array.isArray(syncPacket) 
-      ? syncPacket 
+    const syncRecords = Array.isArray(syncPacket)
+      ? syncPacket
       : syncPacket?.sync_records || syncPacket?.items || []
-    
+
     // Filter for outbound/DN records and normalize
     const syncDNs = syncRecords
       .filter(record => {
@@ -117,12 +133,12 @@ export default function OutboundOrders() {
     if (shipmentRaw?.topics && Array.isArray(shipmentRaw.topics) && shipmentRaw.topics.length > 0) {
       shipmentPacket = shipmentRaw.topics[0].value || shipmentRaw.topics[0]
     }
-    
+
     // Handle different data structures
     const rawShipments = Array.isArray(shipmentPacket)
       ? shipmentPacket
       : shipmentPacket?.items || shipmentPacket?.shipments || []
-    
+
     // Normalize shipments
     const formattedShipments = rawShipments
       .map(s => OutboundOrderService.normalizeOrder(s, 'shipment'))
@@ -135,7 +151,7 @@ export default function OutboundOrders() {
 
     // 5. Merge all orders (prioritizes costing for cost info)
     const merged = OutboundOrderService.mergeOrders(costingOrders, syncDNs, formattedShipments)
-    
+
     // Debug logging for orders with PENDING_APPROVAL status
     const pendingApproval = merged.filter(o => (o.status || '').toUpperCase() === 'PENDING_APPROVAL')
     if (pendingApproval.length > 0) {
@@ -147,20 +163,20 @@ export default function OutboundOrders() {
         source: o.raw ? 'has raw data' : 'no raw data'
       })))
     }
-    
+
     return merged
   }, [data.dns, data.raw])
 
   // --- FILTERING (using activeQuery) ---
   const filteredOrders = useMemo(() => {
     let filtered = orders
-    
+
     // Apply active query filters
     if (activeQuery.docId) {
       filtered = filtered.filter(o => o.id.toLowerCase().includes(activeQuery.docId.toLowerCase()))
     }
     if (activeQuery.customer) {
-      filtered = filtered.filter(o => 
+      filtered = filtered.filter(o =>
         (o.customer || o.destination || '').toLowerCase().includes(activeQuery.customer.toLowerCase())
       )
     }
@@ -187,13 +203,13 @@ export default function OutboundOrders() {
         return status === activeQuery.status.toUpperCase()
       })
     }
-    
+
     return filtered
   }, [orders, activeQuery])
 
   // --- FILTER HANDLERS ---
   const handleQuery = () => setActiveQuery(filterInputs)
-  
+
   const handleResetFilters = () => {
     setFilterInputs(INITIAL_FILTER_STATE)
     setActiveQuery(INITIAL_FILTER_STATE)
@@ -211,12 +227,12 @@ export default function OutboundOrders() {
       order.cost ? `¥${Number(order.cost).toFixed(2)}` : '-',
       order.status
     ])
-    
+
     const csvContent = [
       headers.join(','),
       ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     ].join('\n')
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
@@ -225,11 +241,11 @@ export default function OutboundOrders() {
   }
 
   // --- ACTIONS ---
-  
+
   // Approval Actions (from DnApproval)
   const handleApprove = () => {
     if (!actionOrder) return
-    
+
     try {
       // Validate and build command
       OutboundOrderValidator.validateApprovalAction(actionOrder.id, actionOrder.status)
@@ -247,12 +263,12 @@ export default function OutboundOrders() {
 
   const handleReject = () => {
     if (!actionOrder) return
-    
+
     try {
       // Validate and build command
       const payload = OutboundOrderService.buildRejectCommand(
-        actionOrder.id, 
-        rejectReason, 
+        actionOrder.id,
+        rejectReason,
         actionOrder.status
       )
       publish(TOPIC_ACTION_REVIEW, payload)
@@ -269,7 +285,7 @@ export default function OutboundOrders() {
   // Release & Workflow Actions (from OutboundDN)
   const sendStatusUpdate = (newStatus) => {
     if (!actionOrder) return
-    
+
     try {
       // Validate and build command
       const payload = OutboundOrderService.buildStatusUpdateCommand(
@@ -302,6 +318,93 @@ export default function OutboundOrders() {
     setTrackingNumber('')
   }
 
+  // Enterprise Hold/Release Actions
+  const handleHoldOrder = () => {
+    if (!actionOrder) return
+    try {
+      const payload = OutboundOrderService.buildHoldCommand(
+        actionOrder.id,
+        holdReason,
+        actionOrder.status
+      )
+      publish(TOPIC_HOLD_ORDER, payload)
+      setCurrentStatus('ON_HOLD')
+      setActionOrder({ ...actionOrder, status: 'ON_HOLD' })
+      setHoldReason('')
+    } catch (error) {
+      if (error instanceof OutboundOrderValidationError) {
+        alert(error.message)
+        return
+      }
+      throw error
+    }
+  }
+
+  const handleReleaseHold = () => {
+    if (!actionOrder) return
+    try {
+      const payload = OutboundOrderService.buildReleaseHoldCommand(actionOrder.id, actionOrder.status)
+      publish(TOPIC_RELEASE_HOLD, payload)
+      setCurrentStatus('RELEASED')
+      setActionOrder({ ...actionOrder, status: 'RELEASED' })
+    } catch (error) {
+      if (error instanceof OutboundOrderValidationError) {
+        alert(error.message)
+        return
+      }
+      throw error
+    }
+  }
+
+  const handleAddToWave = () => {
+    if (!actionOrder || !selectedWaveId) return
+    try {
+      const payload = OutboundOrderService.buildAddToWaveCommand(actionOrder.id, selectedWaveId)
+      publish(TOPIC_ADD_TO_WAVE, payload)
+      setCurrentStatus('WAVE_ASSIGNED')
+      setActionOrder({ ...actionOrder, status: 'WAVE_ASSIGNED', wave_id: selectedWaveId })
+      setSelectedWaveId('')
+    } catch (error) {
+      if (error instanceof OutboundOrderValidationError) {
+        alert(error.message)
+        return
+      }
+      throw error
+    }
+  }
+
+  const handleRemoveFromWave = () => {
+    if (!actionOrder) return
+    try {
+      const payload = OutboundOrderService.buildRemoveFromWaveCommand(actionOrder.id)
+      publish(TOPIC_REMOVE_FROM_WAVE, payload)
+      setCurrentStatus('RELEASED')
+      setActionOrder({ ...actionOrder, status: 'RELEASED', wave_id: null })
+    } catch (error) {
+      if (error instanceof OutboundOrderValidationError) {
+        alert(error.message)
+        return
+      }
+      throw error
+    }
+  }
+
+  const handleAllocate = () => {
+    if (!actionOrder) return
+    try {
+      const payload = OutboundOrderService.buildAllocateCommand(actionOrder.id)
+      publish(TOPIC_ALLOCATE_DN, payload)
+      setCurrentStatus('ALLOCATING')
+      setActionOrder({ ...actionOrder, status: 'ALLOCATING' })
+    } catch (error) {
+      if (error instanceof OutboundOrderValidationError) {
+        alert(error.message)
+        return
+      }
+      throw error
+    }
+  }
+
   // Modal/Sheet handlers
   const closeActionSheet = () => {
     setActionOrder(null)
@@ -310,6 +413,8 @@ export default function OutboundOrders() {
     setCurrentStatus(null)
     setCarrier('')
     setTrackingNumber('')
+    setHoldReason('')
+    setSelectedWaveId('')
   }
 
   const openViewDetails = (order) => {
@@ -328,7 +433,7 @@ export default function OutboundOrders() {
   const handleCreate = () => {
     try {
       // Will need to add buildCreateCommand to OutboundOrderService
-      const payload = OutboundOrderService.buildCreateCommand ? 
+      const payload = OutboundOrderService.buildCreateCommand ?
         OutboundOrderService.buildCreateCommand(newOrder) :
         {
           type: newOrder.type,
@@ -339,7 +444,7 @@ export default function OutboundOrders() {
           requested_date: newOrder.requestedDate,
           lines: newOrder.lines.filter(l => l.code && l.qty)
         }
-      
+
       publish(TOPIC_CREATE_ACTION, payload)
       setIsCreateOpen(false)
       setNewOrder(INITIAL_ORDER_STATE)
@@ -370,12 +475,12 @@ export default function OutboundOrders() {
   }
 
   // --- HELPERS ---
-  
+
   const getStatusBadge = (status) => {
     const config = OutboundOrderValidator.getStatusBadgeConfig(status)
     return (
-      <Badge 
-        variant={config.variant} 
+      <Badge
+        variant={config.variant}
         className={config.className}
       >
         {config.label}
@@ -406,29 +511,29 @@ export default function OutboundOrders() {
               {/* 1. Document Number */}
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-500">Document #</Label>
-                <Input 
-                  placeholder="e.g. DN-2026..." 
+                <Input
+                  placeholder="e.g. DN-2026..."
                   className="bg-white h-8 text-sm"
                   value={filterInputs.docId}
-                  onChange={e => setFilterInputs(prev => ({...prev, docId: e.target.value}))}
+                  onChange={e => setFilterInputs(prev => ({ ...prev, docId: e.target.value }))}
                 />
               </div>
               {/* 2. Warehouse */}
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-500">Warehouse</Label>
-                <WarehouseSelect 
-                  value={filterInputs.warehouse} 
-                  onChange={v => setFilterInputs(prev => ({...prev, warehouse: v}))} 
+                <WarehouseSelect
+                  value={filterInputs.warehouse}
+                  onChange={v => setFilterInputs(prev => ({ ...prev, warehouse: v }))}
                 />
               </div>
               {/* 3. Customer/Destination */}
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-500">Customer / Destination</Label>
-                <Input 
-                  placeholder="Search Customer or Destination..." 
+                <Input
+                  placeholder="Search Customer or Destination..."
                   className="bg-white h-8 text-sm"
                   value={filterInputs.customer}
-                  onChange={e => setFilterInputs(prev => ({...prev, customer: e.target.value}))}
+                  onChange={e => setFilterInputs(prev => ({ ...prev, customer: e.target.value }))}
                 />
               </div>
               {/* 4. Operator */}
@@ -436,18 +541,18 @@ export default function OutboundOrders() {
                 <Label className="text-xs font-semibold text-slate-500">Operator</Label>
                 <div className="relative">
                   <User className="absolute left-2 top-2 h-3.5 w-3.5 text-slate-400" />
-                  <Input 
-                    placeholder="Select Operator" 
+                  <Input
+                    placeholder="Select Operator"
                     className="bg-white h-8 text-sm pl-8"
                     value={filterInputs.operator}
-                    onChange={e => setFilterInputs(prev => ({...prev, operator: e.target.value}))}
+                    onChange={e => setFilterInputs(prev => ({ ...prev, operator: e.target.value }))}
                   />
                 </div>
               </div>
               {/* 5. Business Type */}
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-500">Business Type</Label>
-                <Select value={filterInputs.type} onValueChange={v => setFilterInputs(prev => ({...prev, type: v}))}>
+                <Select value={filterInputs.type} onValueChange={v => setFilterInputs(prev => ({ ...prev, type: v }))}>
                   <SelectTrigger className="bg-white h-8 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">All Types</SelectItem>
@@ -460,18 +565,22 @@ export default function OutboundOrders() {
               {/* 6. Status */}
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-500">Status</Label>
-                <Select value={filterInputs.status} onValueChange={v => setFilterInputs(prev => ({...prev, status: v}))}>
+                <Select value={filterInputs.status} onValueChange={v => setFilterInputs(prev => ({ ...prev, status: v }))}>
                   <SelectTrigger className="bg-white h-8 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">All Statuses</SelectItem>
-                    <SelectItem value="PENDING_APPROVAL">Pending Approval</SelectItem>
-                    <SelectItem value="NEW">New</SelectItem>
-                    <SelectItem value="PENDING">Pending</SelectItem>
-                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="RELEASED">Released</SelectItem>
+                    <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                    <SelectItem value="WAVE_ASSIGNED">In Wave</SelectItem>
+                    <SelectItem value="ALLOCATING">Allocating</SelectItem>
+                    <SelectItem value="ALLOCATED">Allocated</SelectItem>
+                    <SelectItem value="BACKORDER">Backorder</SelectItem>
                     <SelectItem value="PICKING">Picking</SelectItem>
+                    <SelectItem value="PICKED">Picked</SelectItem>
                     <SelectItem value="PACKING">Packing</SelectItem>
-                    <SelectItem value="READY_TO_SHIP">Ready to Ship</SelectItem>
+                    <SelectItem value="PACKED">Packed</SelectItem>
                     <SelectItem value="SHIPPED">Shipped</SelectItem>
+                    <SelectItem value="DELIVERED">Delivered</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -492,61 +601,69 @@ export default function OutboundOrders() {
         {/* === SECTION 2: QUICK FILTERS & TOOLBAR === */}
         <div className="flex justify-between items-center pt-2">
           <div className="flex gap-2">
-            <Button 
-              variant={activeQuery.status === 'PENDING_APPROVAL' ? 'default' : 'outline'} 
-              size="sm" 
+            <Button
+              variant={activeQuery.status === 'PENDING_APPROVAL' ? 'default' : 'outline'}
+              size="sm"
               onClick={() => {
                 const newState = { ...INITIAL_FILTER_STATE, status: 'PENDING_APPROVAL' }
                 setFilterInputs(newState)
                 setActiveQuery(newState)
-              }} 
+              }}
               className="rounded-full h-7 text-xs"
             >
               Pending Approval
             </Button>
-            <Button 
-              variant={activeQuery.status === 'READY_TO_SHIP' ? 'default' : 'outline'} 
-              size="sm" 
+            <Button
+              variant={activeQuery.status === 'READY_TO_SHIP' ? 'default' : 'outline'}
+              size="sm"
               onClick={() => {
                 const newState = { ...INITIAL_FILTER_STATE, status: 'READY_TO_SHIP' }
                 setFilterInputs(newState)
                 setActiveQuery(newState)
-              }} 
+              }}
               className="rounded-full h-7 text-xs"
             >
               Ready to Ship
             </Button>
-            <Button 
-              variant={activeQuery.type === 'SALES_ORDER' ? 'default' : 'outline'} 
-              size="sm" 
+            <Button
+              variant={activeQuery.type === 'SALES_ORDER' ? 'default' : 'outline'}
+              size="sm"
               onClick={() => {
                 const newState = { ...INITIAL_FILTER_STATE, type: 'SALES_ORDER' }
                 setFilterInputs(newState)
                 setActiveQuery(newState)
-              }} 
+              }}
               className="rounded-full h-7 text-xs"
             >
               Sales Orders
             </Button>
-            <Button 
-              variant={activeQuery.type === 'TRANSFER_OUT' ? 'default' : 'outline'} 
-              size="sm" 
+            <Button
+              variant={activeQuery.type === 'TRANSFER_OUT' ? 'default' : 'outline'}
+              size="sm"
               onClick={() => {
                 const newState = { ...INITIAL_FILTER_STATE, type: 'TRANSFER_OUT' }
                 setFilterInputs(newState)
                 setActiveQuery(newState)
-              }} 
+              }}
               className="rounded-full h-7 text-xs"
             >
               Transfers
             </Button>
           </div>
-          
+
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="h-9 text-xs border-slate-200 text-slate-700 hover:bg-slate-50" onClick={handleExport}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 text-xs border-slate-200 text-slate-700 hover:bg-slate-50"
+              onClick={handleExport}
+            >
               <FileDown className="h-4 w-4 mr-2" /> Export
             </Button>
-            <Button className="bg-[#a3e635] text-slate-900 font-bold hover:bg-[#8cd121] shadow-sm h-9 text-xs" onClick={() => setIsCreateOpen(true)}>
+            <Button
+              className="bg-[#b2ed1d] text-slate-900 font-bold hover:bg-[#8cd121] shadow-sm h-9 text-xs"
+              onClick={() => navigate('/outbound/order/new')}
+            >
               <Plus className="h-4 w-4 mr-2" /> Create Order
             </Button>
           </div>
@@ -562,6 +679,7 @@ export default function OutboundOrders() {
                 <TableHead className="h-10 text-xs font-bold text-slate-700 text-center">Status</TableHead>
                 <TableHead className="h-10 text-xs font-bold text-slate-700">Business Type</TableHead>
                 <TableHead className="h-10 text-xs font-bold text-slate-700">Customer / Destination</TableHead>
+                <TableHead className="h-10 text-xs font-bold text-slate-700">Wave</TableHead>
                 <TableHead className="h-10 text-xs font-bold text-slate-700 text-right">Qty</TableHead>
                 <TableHead className="h-10 text-xs font-bold text-slate-700 text-right">Total Cost</TableHead>
                 <TableHead className="h-10 text-xs font-bold text-slate-700">Progress</TableHead>
@@ -571,7 +689,7 @@ export default function OutboundOrders() {
             <TableBody>
               {filteredOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-48 text-center text-slate-500">
+                  <TableCell colSpan={10} className="h-48 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Filter className="h-8 w-8 text-slate-300" />
                       <p>No orders match your query.</p>
@@ -585,7 +703,7 @@ export default function OutboundOrders() {
                   return (
                     <TableRow key={order.id} className="hover:bg-blue-50/50 transition-colors border-b border-slate-100">
                       <TableCell className="text-xs text-slate-500">{index + 1}</TableCell>
-                      <TableCell 
+                      <TableCell
                         className="font-mono text-xs font-bold text-blue-600 cursor-pointer hover:underline"
                         onClick={() => openViewDetails(order)}
                       >
@@ -599,6 +717,16 @@ export default function OutboundOrders() {
                         </span>
                       </TableCell>
                       <TableCell className="text-xs text-slate-900 font-medium">{order.customer || order.destination}</TableCell>
+                      <TableCell className="text-xs">
+                        {order.wave_id ? (
+                          <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] rounded font-medium flex items-center gap-1 w-fit">
+                            <Layers className="h-3 w-3" />
+                            {order.wave_id}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-xs text-slate-600 text-right font-mono">{order.qty || 0}</TableCell>
                       <TableCell className="text-xs text-slate-600 text-right font-mono">
                         {order.cost ? `¥${Number(order.cost).toFixed(2)}` : <span className="text-slate-400">-</span>}
@@ -606,8 +734,8 @@ export default function OutboundOrders() {
                       <TableCell>
                         <div className="w-24">
                           <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-[#a3e635] transition-all"
+                            <div
+                              className="h-full bg-[#b2ed1d] transition-all"
                               style={{ width: `${getProgressPercentage(order.status)}%` }}
                             />
                           </div>
@@ -646,7 +774,7 @@ export default function OutboundOrders() {
                 <SheetHeader className="mb-6 border-b border-slate-100 pb-4">
                   <SheetTitle>Workflow Actions: {actionOrder.id}</SheetTitle>
                 </SheetHeader>
-                
+
                 <div className="space-y-6">
                   {/* Workflow Actions */}
                   {actionOrder.status !== 'PENDING_APPROVAL' && (
@@ -658,32 +786,152 @@ export default function OutboundOrders() {
                             <span className="text-[10px] font-normal text-slate-400 bg-white border px-1.5 py-0.5 rounded-full">Live</span>
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="space-y-4">
                           {(() => {
                             const status = (currentStatus || actionOrder.status || '').toUpperCase().trim()
-                            
+                            const orderType = actionOrder.type || 'SALES_ORDER'
+                            const isTrading = orderType === 'SALES_ORDER'
+
+                            // ON_HOLD: Show Release Hold
+                            if (status === 'ON_HOLD') {
+                              return (
+                                <div className="space-y-3">
+                                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <p className="text-sm text-red-700 font-medium flex items-center gap-2">
+                                      <Pause className="h-4 w-4" /> Order is on hold
+                                    </p>
+                                    {actionOrder.hold_reason && (
+                                      <p className="text-xs text-red-600 mt-1">Reason: {actionOrder.hold_reason}</p>
+                                    )}
+                                  </div>
+                                  <Button onClick={handleReleaseHold} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                    <Play className="h-4 w-4" /> Release Hold
+                                  </Button>
+                                </div>
+                              )
+                            }
+
+                            // RELEASED: Hold, Add to Wave (Trading) or Allocate (Manufacturing)
+                            if (status === 'RELEASED' || status === 'APPROVED') {
+                              return (
+                                <div className="space-y-4">
+                                  {isTrading ? (
+                                    <div className="space-y-3">
+                                      <div className="space-y-2">
+                                        <Label className="text-xs font-semibold text-slate-700">Add to Wave</Label>
+                                        <div className="flex gap-2">
+                                          <Input
+                                            value={selectedWaveId}
+                                            onChange={(e) => setSelectedWaveId(e.target.value)}
+                                            placeholder="Wave ID (e.g. W-2026-001)"
+                                            className="h-8 text-sm flex-1"
+                                          />
+                                          <Button
+                                            onClick={handleAddToWave}
+                                            disabled={!selectedWaveId}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3"
+                                          >
+                                            <Layers className="h-4 w-4 mr-1" /> Add
+                                          </Button>
+                                        </div>
+                                      </div>
+                                      <div className="border-t pt-3">
+                                        <Button onClick={handleAllocate} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                          <Target className="h-4 w-4" /> Allocate Inventory
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <Button onClick={handleAllocate} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                      <Target className="h-4 w-4" /> Allocate & Create Picks
+                                    </Button>
+                                  )}
+                                  <div className="border-t pt-3">
+                                    <div className="space-y-2">
+                                      <Input
+                                        value={holdReason}
+                                        onChange={(e) => setHoldReason(e.target.value)}
+                                        placeholder="Reason for hold (optional)"
+                                        className="h-8 text-sm"
+                                      />
+                                      <Button onClick={handleHoldOrder} variant="outline" className="w-full border-red-200 text-red-600 hover:bg-red-50 h-9">
+                                        <Pause className="h-4 w-4 mr-2" /> Put on Hold
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            }
+
+                            // WAVE_ASSIGNED: Remove from wave, or Allocate
+                            if (status === 'WAVE_ASSIGNED') {
+                              return (
+                                <div className="space-y-4">
+                                  <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                    <p className="text-sm text-indigo-700 font-medium flex items-center gap-2">
+                                      <Layers className="h-4 w-4" /> In Wave: {actionOrder.wave_id || 'Unknown'}
+                                    </p>
+                                  </div>
+                                  <Button onClick={handleAllocate} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                    <Target className="h-4 w-4" /> Allocate Inventory
+                                  </Button>
+                                  <Button onClick={handleRemoveFromWave} variant="outline" className="w-full border-slate-200 text-slate-600 h-9">
+                                    <XCircle className="h-4 w-4 mr-2" /> Remove from Wave
+                                  </Button>
+                                </div>
+                              )
+                            }
+
+                            // ALLOCATING: Show loading state
+                            if (status === 'ALLOCATING') {
+                              return (
+                                <div className="p-4 bg-cyan-50 border border-cyan-200 rounded-lg text-center">
+                                  <div className="animate-pulse flex items-center justify-center gap-2 text-cyan-700">
+                                    <Target className="h-5 w-5" />
+                                    <span className="font-medium">Allocating inventory...</span>
+                                  </div>
+                                </div>
+                              )
+                            }
+
+                            // ALLOCATED: Create Pick Tasks
+                            if (status === 'ALLOCATED' || status === 'READY_TO_PICK') {
+                              return (
+                                <Button onClick={handleReleaseToPicking} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                  <ClipboardCheck className="h-4 w-4" /> Create Pick Tasks
+                                </Button>
+                              )
+                            }
+
+                            // Legacy: NEW/PENDING
                             if (status === 'NEW' || status === 'PENDING') {
                               return (
-                                <Button onClick={handleReleaseToPicking} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                <Button onClick={handleReleaseToPicking} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
                                   <ClipboardCheck className="h-4 w-4" /> Release to Picking
                                 </Button>
                               )
                             }
+
+                            // PICKING
                             if (status === 'PICKING') {
                               return (
-                                <Button onClick={handleConfirmPacking} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
-                                  <Box className="h-4 w-4" /> Confirm Packing
+                                <Button onClick={handleConfirmPacking} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                  <Box className="h-4 w-4" /> {isTrading ? 'Confirm Packing' : 'Confirm Delivery'}
                                 </Button>
                               )
                             }
-                            if (status === 'PACKING') {
+
+                            // PACKING
+                            if (status === 'PACKING' || status === 'PICKED') {
                               return (
-                                <Button onClick={handleReadyToShip} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                <Button onClick={handleReadyToShip} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
                                   <ArrowRight className="h-4 w-4" /> Ready to Ship
                                 </Button>
                               )
                             }
-                            if (status === 'READY_TO_SHIP' || status === 'READY TO SHIP') {
+
+                            // READY_TO_SHIP / PACKED
+                            if (status === 'READY_TO_SHIP' || status === 'READY TO SHIP' || status === 'PACKED') {
                               return (
                                 <div className="space-y-3">
                                   <div className="space-y-2">
@@ -694,15 +942,25 @@ export default function OutboundOrders() {
                                     <Label className="text-xs font-semibold text-slate-700">Tracking #</Label>
                                     <Input value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="Tracking ID" className="h-8 text-sm" />
                                   </div>
-                                  <Button onClick={handleConfirmShipment} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                  <Button onClick={handleConfirmShipment} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
                                     <Truck className="h-4 w-4" /> Confirm Shipment
                                   </Button>
                                 </div>
                               )
                             }
+
+                            // Terminal states
+                            if (status === 'SHIPPED' || status === 'DELIVERED') {
+                              return (
+                                <div className="text-center py-3 text-sm text-green-600 bg-green-50 rounded border border-green-200 flex items-center justify-center gap-2">
+                                  <CheckCircle className="h-4 w-4" /> Order completed
+                                </div>
+                              )
+                            }
+
                             return (
                               <div className="text-center py-2 text-sm text-slate-500 bg-white rounded border border-slate-100">
-                                All actions completed for this order.
+                                No actions available for status: {status}
                               </div>
                             )
                           })()}
@@ -732,13 +990,13 @@ export default function OutboundOrders() {
                   {actionOrder.status === 'PENDING_APPROVAL' ? (
                     !showRejectDialog ? (
                       <>
-                        <Button 
+                        <Button
                           onClick={handleApprove}
-                          className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold h-12 shadow-sm px-4 inline-flex items-center gap-2"
+                          className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold h-12 shadow-sm px-4 inline-flex items-center gap-2"
                         >
                           <CheckCircle className="h-5 w-5" /> Approve & Bill
                         </Button>
-                        <Button 
+                        <Button
                           onClick={() => setShowRejectDialog(true)}
                           variant="outline"
                           className="w-full border-slate-200 text-slate-700 hover:bg-slate-50"
@@ -748,14 +1006,14 @@ export default function OutboundOrders() {
                       </>
                     ) : (
                       <div className="flex gap-3 w-full">
-                        <Button 
+                        <Button
                           onClick={() => setShowRejectDialog(false)}
                           variant="outline"
                           className="flex-1 border-slate-200 text-slate-700 hover:bg-slate-50"
                         >
                           Cancel
                         </Button>
-                        <Button 
+                        <Button
                           onClick={handleReject}
                           className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                         >
@@ -779,13 +1037,13 @@ export default function OutboundOrders() {
                 {newOrder.type === 'SALES_ORDER' ? "Create Sales Shipment (DN)" : "Create Inter-Warehouse Transfer"}
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="grid gap-4 py-4">
               {/* Row 1: Common Fields */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <Label className="text-xs">Business Type</Label>
-                  <Select value={newOrder.type} onValueChange={v => setNewOrder(prev => ({...prev, type: v}))}>
+                  <Select value={newOrder.type} onValueChange={v => setNewOrder(prev => ({ ...prev, type: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(BUSINESS_TYPES).map(([key, val]) => (
@@ -796,11 +1054,11 @@ export default function OutboundOrders() {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Warehouse</Label>
-                  <WarehouseSelect value={newOrder.warehouse} onChange={v => setNewOrder(prev => ({...prev, warehouse: v}))} />
+                  <WarehouseSelect value={newOrder.warehouse} onChange={v => setNewOrder(prev => ({ ...prev, warehouse: v }))} />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Requested Ship Date</Label>
-                  <Input type="date" value={newOrder.requestedDate} onChange={e => setNewOrder(prev => ({...prev, requestedDate: e.target.value}))} />
+                  <Input type="date" value={newOrder.requestedDate} onChange={e => setNewOrder(prev => ({ ...prev, requestedDate: e.target.value }))} />
                 </div>
               </div>
 
@@ -810,30 +1068,30 @@ export default function OutboundOrders() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <Label className="text-xs font-bold text-blue-700">Customer</Label>
-                      <Input 
-                        placeholder="Search Customer..." 
+                      <Input
+                        placeholder="Search Customer..."
                         value={newOrder.customer}
-                        onChange={e => setNewOrder(prev => ({...prev, customer: e.target.value}))}
+                        onChange={e => setNewOrder(prev => ({ ...prev, customer: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Operator</Label>
-                      <Input value={newOrder.operator} onChange={e => setNewOrder(prev => ({...prev, operator: e.target.value}))} />
+                      <Input value={newOrder.operator} onChange={e => setNewOrder(prev => ({ ...prev, operator: e.target.value }))} />
                     </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <Label className="text-xs font-bold text-purple-700">Destination</Label>
-                      <Input 
-                        placeholder="Destination Warehouse..." 
+                      <Input
+                        placeholder="Destination Warehouse..."
                         value={newOrder.destination}
-                        onChange={e => setNewOrder(prev => ({...prev, destination: e.target.value}))}
+                        onChange={e => setNewOrder(prev => ({ ...prev, destination: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Operator</Label>
-                      <Input value={newOrder.operator} onChange={e => setNewOrder(prev => ({...prev, operator: e.target.value}))} />
+                      <Input value={newOrder.operator} onChange={e => setNewOrder(prev => ({ ...prev, operator: e.target.value }))} />
                     </div>
                   </div>
                 )}
@@ -843,7 +1101,7 @@ export default function OutboundOrders() {
               <div className="space-y-2 border-t pt-4">
                 <div className="flex justify-between items-center mb-2">
                   <Label className="text-xs font-bold">Line Items</Label>
-                  <Button size="sm" variant="ghost" onClick={addLine} className="h-6 text-xs"><Plus className="h-3 w-3 mr-1"/> Add Line</Button>
+                  <Button size="sm" variant="ghost" onClick={addLine} className="h-6 text-xs"><Plus className="h-3 w-3 mr-1" /> Add Line</Button>
                 </div>
                 {newOrder.lines.map((line, idx) => (
                   <div key={idx} className="flex gap-2 items-center">
@@ -851,9 +1109,9 @@ export default function OutboundOrders() {
                       <MaterialSelect value={line.code} onChange={(val) => updateLine(idx, 'code', val)} />
                     </div>
                     <div className="w-24">
-                      <Input 
-                        type="number" 
-                        placeholder="Qty" 
+                      <Input
+                        type="number"
+                        placeholder="Qty"
                         className="h-8 text-xs bg-white"
                         value={line.qty}
                         onChange={e => updateLine(idx, 'qty', e.target.value)}
@@ -869,7 +1127,7 @@ export default function OutboundOrders() {
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreate} className="bg-[#a3e635] text-slate-900 font-bold hover:bg-[#8cd121]">Confirm Create</Button>
+              <Button onClick={handleCreate} className="bg-[#b2ed1d] text-slate-900 font-bold hover:bg-[#8cd121]">Confirm Create</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

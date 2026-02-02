@@ -144,7 +144,7 @@ export default function CostingEngine() {
                     </div>
                     <Button
                       onClick={calculateInternalCost}
-                      className="w-full h-10 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
+                      className="w-full h-10 bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
                     >
                       Calculate
                     </Button>
@@ -322,7 +322,7 @@ export default function CostingEngine() {
                 <CardContent className="pt-6">
                   <Button
                     onClick={handleCalculateExternal}
-                    className="w-full h-10 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
+                    className="w-full h-10 bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
                     disabled={status !== 'CONNECTED'}
                   >
                     Calculate External Bill
@@ -379,7 +379,7 @@ export default function CostingEngine() {
                           <TableCell colSpan={4} className="text-right font-bold text-slate-900">
                             Grand Total:
                           </TableCell>
-                          <TableCell className="text-2xl font-bold text-[#a3e635]">
+                          <TableCell className="text-2xl font-bold text-[#b2ed1d]">
                             ¥{calculatedTotal.toFixed(2)}
                           </TableCell>
                         </TableRow>
@@ -397,7 +397,7 @@ export default function CostingEngine() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-4">
-                      <div className="text-5xl font-bold text-[#a3e635] mb-2">
+                      <div className="text-5xl font-bold text-[#b2ed1d] mb-2">
                         ¥{resultData.total_cost.toFixed(2)}
                       </div>
                       <p className="text-sm text-slate-600">Calculated by UNS Costing Engine</p>

@@ -71,7 +71,7 @@ export default function DispatchOrders() {
         <Card className="bg-white border-slate-200 shadow-sm">
             <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex justify-between items-center">
                 <h3 className="font-semibold text-slate-800 flex items-center gap-2"><Truck className="h-5 w-5 text-slate-500" /> Transfer Orders</h3>
-                <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={() => setIsCreateOpen(true)}>
+                <Button className="h-10 px-4 inline-flex items-center gap-2 font-semibold" onClick={() => setIsCreateOpen(true)}>
                     <Plus className="h-4 w-4" /> New Transfer
                 </Button>
             </div>
@@ -144,8 +144,8 @@ export default function DispatchOrders() {
                     </div>
                 </div>
                 <DialogFooter className="border-t border-slate-100 bg-slate-50/30">
-                    <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 h-10 px-4" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                    <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={handleCreateShipment} disabled={!customer || !selectedProduct}>Create Transfer</Button>
+                    <Button variant="outline" className="h-10 px-4" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+                    <Button className="h-10 px-4 inline-flex items-center gap-2 font-semibold" onClick={handleCreateShipment} disabled={!customer || !selectedProduct}>Create Transfer</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

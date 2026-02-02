@@ -304,7 +304,7 @@ export default function ThreePLExceptions() {
         <div className="flex justify-end">
           <Button
             onClick={handleCreateException}
-            className="h-10 px-4 inline-flex items-center gap-2 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
+            className="h-10 px-4 inline-flex items-center gap-2 bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
           >
             <Plus className="h-4 w-4" />
             Create Exception
@@ -608,7 +608,7 @@ export default function ThreePLExceptions() {
                 </Button>
                 <Button
                   onClick={handleSubmitException}
-                  className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2"
+                  className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2"
                 >
                   Submit Exception
                 </Button>

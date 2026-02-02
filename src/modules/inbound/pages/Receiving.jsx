@@ -287,7 +287,7 @@ export default function Receiving() {
                   className={`
                     relative p-3 rounded-lg border cursor-pointer transition-all duration-200 group
                     ${selectedDoc?.id === doc.id 
-                      ? 'bg-white border-[#a3e635] shadow-md ring-1 ring-[#a3e635] z-10' 
+                      ? 'bg-white border-[#b2ed1d] shadow-md ring-1 ring-[#b2ed1d] z-10' 
                       : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
                     }
                   `}
@@ -321,7 +321,7 @@ export default function Receiving() {
           {submissionSuccess ? (
             <div className="flex-1 flex flex-col items-center justify-center p-12 bg-slate-50 animate-in fade-in zoom-in duration-300">
               <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-100 text-center max-w-sm w-full">
-                <div className="mx-auto h-16 w-16 bg-[#a3e635]/20 rounded-full flex items-center justify-center mb-6">
+                <div className="mx-auto h-16 w-16 bg-[#b2ed1d]/20 rounded-full flex items-center justify-center mb-6">
                   <CheckCircle2 className="h-8 w-8 text-[#65a30d]" />
                 </div>
                 <h2 className="text-xl font-bold text-slate-900 mb-1">Receipt Posted</h2>
@@ -331,7 +331,7 @@ export default function Receiving() {
                   <div className="flex justify-between"><span className="text-slate-500">Location:</span> <span className="font-medium text-slate-900">{submissionSuccess.location}</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Outcome:</span> <Badge variant="outline" className="text-[10px] bg-white border-slate-200">{submissionSuccess.outcome}</Badge></div>
                 </div>
-                <Button className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={resetForm}>
+                <Button className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={resetForm}>
                   Process Next
                 </Button>
               </div>
@@ -441,7 +441,7 @@ export default function Receiving() {
                     <Label className="text-sm font-bold text-slate-900 flex items-center gap-2">
                       <PackageCheck className="h-4 w-4 text-slate-500" /> Received Materials
                     </Label>
-                    <Button variant="ghost" size="sm" onClick={addLine} className="text-[#65a30d] hover:text-[#4d7c0f] hover:bg-[#a3e635]/10 h-8 text-xs font-semibold">
+                    <Button variant="ghost" size="sm" onClick={addLine} className="text-[#65a30d] hover:text-[#4d7c0f] hover:bg-[#b2ed1d]/10 h-8 text-xs font-semibold">
                       <Plus className="h-3 w-3 mr-1" /> Add Line
                     </Button>
                   </div>
@@ -531,11 +531,11 @@ export default function Receiving() {
                     </CardHeader>
                     <CardContent className="space-y-3 pt-3">
                       <div className="flex items-center space-x-3">
-                        <Checkbox id="chk1" checked={inspection.packagingOk} onCheckedChange={c => setInspection(x => ({...x, packagingOk: c === true}))} className="border-slate-300 data-[state=checked]:bg-[#a3e635] data-[state=checked]:text-slate-900" />
+                        <Checkbox id="chk1" checked={inspection.packagingOk} onCheckedChange={c => setInspection(x => ({...x, packagingOk: c === true}))} className="border-slate-300 data-[state=checked]:bg-[#b2ed1d] data-[state=checked]:text-slate-900" />
                         <Label htmlFor="chk1" className="text-sm font-medium text-slate-700">Packaging Intact</Label>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <Checkbox id="chk2" checked={inspection.noLeaks} onCheckedChange={c => setInspection(x => ({...x, noLeaks: c === true}))} className="border-slate-300 data-[state=checked]:bg-[#a3e635] data-[state=checked]:text-slate-900" />
+                        <Checkbox id="chk2" checked={inspection.noLeaks} onCheckedChange={c => setInspection(x => ({...x, noLeaks: c === true}))} className="border-slate-300 data-[state=checked]:bg-[#b2ed1d] data-[state=checked]:text-slate-900" />
                         <Label htmlFor="chk2" className="text-sm font-medium text-slate-700">No Leaks or Spills</Label>
                       </div>
                       <Textarea placeholder="Add notes for QC..." className="h-16 text-xs resize-none bg-slate-50" value={inspection.notes} onChange={e => setInspection({...inspection, notes: e.target.value})} />
@@ -547,7 +547,7 @@ export default function Receiving() {
                         <CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Disposition</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 pt-3">
-                      <div onClick={() => setOutcome('ACCEPT_QUARANTINE')} className={`cursor-pointer p-3 rounded-md border transition-all flex items-center gap-3 ${outcome === 'ACCEPT_QUARANTINE' ? 'bg-[#a3e635]/10 border-[#a3e635]' : 'bg-white border-slate-200'}`}>
+                      <div onClick={() => setOutcome('ACCEPT_QUARANTINE')} className={`cursor-pointer p-3 rounded-md border transition-all flex items-center gap-3 ${outcome === 'ACCEPT_QUARANTINE' ? 'bg-[#b2ed1d]/10 border-[#b2ed1d]' : 'bg-white border-slate-200'}`}>
                         <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${outcome === 'ACCEPT_QUARANTINE' ? 'border-[#65a30d]' : 'border-slate-300'}`}>
                           {outcome === 'ACCEPT_QUARANTINE' && <div className="h-2 w-2 rounded-full bg-[#65a30d]" />}
                         </div>
@@ -575,7 +575,7 @@ export default function Receiving() {
                 <Button variant="ghost" onClick={resetForm} className="text-slate-500 hover:text-slate-900">Cancel</Button>
                 <Button 
                   className={`min-w-[160px] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2 transition-all
-                    ${outcome === 'REJECT' ? "bg-red-600 hover:bg-red-700 text-white" : "bg-[#a3e635] hover:bg-[#8cd121] text-slate-900"}
+                    ${outcome === 'REJECT' ? "bg-red-600 hover:bg-red-700 text-white" : "bg-[#b2ed1d] hover:bg-[#8cd121] text-slate-900"}
                   `}
                   disabled={isSubmitting} 
                   onClick={() => handleSubmit(false)}

@@ -163,7 +163,7 @@ export default function FinishedGoodsReceipt() {
                     </div>
 
                     <Button 
-                        className="w-full h-12 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
+                        className="w-full h-12 bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
                         disabled={!selectedOrder || isSubmitting}
                         onClick={handlePostReceipt}
                     >

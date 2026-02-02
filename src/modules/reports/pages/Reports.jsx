@@ -13,7 +13,7 @@ const CHART_COLORS = {
   inbound: '#94a3b8',      // Slate-400
   outbound: '#475569',     // Slate-600
   storage: '#1e293b',       // Slate-800
-  vas: '#a3e635'            // Tier0 Green
+  vas: '#b2ed1d'            // Tier0 Green
 }
 
 export default function Reports() {

@@ -283,7 +283,7 @@ export default function QASamples() {
 
             <DialogFooter className="border-t border-slate-100 pt-4">
               <Button variant="ghost" onClick={() => setIsResultOpen(false)} className="text-slate-500 hover:text-slate-900">Cancel</Button>
-              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2 min-w-[120px]" onClick={handleSubmitResults}>
+              <Button className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2 min-w-[120px]" onClick={handleSubmitResults}>
                 Submit Results
               </Button>
             </DialogFooter>

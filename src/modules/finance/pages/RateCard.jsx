@@ -146,7 +146,7 @@ export default function RateCard() {
         </div>
         <Button
           onClick={handleSaveChanges}
-          className="h-10 px-4 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm inline-flex items-center gap-2"
+          className="h-10 px-4 bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm inline-flex items-center gap-2"
         >
           Save Changes
         </Button>

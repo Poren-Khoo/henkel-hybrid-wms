@@ -59,7 +59,7 @@ export default function WarehouseDetail() {
         <Button variant="ghost" onClick={() => navigate('/master/warehouses')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Network
         </Button>
-        <Button className="bg-[#a3e635] text-slate-900 font-bold" onClick={handleSave}>
+        <Button className="bg-[#b2ed1d] text-slate-900 font-bold" onClick={handleSave}>
             <Save className="mr-2 h-4 w-4" /> Save Configuration
         </Button>
       </div>

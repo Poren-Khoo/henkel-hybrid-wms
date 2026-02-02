@@ -153,7 +153,7 @@ export default function ProductionRequests() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
               <Input placeholder="Search requests..." className="pl-9 h-9 text-sm bg-slate-50 border-slate-200 focus:bg-white transition-colors" />
             </div>
-            <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={() => setIsCreateOpen(true)}>
+            <Button className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={() => setIsCreateOpen(true)}>
               <Plus className="h-4 w-4" /> New Request
             </Button>
           </div>
@@ -278,7 +278,7 @@ export default function ProductionRequests() {
 
             <DialogFooter className="border-t border-slate-100 bg-slate-50/30">
               <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 h-10 px-4" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={handleSubmitRequest} disabled={items.length === 0}>
+              <Button className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={handleSubmitRequest} disabled={items.length === 0}>
                 Submit Request
               </Button>
             </DialogFooter>

@@ -253,7 +253,7 @@ export default function LocationsTable({ warehouseCode }) {
            
            {/* Primary Action */}
            <Button 
-              className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-semibold w-full sm:w-auto h-9 text-xs"
+              className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-semibold w-full sm:w-auto h-9 text-xs"
               onClick={() => {
                 setEditingLocation(null)
                 setFormData(prev => ({ ...prev, wh: warehouseCode || 'WH01', code: '', zone: '', utilization: '0' }))
@@ -451,7 +451,7 @@ export default function LocationsTable({ warehouseCode }) {
                   <div className="flex items-center gap-2">
                       <input 
                           type="checkbox" 
-                          className="accent-[#a3e635] h-4 w-4"
+                          className="accent-[#b2ed1d] h-4 w-4"
                           checked={formData.mixedMat}
                           onChange={e => setFormData({...formData, mixedMat: e.target.checked})}
                       />
@@ -460,7 +460,7 @@ export default function LocationsTable({ warehouseCode }) {
                   <div className="flex items-center gap-2">
                       <input 
                           type="checkbox" 
-                          className="accent-[#a3e635] h-4 w-4"
+                          className="accent-[#b2ed1d] h-4 w-4"
                           checked={formData.mixedBatch}
                           onChange={e => setFormData({...formData, mixedBatch: e.target.checked})}
                       />
@@ -469,7 +469,7 @@ export default function LocationsTable({ warehouseCode }) {
                   <div className="flex items-center gap-2 ml-auto">
                       <input 
                           type="checkbox" 
-                          className="accent-[#a3e635] h-4 w-4"
+                          className="accent-[#b2ed1d] h-4 w-4"
                           checked={formData.status}
                           onChange={e => setFormData({...formData, status: e.target.checked})}
                       />
@@ -483,7 +483,7 @@ export default function LocationsTable({ warehouseCode }) {
               setIsModalOpen(false)
               setEditingLocation(null)
             }}>Cancel</Button>
-            <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold" onClick={handleSave}>
+            <Button className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold" onClick={handleSave}>
               {editingLocation ? 'Update Location' : 'Save Location'}
             </Button>
           </DialogFooter>

@@ -76,7 +76,7 @@ export default function DispatchPicking() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button 
-                                        className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-9 px-4 inline-flex items-center gap-2"
+                                        className="h-9 px-4 inline-flex items-center gap-2 font-semibold"
                                         disabled={processingId === task.dn_id}
                                         onClick={() => handleConfirmPick(task.dn_id)}
                                     >

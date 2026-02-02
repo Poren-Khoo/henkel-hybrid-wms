@@ -243,7 +243,7 @@ export default function DnApproval() {
                         </div>
                         <div className="flex justify-between text-lg pt-3 border-t border-slate-200">
                             <span className="font-bold text-slate-900">Total Billable:</span>
-                            <span className="font-bold text-[#a3e635] text-xl">¥{Number(selectedDN.total_cost).toFixed(2)}</span>
+                            <span className="font-bold text-[#b2ed1d] text-xl">¥{Number(selectedDN.total_cost).toFixed(2)}</span>
                         </div>
                     </div>
 
@@ -272,14 +272,14 @@ export default function DnApproval() {
                     <>
                         <Button 
                             onClick={handleApprove}
-                            className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold h-12 shadow-sm px-4 inline-flex items-center gap-2"
+                            className="w-full h-12 px-4 inline-flex items-center gap-2 font-semibold"
                         >
                             <CheckCircle className="h-5 w-5" /> Approve & Bill
                         </Button>
                         <Button 
                             onClick={() => setShowRejectDialog(true)}
                             variant="outline"
-                            className="w-full border-slate-200 text-slate-700 hover:bg-slate-50"
+                            className="w-full"
                         >
                             Dispute / Reject
                         </Button>
@@ -289,7 +289,7 @@ export default function DnApproval() {
                         <Button 
                             onClick={() => setShowRejectDialog(false)}
                             variant="outline"
-                            className="flex-1 border-slate-200 text-slate-700 hover:bg-slate-50"
+                            className="flex-1"
                         >
                             Cancel
                         </Button>

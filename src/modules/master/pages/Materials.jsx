@@ -99,7 +99,7 @@ export default function Materials() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button className="bg-[#a3e635] text-slate-900 font-bold h-9 text-xs" onClick={handleAdd}>
+            <Button className="bg-[#b2ed1d] text-slate-900 font-bold h-9 text-xs" onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" /> Add Material
             </Button>
           </div>

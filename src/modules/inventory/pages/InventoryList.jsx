@@ -214,7 +214,7 @@ export default function InventoryList() {
                             : 'Your warehouse appears to be empty'}
                         </p>
                         {(searchTerm || statusFilter !== "ALL" || materialFilter !== "ALL") && (
-                          <Button variant="link" onClick={clearFilters} className="text-[#a3e635] text-xs h-auto p-0">Clear Filters</Button>
+                          <Button variant="link" onClick={clearFilters} className="text-[#b2ed1d] text-xs h-auto p-0">Clear Filters</Button>
                         )}
                       </div>
                     </div>

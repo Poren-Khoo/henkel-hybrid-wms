@@ -266,18 +266,18 @@ export default function InboundASN() {
                                 <div className="flex flex-col items-center flex-1">
                                     <div className={`
                                         w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
-                                        ${step.status === 'completed' ? 'bg-[#a3e635] text-slate-900' : ''}
-                                        ${step.status === 'active' ? 'bg-[#a3e635] text-slate-900 ring-4 ring-[#a3e635]/20' : ''}
+                                        ${step.status === 'completed' ? 'bg-[#b2ed1d] text-slate-900' : ''}
+                                        ${step.status === 'active' ? 'bg-[#b2ed1d] text-slate-900 ring-4 ring-[#b2ed1d]/20' : ''}
                                         ${step.status === 'pending' ? 'bg-slate-100 text-slate-400' : ''}
                                     `}>
                                         {step.status === 'completed' ? '✓' : index + 1}
                                     </div>
-                                    <span className={`text-[10px] mt-1 text-center font-medium ${step.status === 'active' ? 'text-[#a3e635]' : 'text-slate-500'}`}>
+                                    <span className={`text-[10px] mt-1 text-center font-medium ${step.status === 'active' ? 'text-[#b2ed1d]' : 'text-slate-500'}`}>
                                         {step.label}
                                     </span>
                                 </div>
                                 {index < getProgressSteps().length - 1 && (
-                                    <div className={`h-0.5 flex-1 mx-0.5 ${step.status === 'completed' ? 'bg-[#a3e635]' : 'bg-slate-200'}`} />
+                                    <div className={`h-0.5 flex-1 mx-0.5 ${step.status === 'completed' ? 'bg-[#b2ed1d]' : 'bg-slate-200'}`} />
                                 )}
                             </div>
                         ))}
@@ -295,21 +295,21 @@ export default function InboundASN() {
                             const status = (currentStatus || selectedASN.status || '').toUpperCase()
                             if (status === 'NEW' || status === 'PENDING') {
                                 return (
-                                <Button onClick={handleConfirmArrival} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                <Button onClick={handleConfirmArrival} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
                                     <Truck className="h-4 w-4" /> Confirm Arrival
                                 </Button>
                                 )
                             }
                             if (status === 'ARRIVED') {
                                 return (
-                                <Button onClick={handleStartReceiving} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                <Button onClick={handleStartReceiving} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
                                     <ClipboardCheck className="h-4 w-4" /> Start Receiving
                                 </Button>
                                 )
                             }
                             if (status === 'RECEIVING') {
                                 return (
-                                <Button onClick={handleFinishPutaway} className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
+                                <Button onClick={handleFinishPutaway} className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2">
                                     <PackageCheck className="h-4 w-4" /> Finish Putaway
                                 </Button>
                                 )

@@ -280,7 +280,7 @@ export default function InboundOrders() {
                 <Button variant="outline" size="sm" className="h-9 text-xs border-slate-200 text-slate-700 hover:bg-slate-50">
                     <FileDown className="h-4 w-4 mr-2" /> Export
                 </Button>
-                <Button className="bg-[#a3e635] text-slate-900 font-bold hover:bg-[#8cd121] shadow-sm h-9 text-xs" onClick={() => setIsCreateOpen(true)}>
+                <Button className="bg-[#b2ed1d] text-slate-900 font-bold hover:bg-[#8cd121] shadow-sm h-9 text-xs" onClick={() => setIsCreateOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" /> Create Inbound Plan
                 </Button>
              </div>
@@ -455,7 +455,7 @@ export default function InboundOrders() {
 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                    <Button onClick={handleCreate} className="bg-[#a3e635] text-slate-900 font-bold hover:bg-[#8cd121]">Confirm Create</Button>
+                    <Button onClick={handleCreate} className="bg-[#b2ed1d] text-slate-900 font-bold hover:bg-[#8cd121]">Confirm Create</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

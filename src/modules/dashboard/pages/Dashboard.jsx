@@ -83,7 +83,7 @@ export default function ExternalDashboard() {
           {/* Right: System Metadata (Pills) */}
           <div className="flex items-center gap-3">
              <div className="hidden md:flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
-               <Signal className="h-3.5 w-3.5 text-[#a3e635]" />
+               <Signal className="h-3.5 w-3.5 text-[#b2ed1d]" />
                <span>System Online</span>
              </div>
              <div className="hidden md:flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
@@ -194,8 +194,8 @@ export default function ExternalDashboard() {
                     <defs>
                       {/* Brand Green Gradient for External */}
                       <linearGradient id="colorExternal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#a3e635" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#a3e635" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#b2ed1d" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#b2ed1d" stopOpacity={0}/>
                       </linearGradient>
                       {/* Neutral Gradient for Internal */}
                       <linearGradient id="colorInternal" x1="0" y1="0" x2="0" y2="1">
@@ -243,7 +243,7 @@ export default function ExternalDashboard() {
                         strokeWidth={2} 
                         fillOpacity={1} 
                         fill="url(#colorExternal)" 
-                        activeDot={{ r: 4, fill: '#a3e635', stroke: '#fff', strokeWidth: 2 }} 
+                        activeDot={{ r: 4, fill: '#b2ed1d', stroke: '#fff', strokeWidth: 2 }} 
                     />
                   </AreaChart>
                 </ResponsiveContainer>

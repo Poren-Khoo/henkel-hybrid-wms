@@ -117,7 +117,7 @@ export default function MaterialDetail() {
         </Button>
         <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate('/master/material')}>Cancel</Button>
-            <Button className="bg-[#a3e635] text-slate-900 font-bold hover:bg-[#8cd121]" onClick={handleSave}>
+            <Button className="bg-[#b2ed1d] text-slate-900 font-bold hover:bg-[#8cd121]" onClick={handleSave}>
                 <Save className="mr-2 h-4 w-4" /> Save Material
             </Button>
         </div>

@@ -180,7 +180,7 @@ export default function ProductionOrders() {
               </Button>
 
               {/* MANUAL CREATE BUTTON */}
-              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={() => setIsCreateOpen(true)}>
+              <Button className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={() => setIsCreateOpen(true)}>
                 <Plus className="h-4 w-4" /> Create Ad-hoc
               </Button>
             </div>
@@ -288,7 +288,7 @@ export default function ProductionOrders() {
 
             <DialogFooter className="border-t border-slate-100 bg-slate-50/30">
               <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 h-10 px-4" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-              <Button className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={handleManualSubmit}>Create Order</Button>
+              <Button className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2" onClick={handleManualSubmit}>Create Order</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

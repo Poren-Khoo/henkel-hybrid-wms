@@ -16,7 +16,7 @@ export class OutboundOrderService {
 
     // Handle different ID field variations
     const id = rawData.dn_no || rawData.id || rawData.ref_no || rawData.dn_id || rawData.dnNumber || 'UNKNOWN';
-    
+
     // Determine type based on source
     let type = 'SALES_ORDER';
     if (source === 'shipment') {
@@ -27,26 +27,33 @@ export class OutboundOrderService {
 
     // Handle status variations
     const status = rawData.status || rawData.workflow_status || rawData.sync_status || 'NEW';
-    
+
     // Handle customer/destination variations
     let customer = rawData.customer || rawData.destination || rawData['3pl_provider'] || 'Unknown';
     let destination = rawData.destination || rawData.customer || rawData['3pl_provider'] || 'Unknown';
-    
+
     // Special handling for shipments
     if (source === 'shipment') {
       customer = rawData.customer || '3PL Hub';
       destination = rawData.destination || 'Unknown';
     }
-    
+
     // Handle quantity (for shipments, calculate from items)
     let qty = rawData.qty || rawData.quantity || 0;
     if (source === 'shipment' && rawData.items && Array.isArray(rawData.items)) {
       qty = rawData.items.reduce((sum, i) => sum + (i.qty || 0), 0);
     }
-    
-    // Handle cost (only for costing source)
-    const cost = source === 'costing' ? (rawData.total_cost || rawData.cost || 0) : null;
-    
+
+    // Handle requested_date (per DOMAIN_MODEL.md - Required field)
+    const requested_date = rawData.requested_date || rawData.requestedDate ||
+      rawData.ship_date || rawData.shipDate || null;
+
+    // Handle warehouse (per DOMAIN_MODEL.md - Required field)
+    const warehouse = rawData.warehouse || rawData.warehouseCode || 'WH-SHANGHAI';
+
+    // Handle total_cost (per DOMAIN_MODEL.md - use total_cost not cost)
+    const total_cost = source === 'costing' ? (rawData.total_cost || rawData.cost || 0) : null;
+
     // Handle breakdown (only for costing source) - normalize breakdown structure
     let breakdown = null;
     if (source === 'costing' && rawData.breakdown) {
@@ -54,44 +61,66 @@ export class OutboundOrderService {
         // Inbound costs
         inbound_total: rawData.breakdown.inbound_total || rawData.breakdown.inboundTotal || 0,
         inbound_unit_price: rawData.breakdown.inbound_unit_price || rawData.breakdown.inboundUnitPrice || rawData.breakdown.inbound_unit || 0,
-        
+
         // Outbound costs
         outbound_total: rawData.breakdown.outbound_total || rawData.breakdown.outboundTotal || 0,
         outbound_unit_price: rawData.breakdown.outbound_unit_price || rawData.breakdown.outboundUnitPrice || rawData.breakdown.outbound_unit || 0,
-        
+
         // Storage costs
         storage_total: rawData.breakdown.storage_total || rawData.breakdown.storageTotal || 0,
         storage_unit_price: rawData.breakdown.storage_unit_price || rawData.breakdown.storageUnitPrice || rawData.breakdown.storage_unit || 0,
         storage_days: rawData.breakdown.storage_days || rawData.breakdown.storageDays || 10,
-        
+
         // Preserve any additional breakdown fields
         ...rawData.breakdown
       };
     }
     const basic_cost = source === 'costing' ? (rawData.basic_cost || rawData.basicCost || null) : null;
     const vas_cost = source === 'costing' ? (rawData.vas_cost || rawData.vasCost || null) : null;
-    
+
     // Handle carrier and tracking (for sync source)
     const carrier = rawData.carrier || '';
     const trackingNumber = rawData.tracking_number || rawData.trackingNumber || '';
-    
+
     // Handle items (for shipment source)
     const items = rawData.items || [];
 
+    // Handle lines with proper structure (per DOMAIN_MODEL.md - OutboundOrderLine)
+    const lines = (rawData.lines || []).map(line => ({
+      code: line.code || line.material_code || line.sku || '',
+      qty: line.qty || line.quantity || 0,
+      picked_qty: line.picked_qty || line.pickedQty || 0,
+      packed_qty: line.packed_qty || line.packedQty || 0
+    }));
+
     return {
       id,
+      dn_no: id, // Alias for DOMAIN_MODEL.md compatibility
       type,
       customer,
       destination,
+      warehouse,
+      requested_date,
       qty,
       status,
-      cost,
+      total_cost, // Changed from 'cost' per DOMAIN_MODEL.md
       breakdown,
       basic_cost,
       vas_cost,
       carrier,
-      trackingNumber,
+      tracking_number: trackingNumber, // Changed to snake_case per DOMAIN_MODEL.md
       items,
+      lines, // Properly structured lines per DOMAIN_MODEL.md
+      // Enterprise fields (documented below in extended schema)
+      wave_id: rawData.wave_id || rawData.waveId || null,
+      priority: rawData.priority || 'NORMAL',
+      context: OutboundOrderValidator.getContext(type),
+      on_hold: rawData.on_hold || false,
+      hold_reason: rawData.hold_reason || null,
+      allocated_at: rawData.allocated_at || null,
+      picked_at: rawData.picked_at || null,
+      packed_at: rawData.packed_at || null,
+      shipped_at: rawData.shipped_at || rawData.delivered_at || null,
       raw: rawData // Preserve raw data for reference
     };
   }
@@ -169,12 +198,33 @@ export class OutboundOrderService {
 
     return orders.filter(order => {
       const status = (order.status || '').toUpperCase();
-      
+
+      // New enterprise tabs
+      if (tab === 'on-hold') {
+        return status === 'ON_HOLD';
+      }
+      if (tab === 'awaiting-allocation') {
+        return ['RELEASED', 'WAVE_ASSIGNED', 'ALLOCATING'].includes(status);
+      }
+      if (tab === 'allocated') {
+        return status === 'ALLOCATED';
+      }
+      if (tab === 'in-execution') {
+        return ['PICKING', 'PICKED', 'PACKING', 'PACKED'].includes(status);
+      }
+      if (tab === 'backorder') {
+        return status === 'BACKORDER';
+      }
+      if (tab === 'completed') {
+        return ['SHIPPED', 'DELIVERED'].includes(status);
+      }
+
+      // Legacy tabs (backwards compatibility)
       if (tab === 'pending-release') {
-        return status === 'NEW' || status === 'PENDING' || status === 'PENDING_APPROVAL';
+        return ['NEW', 'PENDING', 'PENDING_APPROVAL', 'ON_HOLD'].includes(status);
       }
       if (tab === 'released') {
-        return status === 'APPROVED' || status === 'ALLOCATED' || status === 'READY_TO_PICK';
+        return ['APPROVED', 'ALLOCATED', 'READY_TO_PICK', 'RELEASED', 'WAVE_ASSIGNED'].includes(status);
       }
       if (tab === 'picking') {
         return status === 'PICKING';
@@ -183,9 +233,9 @@ export class OutboundOrderService {
         return status === 'PACKING';
       }
       if (tab === 'shipped') {
-        return status === 'SHIPPED' || status === 'READY_TO_SHIP' || status === 'READY TO SHIP';
+        return ['SHIPPED', 'DELIVERED', 'READY_TO_SHIP', 'READY TO SHIP', 'PACKED'].includes(status);
       }
-      
+
       return true;
     });
   }
@@ -252,6 +302,152 @@ export class OutboundOrderService {
     return payload;
   }
 
+  // ===========================================
+  // HOLD / RELEASE COMMANDS
+  // ===========================================
+
+  /**
+   * Build MQTT command payload for putting order on hold
+   * @param {string} orderId - Order ID
+   * @param {string} reason - Reason for hold (optional)
+   * @param {string} currentStatus - Current order status (for validation)
+   * @returns {Object} MQTT payload
+   */
+  static buildHoldCommand(orderId, reason, currentStatus) {
+    OutboundOrderValidator.validateHoldAction(orderId, currentStatus);
+
+    return {
+      dn_no: orderId,
+      action: 'HOLD',
+      reason: reason?.trim() || 'Manual hold',
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * Build MQTT command payload for releasing hold
+   * @param {string} orderId - Order ID
+   * @param {string} currentStatus - Current order status (for validation)
+   * @returns {Object} MQTT payload
+   */
+  static buildReleaseHoldCommand(orderId, currentStatus) {
+    OutboundOrderValidator.validateReleaseHoldAction(orderId, currentStatus);
+
+    return {
+      dn_no: orderId,
+      action: 'RELEASE_HOLD',
+      timestamp: Date.now()
+    };
+  }
+
+  // ===========================================
+  // WAVE COMMANDS (Trading only)
+  // ===========================================
+
+  /**
+   * Build MQTT command payload for adding order to wave
+   * @param {string} orderId - Order ID
+   * @param {string} waveId - Wave ID to add to
+   * @returns {Object} MQTT payload
+   */
+  static buildAddToWaveCommand(orderId, waveId) {
+    if (!orderId || orderId.trim().length === 0) {
+      throw new OutboundOrderValidationError("Order ID is required");
+    }
+    if (!waveId || waveId.trim().length === 0) {
+      throw new OutboundOrderValidationError("Wave ID is required");
+    }
+
+    return {
+      dn_no: orderId,
+      wave_id: waveId,
+      action: 'ADD_TO_WAVE',
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * Build MQTT command payload for removing order from wave
+   * @param {string} orderId - Order ID
+   * @returns {Object} MQTT payload
+   */
+  static buildRemoveFromWaveCommand(orderId) {
+    if (!orderId || orderId.trim().length === 0) {
+      throw new OutboundOrderValidationError("Order ID is required");
+    }
+
+    return {
+      dn_no: orderId,
+      action: 'REMOVE_FROM_WAVE',
+      timestamp: Date.now()
+    };
+  }
+
+  // ===========================================
+  // ALLOCATION COMMANDS
+  // ===========================================
+
+  /**
+   * Build MQTT command payload for triggering allocation
+   * @param {string} orderId - Order ID
+   * @returns {Object} MQTT payload
+   */
+  static buildAllocateCommand(orderId) {
+    if (!orderId || orderId.trim().length === 0) {
+      throw new OutboundOrderValidationError("Order ID is required");
+    }
+
+    return {
+      dn_no: orderId,
+      action: 'ALLOCATE',
+      timestamp: Date.now()
+    };
+  }
+
+  // ===========================================
+  // PICK COMMANDS
+  // ===========================================
+
+  /**
+   * Build MQTT command payload for creating pick tasks
+   * @param {string} orderId - Order ID
+   * @returns {Object} MQTT payload
+   */
+  static buildCreatePicksCommand(orderId) {
+    if (!orderId || orderId.trim().length === 0) {
+      throw new OutboundOrderValidationError("Order ID is required");
+    }
+
+    return {
+      dn_no: orderId,
+      action: 'CREATE_PICKS',
+      timestamp: Date.now()
+    };
+  }
+
+  // ===========================================
+  // DELIVERY COMMANDS (Manufacturing)
+  // ===========================================
+
+  /**
+   * Build MQTT command payload for confirming delivery to production line
+   * @param {string} orderId - Order ID
+   * @param {string} productionLine - Production line location
+   * @returns {Object} MQTT payload
+   */
+  static buildConfirmDeliveryCommand(orderId, productionLine) {
+    if (!orderId || orderId.trim().length === 0) {
+      throw new OutboundOrderValidationError("Order ID is required");
+    }
+
+    return {
+      dn_no: orderId,
+      action: 'CONFIRM_DELIVERY',
+      production_line: productionLine || 'DEFAULT',
+      timestamp: Date.now()
+    };
+  }
+
   /**
    * Build MQTT command payload for creating a new outbound order
    * @param {Object} orderData - Order data from form
@@ -307,7 +503,7 @@ export class OutboundOrderService {
    */
   static calculateProgressPercentage(status) {
     const statusUpper = (status || '').toUpperCase();
-    
+
     if (statusUpper === 'NEW' || statusUpper === 'PENDING' || statusUpper === 'PENDING_APPROVAL') {
       return 0;
     }
@@ -326,47 +522,105 @@ export class OutboundOrderService {
     if (statusUpper === 'SHIPPED') {
       return 100;
     }
-    
+
     return 0;
   }
 
   /**
    * Get progress steps for workflow visualization
+   * Context-aware: Shows different steps for Trading vs Manufacturing
    * @param {string} status - Order status
+   * @param {string} type - Order type (for context)
    * @returns {Array} Array of step objects with label and status
    */
-  static getProgressSteps(status) {
+  static getProgressSteps(status, type = 'SALES_ORDER') {
     const statusUpper = (status || '').toUpperCase();
-    
-    const steps = [
-      { label: 'NEW', status: 'pending' },
-      { label: 'PICKING', status: 'pending' },
-      { label: 'PACKING', status: 'pending' },
-      { label: 'READY TO SHIP', status: 'pending' },
-      { label: 'SHIPPED', status: 'pending' },
+    const context = OutboundOrderValidator.getContext(type);
+
+    // Define steps based on context
+    const tradingSteps = [
+      { key: 'RELEASED', label: 'Released', status: 'pending' },
+      { key: 'ALLOCATED', label: 'Allocated', status: 'pending' },
+      { key: 'PICKING', label: 'Picking', status: 'pending' },
+      { key: 'PACKING', label: 'Packing', status: 'pending' },
+      { key: 'SHIPPED', label: 'Shipped', status: 'pending' },
     ];
 
-    if (statusUpper === 'NEW' || statusUpper === 'PENDING' || statusUpper === 'PENDING_APPROVAL') {
-      steps[0].status = 'active';
-    } else if (statusUpper === 'APPROVED' || statusUpper === 'ALLOCATED' || statusUpper === 'READY_TO_PICK') {
-      steps[0].status = 'completed';
-      steps[1].status = 'active';
-    } else if (statusUpper === 'PICKING') {
-      steps[0].status = 'completed';
-      steps[1].status = 'active';
-    } else if (statusUpper === 'PACKING') {
-      steps[0].status = 'completed';
-      steps[1].status = 'completed';
-      steps[2].status = 'active';
-    } else if (statusUpper === 'READY_TO_SHIP' || statusUpper === 'READY TO SHIP') {
-      steps[0].status = 'completed';
-      steps[1].status = 'completed';
-      steps[2].status = 'completed';
-      steps[3].status = 'active';
-    } else if (statusUpper === 'SHIPPED') {
-      steps.forEach(step => step.status = 'completed');
-    }
+    const manufacturingSteps = [
+      { key: 'RELEASED', label: 'Released', status: 'pending' },
+      { key: 'ALLOCATED', label: 'Allocated', status: 'pending' },
+      { key: 'PICKING', label: 'Picking', status: 'pending' },
+      { key: 'DELIVERED', label: 'Delivered', status: 'pending' },
+    ];
+
+    const steps = context === 'TRADING' ? tradingSteps : manufacturingSteps;
+
+    // Status to step index mapping
+    const statusOrder = {
+      'NEW': 0, 'PENDING': 0, 'PENDING_APPROVAL': 0, 'ON_HOLD': 0,
+      'RELEASED': 0, 'WAVE_ASSIGNED': 0.5,
+      'ALLOCATING': 1, 'ALLOCATED': 1, 'BACKORDER': 1,
+      'PICKING': 2, 'PICKED': 2.5,
+      'PACKING': 3, 'PACKED': 3.5,
+      'SHIPPED': 4, 'DELIVERED': 3
+    };
+
+    const currentIndex = statusOrder[statusUpper] ?? 0;
+    const isOnHold = statusUpper === 'ON_HOLD';
+    const isBackorder = statusUpper === 'BACKORDER';
+
+    steps.forEach((step, idx) => {
+      if (isOnHold) {
+        step.status = idx === 0 ? 'warning' : 'pending';
+      } else if (isBackorder && idx === 1) {
+        step.status = 'error';
+      } else if (idx < Math.floor(currentIndex)) {
+        step.status = 'completed';
+      } else if (idx === Math.floor(currentIndex)) {
+        step.status = currentIndex % 1 === 0.5 ? 'completed' : 'active';
+      }
+    });
 
     return steps;
+  }
+
+  // ===========================================
+  // ENTERPRISE TAB CONFIGURATION
+  // ===========================================
+
+  /**
+   * Get tab configuration for order list
+   * @returns {Array} Array of tab config objects
+   */
+  static getOrderListTabs() {
+    return [
+      { id: 'all', label: 'All', filter: null },
+      { id: 'on-hold', label: 'On Hold', filter: 'on-hold', badge: 'warning' },
+      { id: 'awaiting-allocation', label: 'Awaiting Allocation', filter: 'awaiting-allocation' },
+      { id: 'allocated', label: 'Allocated', filter: 'allocated' },
+      { id: 'in-execution', label: 'In Execution', filter: 'in-execution', badge: 'info' },
+      { id: 'backorder', label: 'Backorder', filter: 'backorder', badge: 'error' },
+      { id: 'completed', label: 'Completed', filter: 'completed' },
+    ];
+  }
+
+  /**
+   * Count orders by tab for badge display
+   * @param {Array} orders - Array of orders
+   * @returns {Object} Map of tab id to count
+   */
+  static countOrdersByTab(orders) {
+    const counts = {};
+    const tabs = OutboundOrderService.getOrderListTabs();
+
+    tabs.forEach(tab => {
+      if (tab.filter) {
+        counts[tab.id] = OutboundOrderService.filterOrdersByStatus(orders, tab.filter).length;
+      } else {
+        counts[tab.id] = orders.length;
+      }
+    });
+
+    return counts;
   }
 }

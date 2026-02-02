@@ -119,7 +119,7 @@ export default function OutboundVAS() {
                       onClick={() => handleDNSelect(dn)}
                       className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
                         selectedDN?.id === dn.id
-                          ? 'bg-white border-[#a3e635] shadow-md ring-1 ring-[#a3e635] z-10'
+                          ? 'bg-white border-[#b2ed1d] shadow-md ring-1 ring-[#b2ed1d] z-10'
                           : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
                       }`}
                     >
@@ -175,7 +175,7 @@ export default function OutboundVAS() {
                         <Checkbox
                           checked={vasOptions.isUrgent}
                           onChange={() => handleCheckboxChange('isUrgent')}
-                          className="border-slate-300 data-[state=checked]:bg-[#a3e635] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#a3e635]"
+                          className="border-slate-300 data-[state=checked]:bg-[#b2ed1d] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#b2ed1d]"
                         />
                         <div className="flex-1">
                           <div className="text-sm font-medium text-slate-900">Expedited Shipping</div>
@@ -187,7 +187,7 @@ export default function OutboundVAS() {
                         <Checkbox
                           checked={vasOptions.needRepack}
                           onChange={() => handleCheckboxChange('needRepack')}
-                          className="border-slate-300 data-[state=checked]:bg-[#a3e635] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#a3e635]"
+                          className="border-slate-300 data-[state=checked]:bg-[#b2ed1d] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#b2ed1d]"
                         />
                         <div className="flex-1">
                           <div className="text-sm font-medium text-slate-900">Re-palletizing</div>
@@ -199,7 +199,7 @@ export default function OutboundVAS() {
                         <Checkbox
                           checked={vasOptions.customLabel}
                           onChange={() => handleCheckboxChange('customLabel')}
-                          className="border-slate-300 data-[state=checked]:bg-[#a3e635] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#a3e635]"
+                          className="border-slate-300 data-[state=checked]:bg-[#b2ed1d] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#b2ed1d]"
                         />
                         <div className="flex-1">
                           <div className="text-sm font-medium text-slate-900">VAS Labeling</div>
@@ -214,7 +214,7 @@ export default function OutboundVAS() {
                     <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-bold text-slate-900">Total VAS Cost:</span>
-                        <span className="text-2xl font-bold text-[#a3e635]">¥{calculateTotal()}</span>
+                        <span className="text-2xl font-bold text-[#b2ed1d]">¥{calculateTotal()}</span>
                       </div>
                     </div>
                   )}
@@ -222,7 +222,7 @@ export default function OutboundVAS() {
                   {/* Submit Button */}
                   <Button
                     onClick={handleSubmit}
-                    className="w-full h-10 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
+                    className="w-full h-10 bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
                   >
                     Calculate & Submit
                   </Button>

@@ -90,10 +90,10 @@ export default function UserSwitcher() {
           <div className="relative">
             <Avatar className="h-8 w-8 border border-slate-200 shadow-sm">
               <AvatarImage src="/avatar-placeholder.jpg" />
-              <AvatarFallback className="bg-slate-900 text-[#a3e635] text-xs font-bold">SM</AvatarFallback>
+              <AvatarFallback className="bg-slate-900 text-[#b2ed1d] text-xs font-bold">SM</AvatarFallback>
             </Avatar>
             {/* Online Status Dot */}
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#a3e635] border-2 border-white shadow-sm"></span>
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#b2ed1d] border-2 border-white shadow-sm"></span>
           </div>
           
           <ChevronsUpDown className="h-3 w-3 text-slate-400 opacity-50 group-hover:opacity-100" />
@@ -174,7 +174,7 @@ export default function UserSwitcher() {
 
                 {/* 4. Active Checkmark */}
                 {isActive && (
-                  <Check className="h-4 w-4 text-[#a3e635] mt-1.5 animate-in fade-in zoom-in duration-200" />
+                  <Check className="h-4 w-4 text-[#b2ed1d] mt-1.5 animate-in fade-in zoom-in duration-200" />
                 )}
               </DropdownMenuItem>
             )

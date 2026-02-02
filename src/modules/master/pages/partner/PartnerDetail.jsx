@@ -106,7 +106,7 @@ export default function PartnerDetail() {
         <Button variant="ghost" onClick={() => navigate('/master/partners')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Partners
         </Button>
-        <Button className="bg-[#a3e635] text-slate-900 font-bold" onClick={handleSave}>
+        <Button className="bg-[#b2ed1d] text-slate-900 font-bold" onClick={handleSave}>
             <Save className="mr-2 h-4 w-4" /> Save Partner
         </Button>
       </div>
@@ -145,7 +145,7 @@ export default function PartnerDetail() {
                 <div key={role} className="flex items-center gap-2">
                   <input 
                     type="checkbox" 
-                    className="accent-[#a3e635] h-4 w-4"
+                    className="accent-[#b2ed1d] h-4 w-4"
                     checked={formData.roles.includes(role)}
                     onChange={() => handleRoleToggle(role)}
                   />
@@ -202,7 +202,7 @@ export default function PartnerDetail() {
             <div className="flex items-center gap-2 pt-2">
               <input 
                 type="checkbox" 
-                className="accent-[#a3e635] h-4 w-4"
+                className="accent-[#b2ed1d] h-4 w-4"
                 checked={formData.status === 'Active'}
                 onChange={e => setFormData({...formData, status: e.target.checked ? 'Active' : 'Blocked'})}
               />

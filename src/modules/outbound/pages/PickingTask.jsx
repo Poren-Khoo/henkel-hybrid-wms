@@ -15,6 +15,8 @@ import {
 import PageContainer from '../../../components/PageContainer'
 import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
+import { PickingTaskService } from '../../../domain/outbound/PickingTaskService'
+import { PickingTaskValidator, PickingTaskValidationError } from '../../../domain/outbound/PickingTaskValidator'
 
 // TOPICS
 const TOPIC_PICK_QUEUE = "Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Queue"
@@ -35,33 +37,20 @@ export default function PickingTasks() {
   const [isExceptionOpen, setIsExceptionOpen] = useState(false)
   const [exceptionReason, setExceptionReason] = useState('')
 
-  // --- DATA HANDLING ---
+  // --- DATA HANDLING (DDD Pattern: Use domain service for normalization) ---
   const tasks = useMemo(() => {
     const rawData = data.raw[TOPIC_PICK_QUEUE]
-    const queue = Array.isArray(rawData) ? rawData : rawData?.queue || []
-    
-    return queue.map(t => ({
-      id: t.task_id || t.id,
-      orderId: t.order_id || t.ref_no,
-      type: t.order_type || 'SALES_ORDER', // SALES vs PROD
-      sku: t.sku || t.material,
-      desc: t.desc || 'Standard Material',
-      location: t.location || t.bin || 'ZONE-A-01',
-      zone: t.location ? t.location.split('-')[1] : 'A', // Mock Zone extraction
-      qty: t.qty_req || t.qty || 0,
-      uom: t.uom || 'EA',
-      destination: t.destination || 'PACK-STATION-1', // or LINE-SIDE
-      status: t.status || 'PENDING'
-    }))
+    // UNS envelope unwrapping handled inside normalizeTasks
+    return PickingTaskService.normalizeTasks(rawData)
   }, [data.raw])
 
-  // --- FILTERING ---
+  // --- FILTERING (DDD Pattern: Use domain service for filtering) ---
   const filteredTasks = useMemo(() => {
-    return tasks.filter(t => {
-      if (filterZone !== 'ALL' && t.zone !== filterZone) return false
-      if (t.status !== 'PENDING') return false // Only show open tasks
-      return true
-    })
+    let filtered = PickingTaskService.filterTasksByStatus(tasks, 'PENDING')
+    if (filterZone !== 'ALL') {
+      filtered = PickingTaskService.filterTasksByZone(filtered, filterZone)
+    }
+    return filtered
   }, [tasks, filterZone])
 
   // --- ACTIONS ---
@@ -73,38 +62,57 @@ export default function PickingTasks() {
   }
 
   const handleConfirmPick = () => {
-    // 1. Validation
-    if (scanBin !== selectedTask.location) return alert('Wrong Bin Scanned!')
-    if (scanItem !== selectedTask.sku) return alert('Wrong Item Scanned!')
+    if (!selectedTask) return
     
-    // 2. Publish
-    const payload = {
-      task_id: selectedTask.id,
-      order_id: selectedTask.orderId,
-      sku: selectedTask.sku,
-      qty_picked: Number(scanQty),
-      operator: "Current_User",
-      timestamp: Date.now()
+    try {
+      // DDD Pattern: Use domain validator for validation
+      PickingTaskValidator.validateScan(selectedTask, scanBin, scanItem)
+      
+      // DDD Pattern: Use domain service for command building
+      const payload = PickingTaskService.buildConfirmPickCommand(
+        selectedTask,
+        scanBin,
+        scanItem,
+        scanQty,
+        "Current_User"
+      )
+      
+      publish(TOPIC_ACTION_PICK, payload)
+      setSelectedTask(null)
+    } catch (error) {
+      if (error instanceof PickingTaskValidationError) {
+        alert(error.message)
+        return
+      }
+      throw error
     }
-    
-    publish(TOPIC_ACTION_PICK, payload)
-    
-    // 3. Reset
-    setSelectedTask(null)
   }
 
   const handleShortPick = () => {
-    const payload = {
-      task_id: selectedTask.id,
-      sku: selectedTask.sku,
-      location: selectedTask.location,
-      reason: exceptionReason,
-      operator: "Current_User",
-      timestamp: Date.now()
+    if (!selectedTask) return
+    
+    try {
+      // DDD Pattern: Use domain validator for validation
+      PickingTaskValidator.validateExceptionReason(exceptionReason)
+      
+      // DDD Pattern: Use domain service for command building
+      const payload = PickingTaskService.buildExceptionCommand(
+        selectedTask,
+        exceptionReason,
+        "Current_User"
+      )
+      
+      publish(TOPIC_EXCEPTION, payload)
+      setIsExceptionOpen(false)
+      setSelectedTask(null)
+      setExceptionReason('')
+    } catch (error) {
+      if (error instanceof PickingTaskValidationError) {
+        alert(error.message)
+        return
+      }
+      throw error
     }
-    publish(TOPIC_EXCEPTION, payload)
-    setIsExceptionOpen(false)
-    setSelectedTask(null)
   }
 
   return (
@@ -201,7 +209,7 @@ export default function PickingTasks() {
                       <CardTitle className="text-2xl font-mono">{selectedTask.location}</CardTitle>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-[#a3e635]">{selectedTask.qty}</div>
+                      <div className="text-3xl font-bold text-[#b2ed1d]">{selectedTask.qty}</div>
                       <div className="text-xs text-slate-500">{selectedTask.uom}</div>
                     </div>
                   </div>
@@ -258,7 +266,7 @@ export default function PickingTasks() {
                 <div className="p-6 border-t bg-slate-50 flex flex-col gap-3">
                   <Button 
                     size="lg" 
-                    className="w-full bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold"
+                    className="w-full bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold"
                     disabled={scanBin !== selectedTask.location || scanItem !== selectedTask.sku}
                     onClick={handleConfirmPick}
                   >
@@ -294,10 +302,11 @@ export default function PickingTasks() {
                 <Select onValueChange={setExceptionReason}>
                   <SelectTrigger><SelectValue placeholder="Select reason..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="BIN_EMPTY">Bin Empty (Short Pick)</SelectItem>
-                    <SelectItem value="DAMAGED">Item Damaged</SelectItem>
-                    <SelectItem value="WRONG_ITEM">Wrong Item in Bin</SelectItem>
-                    <SelectItem value="BLOCKED">Location Inaccessible</SelectItem>
+                    {PickingTaskValidator.VALID_EXCEPTION_REASONS.map(reason => (
+                      <SelectItem key={reason} value={reason}>
+                        {PickingTaskValidator.getExceptionReasonLabel(reason)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

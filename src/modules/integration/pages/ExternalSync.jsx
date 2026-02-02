@@ -310,7 +310,7 @@ export default function ExternalSync() {
                           {isPending(dn) && (
                             <Button
                               size="sm"
-                              className="h-9 px-4 inline-flex items-center gap-2 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
+                              className="h-9 px-4 inline-flex items-center gap-2 bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
                               onClick={() => handlePushToCarrier(dn)}
                             >
                               <Send className="h-3 w-3" />

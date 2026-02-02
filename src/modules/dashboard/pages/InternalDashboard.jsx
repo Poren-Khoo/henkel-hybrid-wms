@@ -49,7 +49,7 @@ export default function InternalDashboard() {
                 <p className="text-xs text-slate-400 mt-1 font-medium">{subtext}</p>
             </div>
             {/* Icon highlights in Green on hover */}
-            <div className="h-10 w-10 rounded-md bg-slate-50 flex items-center justify-center transition-colors group-hover:bg-[#a3e635]/10">
+            <div className="h-10 w-10 rounded-md bg-slate-50 flex items-center justify-center transition-colors group-hover:bg-[#b2ed1d]/10">
                 <Icon className="h-5 w-5 text-slate-400 transition-colors group-hover:text-[#65a30d]" />
             </div>
         </div>
@@ -62,12 +62,12 @@ export default function InternalDashboard() {
   const QuickActionTile = ({ label, icon: Icon, path }) => (
     <button 
         onClick={() => navigate(path)} 
-        className="flex flex-col items-center justify-center py-6 transition-all duration-200 group relative overflow-hidden outline-none focus:ring-2 focus:ring-[#a3e635] focus:ring-offset-2 rounded-none first:rounded-bl-lg last:rounded-br-lg hover:bg-slate-50"
+        className="flex flex-col items-center justify-center py-6 transition-all duration-200 group relative overflow-hidden outline-none focus:ring-2 focus:ring-[#b2ed1d] focus:ring-offset-2 rounded-none first:rounded-bl-lg last:rounded-br-lg hover:bg-slate-50"
     >
         {/* Hover Highlight Line */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-[#a3e635] opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-[#b2ed1d] opacity-0 group-hover:opacity-100 transition-opacity" />
         
-        <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-3 transition-colors group-hover:bg-[#a3e635] group-hover:text-slate-900 group-hover:shadow-md">
+        <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-3 transition-colors group-hover:bg-[#b2ed1d] group-hover:text-slate-900 group-hover:shadow-md">
             <Icon className="h-6 w-6 text-slate-500 group-hover:text-slate-900" />
         </div>
         <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900">{label}</span>

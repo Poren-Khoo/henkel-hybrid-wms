@@ -151,7 +151,7 @@ export default function DnOperatorQueue() {
                             className={`
                               relative p-3 rounded-lg border cursor-pointer transition-all duration-200
                               ${selectedDN?.dn_no === dn.dn_no || selectedDN?.id === dn.id 
-                                ? 'bg-white border-[#a3e635] shadow-md ring-1 ring-[#a3e635] z-10' 
+                                ? 'bg-white border-[#b2ed1d] shadow-md ring-1 ring-[#b2ed1d] z-10' 
                                 : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
                               }
                             `}
@@ -199,7 +199,7 @@ export default function DnOperatorQueue() {
                         <Checkbox
                           checked={vasInputs.is_urgent}
                           onChange={(e) => handleVASInputChange('is_urgent', e.target.checked)}
-                          className="border-slate-300 data-[state=checked]:bg-[#a3e635] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#a3e635]"
+                          className="border-slate-300 data-[state=checked]:bg-[#b2ed1d] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#b2ed1d]"
                         />
                         <div className="flex-1">
                           <div className="text-sm font-medium text-slate-900">Activity 3 (Urgent)</div>
@@ -211,7 +211,7 @@ export default function DnOperatorQueue() {
                         <Checkbox
                           checked={vasInputs.need_repack}
                           onChange={(e) => handleVASInputChange('need_repack', e.target.checked)}
-                          className="border-slate-300 data-[state=checked]:bg-[#a3e635] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#a3e635]"
+                          className="border-slate-300 data-[state=checked]:bg-[#b2ed1d] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#b2ed1d]"
                         />
                         <div className="flex-1">
                           <div className="text-sm font-medium text-slate-900">Activity 2 (Repacking)</div>
@@ -223,7 +223,7 @@ export default function DnOperatorQueue() {
                         <Checkbox
                           checked={vasInputs.custom_label}
                           onChange={(e) => handleVASInputChange('custom_label', e.target.checked)}
-                          className="border-slate-300 data-[state=checked]:bg-[#a3e635] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#a3e635]"
+                          className="border-slate-300 data-[state=checked]:bg-[#b2ed1d] data-[state=checked]:text-slate-900 data-[state=checked]:border-[#b2ed1d]"
                         />
                         <div className="flex-1">
                           <div className="text-sm font-medium text-slate-900">Activity 1 (Labeling)</div>
@@ -258,7 +258,7 @@ export default function DnOperatorQueue() {
                           </div>
                           <div className="flex justify-between text-lg pt-3 border-t border-slate-200">
                             <span className="font-bold text-slate-900">Total Cost:</span>
-                            <span className="font-bold text-[#a3e635]">¥{costs.totalCost.toFixed(2)}</span>
+                            <span className="font-bold text-[#b2ed1d]">¥{costs.totalCost.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -266,7 +266,7 @@ export default function DnOperatorQueue() {
 
                     <Button
                       onClick={handleSubmitForPricing}
-                      className="w-full h-10 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm px-4 inline-flex items-center gap-2"
+                      className="w-full h-10 px-4 inline-flex items-center gap-2 font-semibold"
                     >
                       Submit for Pricing
                     </Button>

@@ -115,7 +115,7 @@ export default function ProductionConsumption() {
                             <TableCell className="text-right whitespace-nowrap w-[160px] min-w-[140px]">
                                 <div className="inline-flex items-center justify-end">
                                   <Button 
-                                    className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-9 px-4 inline-flex items-center gap-2"
+                                    className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-9 px-4 inline-flex items-center gap-2"
                                     disabled={processingId === item.batch_id}
                                     onClick={() => handleConsume(item.batch_id, item.qty, item.allocated_to)}
                                   >

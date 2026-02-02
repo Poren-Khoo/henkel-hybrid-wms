@@ -102,7 +102,7 @@ export default function PartnerList() {
               </SelectContent>
             </Select>
           </div>
-          <Button className="bg-[#a3e635] text-slate-900 font-bold h-9 text-xs" onClick={() => navigate('/master/partner/new')}>
+          <Button className="bg-[#b2ed1d] text-slate-900 font-bold h-9 text-xs" onClick={() => navigate('/master/partner/new')}>
             <Plus className="h-4 w-4 mr-2" /> Add Partner
           </Button>
         </div>

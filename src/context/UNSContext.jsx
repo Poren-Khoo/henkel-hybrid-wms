@@ -22,6 +22,7 @@ const GLOBAL_SUBSCRIPTIONS = [
   "Henkelv2/Shanghai/Logistics/MasterData/State/Containers",
   "Henkelv2/Shanghai/Logistics/MasterData/State/Warehouses",
   "Henkelv2/Shanghai/Logistics/MasterData/State/BusinessPartners",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/Workers",
 
   // --- 4. INTERNAL WAREHOUSE (Manufacturing Support) ---
   "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level", // Real-time Stock

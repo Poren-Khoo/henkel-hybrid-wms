@@ -293,7 +293,7 @@ export default function MonthlyBilling() {
           <CardContent className="pt-6">
             <div className="space-y-2">
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Cost</p>
-              <p className="text-3xl font-bold text-[#a3e635]">
+              <p className="text-3xl font-bold text-[#b2ed1d]">
                 ¥{totalCostSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
@@ -313,7 +313,7 @@ export default function MonthlyBilling() {
         </Button>
         <Button
           onClick={handleArchiveMonth}
-          className="h-10 px-4 inline-flex items-center gap-2 bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
+          className="h-10 px-4 inline-flex items-center gap-2 bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm"
         >
           <Archive className="h-4 w-4" />
           Archive Month

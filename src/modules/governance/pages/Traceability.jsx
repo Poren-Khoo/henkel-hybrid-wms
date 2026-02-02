@@ -47,7 +47,7 @@ export default function Traceability() {
                     <Button 
                         onClick={handleSearch} 
                         disabled={searching || !query} 
-                        className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed h-9"
+                        className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed h-9"
                     >
                         {searching ? "Tracing..." : "Trace Batch"}
                     </Button>
@@ -57,12 +57,12 @@ export default function Traceability() {
 
         {/* RESULTS TIMELINE */}
         {timeline.length > 0 && isResultForQuery ? (
-            <div className="relative border-l-2 border-[#a3e635]/30 ml-6 space-y-8 py-4">
+            <div className="relative border-l-2 border-[#b2ed1d]/30 ml-6 space-y-8 py-4">
                 {timeline.map((event, index) => (
                     <div key={index} className="relative pl-8">
                         {/* Dot */}
                         <div className={`absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white ${
-                            event.status === 'success' ? 'bg-[#a3e635]' : 
+                            event.status === 'success' ? 'bg-[#b2ed1d]' : 
                             event.status === 'error' ? 'bg-red-500' : 'bg-amber-500'
                         }`}></div>
                         

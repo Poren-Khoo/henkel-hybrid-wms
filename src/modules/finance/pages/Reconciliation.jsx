@@ -526,7 +526,7 @@ export default function Reconciliation() {
                     setPriority('')
                     setNotes('')
                   }}
-                  className="bg-[#a3e635] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2"
+                  className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold shadow-sm h-10 px-4 inline-flex items-center gap-2"
                 >
                   Submit Dispute
                 </Button>
