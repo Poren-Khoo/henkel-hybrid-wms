@@ -33,9 +33,10 @@ export default function InboundASN() {
     }
   }, [selectedASN])
 
-  // Get sync records from UNS
+  // Get sync records from UNS (ensure array before .filter)
   const syncData = data.raw[TOPIC_SYNC_STATUS] || {}
-  const syncRecords = syncData?.sync_records || []
+  let syncRecords = Array.isArray(syncData) ? syncData : (syncData?.sync_records ?? [])
+  if (!Array.isArray(syncRecords)) syncRecords = []
 
   // Filter for INBOUND/ASN records
   const asns = useMemo(() => {

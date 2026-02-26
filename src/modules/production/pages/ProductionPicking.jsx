@@ -29,12 +29,13 @@ export default function ProductionPicking() {
   const [processingId, setProcessingId] = useState(null)
   const [mockTargetHU, setMockTargetHU] = useState('TOTE-2026-X1') // Simulated "Pick Into" container
 
-  // 1. DATA PROCESSING
-  const taskData = data.raw[TOPIC_TASKS] || { items: [] }
-  
+  // 1. DATA PROCESSING (ensure array before .forEach)
+  const taskData = data.raw[TOPIC_TASKS] || {}
+  let allTasks = Array.isArray(taskData) ? taskData : (taskData.items ?? [])
+  if (!Array.isArray(allTasks)) allTasks = []
+
   const { activeOrders } = useMemo(() => {
     const ordersMap = {}
-    const allTasks = taskData.items || []
 
     allTasks.forEach(task => {
       // Filter logic (Same as before)

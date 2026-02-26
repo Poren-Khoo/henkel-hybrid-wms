@@ -26,11 +26,11 @@ export default function WorkerList() {
     if (!packet) return []
     
     // Handle UNS envelope
-    if (packet.topics && packet.topics[0] && Array.isArray(packet.topics[0].value)) {
+    if (packet.topics?.[0] && Array.isArray(packet.topics[0].value)) {
       return packet.topics[0].value
     }
-    
-    return Array.isArray(packet) ? packet : packet.items || []
+    const list = Array.isArray(packet) ? packet : (packet.items ?? [])
+    return Array.isArray(list) ? list : []
   }, [data.raw])
 
   // 2. FILTER LOGIC

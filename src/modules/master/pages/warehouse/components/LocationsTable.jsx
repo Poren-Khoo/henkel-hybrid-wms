@@ -57,14 +57,14 @@ export default function LocationsTable({ warehouseCode }) {
     const packet = data.raw[TOPIC_LOC]
     if (!packet) return []
 
-    // Unwrap UNS Envelope
+    // Unwrap UNS Envelope (ensure array before .filter)
     let allLocations = []
-    if (packet.topics && packet.topics[0] && Array.isArray(packet.topics[0].value)) {
+    if (packet.topics?.[0] && Array.isArray(packet.topics[0].value)) {
       allLocations = packet.topics[0].value
     } else {
-      allLocations = Array.isArray(packet) ? packet : packet.items || []
+      const list = Array.isArray(packet) ? packet : (packet.items ?? [])
+      allLocations = Array.isArray(list) ? list : []
     }
-    
     // CRITICAL: Filter by warehouse code
     return allLocations.filter(loc => loc.wh === warehouseCode)
   }, [data.raw, warehouseCode])

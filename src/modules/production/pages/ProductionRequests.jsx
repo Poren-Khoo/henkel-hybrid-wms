@@ -30,9 +30,10 @@ export default function ProductionRequests() {
   // 1. GET LIVE ORDERS (For the Dropdown)
   const orders = useMemo(() => {
     const rawData = data.raw[TOPIC_ORDER_LIST]
-    const rawOrders = Array.isArray(rawData) ? rawData : rawData?.items || []
-    
-    const mappedOrders = Array.isArray(rawOrders) ? rawOrders.map(order => ({
+    let rawOrders = Array.isArray(rawData) ? rawData : (rawData?.items ?? [])
+    if (!Array.isArray(rawOrders)) rawOrders = []
+
+    const mappedOrders = rawOrders.map(order => ({
       order_id: order.order_id || 'N/A',
       productCode: order.productCode || 'N/A',
       // Fallback logic to ensure we see the Product Name or Code
@@ -41,8 +42,8 @@ export default function ProductionRequests() {
       qtyUnit: order.qtyUnit || 'KG',
       line: order.line || 'N/A',
       status: (order.status || '').toUpperCase()
-    })) : []
-    
+    }))
+
     // Show only active orders
     return mappedOrders.filter(order => order.status === 'PLANNED' || order.status === 'IN_PROGRESS' || order.status === 'RELEASED')
   }, [data.raw])
@@ -50,9 +51,8 @@ export default function ProductionRequests() {
   // 2. GET LIVE REQUESTS (For the Main Table) - REPLACES MOCK DATA
   const liveRequests = useMemo(() => {
     const rawData = data.raw[TOPIC_RESERVATION_LIST]
-    // The backend sends { items: [...] }
-    const list = rawData?.items || []
-    return list
+    let list = Array.isArray(rawData) ? rawData : (rawData?.items ?? [])
+    return Array.isArray(list) ? list : []
   }, [data.raw])
 
   // --- DIALOG LOGIC ---

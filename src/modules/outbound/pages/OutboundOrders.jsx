@@ -112,10 +112,9 @@ export default function OutboundOrders() {
       syncPacket = syncRaw.topics[0].value || syncRaw.topics[0]
     }
 
-    // Handle different data structures
-    const syncRecords = Array.isArray(syncPacket)
-      ? syncPacket
-      : syncPacket?.sync_records || syncPacket?.items || []
+    // Handle different data structures (ensure array before .filter)
+    let syncRecords = Array.isArray(syncPacket) ? syncPacket : (syncPacket?.sync_records ?? syncPacket?.items ?? [])
+    if (!Array.isArray(syncRecords)) syncRecords = []
 
     // Filter for outbound/DN records and normalize
     const syncDNs = syncRecords
@@ -134,10 +133,11 @@ export default function OutboundOrders() {
       shipmentPacket = shipmentRaw.topics[0].value || shipmentRaw.topics[0]
     }
 
-    // Handle different data structures
-    const rawShipments = Array.isArray(shipmentPacket)
+    // Handle different data structures (ensure array before .map)
+    let rawShipments = Array.isArray(shipmentPacket)
       ? shipmentPacket
-      : shipmentPacket?.items || shipmentPacket?.shipments || []
+      : shipmentPacket?.items ?? shipmentPacket?.shipments ?? []
+    if (!Array.isArray(rawShipments)) rawShipments = []
 
     // Normalize shipments
     const formattedShipments = rawShipments

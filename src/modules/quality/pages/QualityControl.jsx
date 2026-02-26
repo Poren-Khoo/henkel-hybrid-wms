@@ -25,8 +25,15 @@ export default function QualityControl() {
     purity: ''
   })
 
-  // Get Queue Data from UNS (Direct read, no caching)
-  const queueData = data.raw[TOPIC_QUEUE] || { items: [] }
+  // Get Queue Data from UNS (ensure items is array before use)
+  const queueRaw = data.raw[TOPIC_QUEUE] || {}
+  const queueData = {
+    ...queueRaw,
+    items: (() => {
+      const arr = Array.isArray(queueRaw) ? queueRaw : (queueRaw.items ?? [])
+      return Array.isArray(arr) ? arr : []
+    })()
+  }
 
   // Reset form when selecting a new batch
   useEffect(() => {

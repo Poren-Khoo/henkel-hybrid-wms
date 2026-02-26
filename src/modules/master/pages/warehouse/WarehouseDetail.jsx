@@ -28,7 +28,9 @@ export default function WarehouseDetail() {
   // Load Warehouse Data
   useEffect(() => {
     if (!isNew && data.raw[TOPIC_WH]) {
-      const list = Array.isArray(data.raw[TOPIC_WH]) ? data.raw[TOPIC_WH] : data.raw[TOPIC_WH].items || []
+      const raw = data.raw[TOPIC_WH]
+      let list = Array.isArray(raw) ? raw : (raw?.items ?? [])
+      if (!Array.isArray(list)) list = []
       const found = list.find(w => w.code === id)
       if (found) setFormData(found)
     }

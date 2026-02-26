@@ -68,9 +68,8 @@ export default function OutboundOrderCreate() {
     if (syncRaw?.topics && Array.isArray(syncRaw.topics) && syncRaw.topics.length > 0) {
       syncPacket = syncRaw.topics[0].value || syncRaw.topics[0]
     }
-    const syncRecords = Array.isArray(syncPacket)
-      ? syncPacket
-      : syncPacket?.sync_records || syncPacket?.items || []
+    let syncRecords = Array.isArray(syncPacket) ? syncPacket : (syncPacket?.sync_records ?? syncPacket?.items ?? [])
+    if (!Array.isArray(syncRecords)) syncRecords = []
 
     // 3. Unwrap shipment list
     const shipmentRaw = data.raw?.[TOPIC_SHIPMENT_LIST]
@@ -78,9 +77,8 @@ export default function OutboundOrderCreate() {
     if (shipmentRaw?.topics && Array.isArray(shipmentRaw.topics) && shipmentRaw.topics.length > 0) {
       shipmentPacket = shipmentRaw.topics[0].value || shipmentRaw.topics[0]
     }
-    const rawShipments = Array.isArray(shipmentPacket)
-      ? shipmentPacket
-      : shipmentPacket?.items || shipmentPacket?.shipments || []
+    let rawShipments = Array.isArray(shipmentPacket) ? shipmentPacket : (shipmentPacket?.items ?? shipmentPacket?.shipments ?? [])
+    if (!Array.isArray(rawShipments)) rawShipments = []
 
     // 4. Normalize & merge (reuse service logic)
     const costingOrders = rawCostDNs

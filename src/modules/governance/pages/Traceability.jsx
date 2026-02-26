@@ -15,9 +15,10 @@ export default function Traceability() {
   const [query, setQuery] = useState("")
   const [searching, setSearching] = useState(false)
 
-  // Get Result
+  // Get Result (ensure timeline is array before .map)
   const traceData = data.raw[TOPIC_RESULT] || {}
-  const timeline = traceData.timeline || []
+  let timeline = traceData.timeline ?? []
+  if (!Array.isArray(timeline)) timeline = []
   const isResultForQuery = traceData.batch_id === query
 
   const handleSearch = () => {

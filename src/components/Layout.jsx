@@ -1,6 +1,6 @@
 import React from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { 
+import {
   Search,
   Wifi,
   Command,
@@ -152,7 +152,7 @@ export default function Layout() {
             <UserSwitcher />
           </div>
         </header>
-        
+
         {/* Page Content */}
         <div className="flex-1 overflow-auto p-[10px] bg-slate-50">
           <Outlet />

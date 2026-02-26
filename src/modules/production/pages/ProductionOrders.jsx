@@ -35,12 +35,13 @@ export default function ProductionOrders() {
   // 1. GET LIVE DATA FROM MQTT (Single Source of Truth)
   const orders = useMemo(() => {
     const rawData = data.raw[TOPIC_ORDER_LIST]
-    const list = rawData?.items || []
-    
+    let list = Array.isArray(rawData) ? rawData : (rawData?.items ?? [])
+    if (!Array.isArray(list)) list = []
+
     if (!searchText) return list
-    return list.filter(o => 
-        (o.order_id && o.order_id.toLowerCase().includes(searchText.toLowerCase())) || 
-        (o.productCode && o.productCode.toLowerCase().includes(searchText.toLowerCase()))
+    return list.filter(o =>
+        (o?.order_id && o.order_id.toLowerCase().includes(searchText.toLowerCase())) ||
+        (o?.productCode && o.productCode.toLowerCase().includes(searchText.toLowerCase()))
     )
   }, [data.raw, searchText])
 

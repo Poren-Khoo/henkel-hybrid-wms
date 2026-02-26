@@ -42,9 +42,10 @@ export default function LineStaging() {
   const [scanMode, setScanMode] = useState('HU') // 'HU' -> 'LANE'
   const [scannedHu, setScannedHu] = useState(null)
 
-  // 1. Data Processing
-  const rawItems = data.raw[TOPIC_TASKS]?.items || []
-  // Create a copy to avoid mutation issues
+  // 1. Data Processing (ensure array before spread / forEach)
+  const raw = data.raw[TOPIC_TASKS]
+  let rawItems = Array.isArray(raw) ? raw : (raw?.items ?? [])
+  if (!Array.isArray(rawItems)) rawItems = []
   const taskDataItems = [...rawItems]
 
   const { inTransit, lanes, demandStats, exceptions, suggestion } = useMemo(() => {

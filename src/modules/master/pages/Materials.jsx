@@ -33,7 +33,8 @@ export default function Materials() {
   const materials = useMemo(() => {
     const packet = data.raw[TOPIC_MAT]
     if (!packet) return []
-    return Array.isArray(packet) ? packet : packet.items || []
+    const list = Array.isArray(packet) ? packet : (packet.items ?? [])
+    return Array.isArray(list) ? list : []
   }, [data.raw])
 
   // 2. FILTER LOGIC (Kept same as before)
@@ -118,7 +119,7 @@ export default function Materials() {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="stagger-fade-in">
               {filteredMaterials.map((item) => (
                 <TableRow key={item.code} className="hover:bg-slate-50 cursor-pointer" onClick={() => handleEdit(item)}>
                   <TableCell className="font-mono font-bold text-slate-900">{item.code}</TableCell>

@@ -35,9 +35,9 @@ export default function QASamples() {
   // Get live data
   const samples = useMemo(() => {
     const rawData = data.raw[TOPIC_QC_QUEUE]
-    const rawSamples = Array.isArray(rawData) ? rawData : rawData?.items || []
-    
-    const mapped = Array.isArray(rawSamples) ? rawSamples.map((sample, index) => ({
+    let rawSamples = Array.isArray(rawData) ? rawData : (rawData?.items ?? [])
+    if (!Array.isArray(rawSamples)) rawSamples = []
+    const mapped = rawSamples.map((sample, index) => ({
       id: sample.sample_id || `QA-${index}`,
       material: sample.sku || 'N/A',
       desc: sample.desc || '',
@@ -45,8 +45,7 @@ export default function QASamples() {
       qty: sample.qty || '0',
       status: sample.status || 'PENDING',
       location: sample.location || 'DOCK'
-    })) : []
-    
+    }))
     if (!searchText) return mapped
     return mapped.filter(s => 
       s.id.toLowerCase().includes(searchText.toLowerCase()) ||

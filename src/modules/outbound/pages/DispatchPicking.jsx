@@ -16,11 +16,14 @@ export default function DispatchPicking() {
   const { data, publish } = useGlobalUNS()
   const [processingId, setProcessingId] = useState(null)
 
-  // 1. Get Shipments needing Picking
+  // 1. Get Shipments needing Picking (ensure list is array before .filter)
   const pickingTasks = useMemo(() => {
     const rawData = data.raw[TOPIC_SHIPMENT_LIST]
-    const list = rawData?.items || []
-    return list.filter(s => s.status === 'READY_TO_PICK')
+    let packet = rawData
+    if (rawData?.topics?.[0]) packet = rawData.topics[0].value ?? rawData.topics[0]
+    let list = Array.isArray(packet) ? packet : (packet?.items ?? packet?.shipments ?? [])
+    if (!Array.isArray(list)) list = []
+    return list.filter(s => s?.status === 'READY_TO_PICK')
   }, [data.raw])
 
   // 2. Handle Pick

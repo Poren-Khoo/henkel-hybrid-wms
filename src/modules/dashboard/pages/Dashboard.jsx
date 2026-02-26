@@ -40,9 +40,12 @@ export default function ExternalDashboard() {
   const inventoryData = data.raw[TOPIC_INVENTORY]
   const externalData = data.raw[TOPIC_SYNC_STATUS]
 
-  const tasks = Array.isArray(taskData) ? taskData : taskData?.queue || taskData?.items || []
-  const inventoryItems = Array.isArray(inventoryData) ? inventoryData : inventoryData?.stock_items || inventoryData?.items || []
-  const syncRecords = Array.isArray(externalData) ? externalData : externalData?.sync_records || externalData?.items || []
+  let tasks = Array.isArray(taskData) ? taskData : (taskData?.queue ?? taskData?.items ?? [])
+  if (!Array.isArray(tasks)) tasks = []
+  let inventoryItems = Array.isArray(inventoryData) ? inventoryData : (inventoryData?.stock_items ?? inventoryData?.items ?? [])
+  if (!Array.isArray(inventoryItems)) inventoryItems = []
+  let syncRecords = Array.isArray(externalData) ? externalData : (externalData?.sync_records ?? externalData?.items ?? [])
+  if (!Array.isArray(syncRecords)) syncRecords = []
 
   // Metrics
   const activeTasks = Array.isArray(tasks) ? tasks.filter(t => (t.status || '').toUpperCase() !== 'COMPLETED').length : 0
@@ -58,7 +61,8 @@ export default function ExternalDashboard() {
   // Financial Data
   const financeRaw = data.raw[TOPIC_FINANCE] || {}
   const financeData = financeRaw.daily ? financeRaw : { daily: [], monthly: [] }
-  const chartData = costView === 'daily' ? financeData.daily : financeData.monthly
+  let chartData = costView === 'daily' ? (financeData.daily ?? []) : (financeData.monthly ?? [])
+  if (!Array.isArray(chartData)) chartData = []
   const chartXKey = costView === 'daily' ? 'date' : 'month'
 
   return (

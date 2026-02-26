@@ -42,7 +42,15 @@ const GLOBAL_SUBSCRIPTIONS = [
 
 
   // --- 6. UPCOMING FEATURES (Pre-loading for next phase) ---
-  "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Inspection_Queue" // Ready for QC Page
+  "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Inspection_Queue", // Ready for QC Page
+
+  // --- 7. OUTBOUND (Trading Context) ---
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Queue",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Staging_Area",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Loading_Docks",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Shipment_List"
 ];
 
 export const UNSProvider = ({ children }) => {

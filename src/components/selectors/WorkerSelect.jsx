@@ -16,14 +16,15 @@ export function WorkerSelect({ value, onChange, placeholder = "Select Operator..
   let workers = []
 
   if (packet) {
-    if (packet.topics && packet.topics[0] && Array.isArray(packet.topics[0].value)) {
+    if (packet.topics?.[0] && Array.isArray(packet.topics[0].value)) {
       workers = packet.topics[0].value
     } else {
-      workers = Array.isArray(packet) ? packet : packet.items || []
+      const raw = Array.isArray(packet) ? packet : (packet.items ?? [])
+      workers = Array.isArray(raw) ? raw : []
     }
   }
 
-  const activeWorkers = workers.filter(w => w.status === 'Active')
+  const activeWorkers = workers.filter(w => w?.status === 'Active')
 
   // Ensure we always pass a string (code) to the Select, even if value is an object from older drafts
   const selectedCode = typeof value === 'string' ? value : (value && value.code) ? value.code : ''

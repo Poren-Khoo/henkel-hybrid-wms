@@ -1,0 +1,1905 @@
+[
+    {
+        "id": "6e44470160f289d7",
+        "type": "group",
+        "z": "99f9fe79da9e4937",
+        "name": "Outbound",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "5537d7f87b30f6d5",
+            "2a38c4b3bb8c00eb",
+            "c7ca76b09ddf4c7e",
+            "group_mock_data_generators"
+        ],
+        "x": 1008,
+        "y": 33,
+        "w": 2184,
+        "h": 1214
+    },
+    {
+        "id": "5537d7f87b30f6d5",
+        "type": "group",
+        "z": "99f9fe79da9e4937",
+        "g": "6e44470160f289d7",
+        "name": "1. Inbound Dispatcher",
+        "style": {
+            "fill": "#d1d1d1",
+            "fill-opacity": "0.8",
+            "label": true,
+            "stroke": "#000000"
+        },
+        "nodes": [
+            "1842d82103e22563",
+            "4e14539e722399d0",
+            "bf5b19e9285a81ac",
+            "84be03be13dbc434",
+            "b3b3dc53441b5f68",
+            "5f65a5d0d921b0b3",
+            "21163b42d1261a86",
+            "8c2d697137744859",
+            "f83674cbb25ff970",
+            "4d33c868654c82df",
+            "78772856fe11fd6f"
+        ],
+        "x": 1034,
+        "y": 59,
+        "w": 1112,
+        "h": 322
+    },
+    {
+        "id": "1842d82103e22563",
+        "type": "switch",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "Check Warehouse Type",
+        "property": "payload.warehouse_type",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "INTERNAL",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "EXTERNAL",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 1450,
+        "y": 180,
+        "wires": [
+            [
+                "4e14539e722399d0"
+            ],
+            [
+                "bf5b19e9285a81ac"
+            ]
+        ]
+    },
+    {
+        "id": "4e14539e722399d0",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "Internal: Append Task & Wrap",
+        "func": "const TOPIC_TASK = \"Henkelv2/Shanghai/Logistics/Internal/Ops/State/Task_Queue\";\nconst TOPIC_SYNC = \"Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status\";\n\nlet newDN = msg.payload;\n\nlet taskData = global.get('internal_task_queue') || { last_updated: 0, queue: [] };\nif (taskData.queue) {\n    taskData.queue = taskData.queue.filter(t => t.dn_no !== newDN.dn_no);\n} else {\n    taskData.queue = [];\n}\n\nlet newTask = {\n    task_id: \"T-\" + Math.floor(Math.random() * 10000),\n    dn_no: newDN.dn_no || \"UNKNOWN\",\n    type: newDN.doc_type === \"OUTBOUND\" ? \"PICK\" : \"PUTAWAY\",\n    location: \"STAGING-01\",\n    sku: newDN.sku,\n    status: \"NEW\",\n    timestamp: Date.now()\n};\n\ntaskData.queue.push(newTask);\ntaskData.last_updated = Math.floor(Date.now() / 1000);\nglobal.set('internal_task_queue', taskData);\n\nlet msgTask = {\n    topic: TOPIC_TASK,\n    payload: {\n        \"version\": \"1.0\",\n        \"topics\": [{ \"path\": TOPIC_TASK, \"type\": \"state\", \"value\": taskData }]\n    }\n};\n\nlet syncData = global.get('external_sync_status') || { last_updated: 0, sync_records: [] };\nif (syncData.sync_records) {\n    syncData.sync_records = syncData.sync_records.filter(r => r.ref_no !== newDN.dn_no);\n} else {\n    syncData.sync_records = [];\n}\n\nlet newRecord = {\n    ref_no: newDN.dn_no,\n    type: newDN.doc_type === \"OUTBOUND\" ? \"OUTBOUND_DN\" : \"INBOUND_ASN\",\n    \"3pl_provider\": \"INTERNAL_FLEET\",\n    sku: newDN.sku,\n    sync_status: \"PENDING\",\n    timestamp: Date.now()\n};\n\nsyncData.sync_records.unshift(newRecord);\nif (syncData.sync_records.length > 10) syncData.sync_records.pop();\nsyncData.last_updated = Math.floor(Date.now() / 1000);\nglobal.set('external_sync_status', syncData);\n\nlet msgSync = {\n    topic: TOPIC_SYNC,\n    payload: {\n        \"version\": \"1.0\",\n        \"topics\": [{ \"path\": TOPIC_SYNC, \"type\": \"state\", \"value\": syncData }]\n    }\n};\n\nreturn [[msgTask, msgSync]];",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1730,
+        "y": 160,
+        "wires": [
+            [
+                "5f65a5d0d921b0b3",
+                "84be03be13dbc434"
+            ]
+        ]
+    },
+    {
+        "id": "bf5b19e9285a81ac",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "Process External Order",
+        "func": "const TOPIC_SYNC = \"Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status\";\nconst TOPIC_COST_DB = \"Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB\";\n\nlet newDN = msg.payload;\nlet rates = global.get('rate_card_db') || {\n    \"basic\": { \"inbound\": 2.0, \"outbound\": 3.0, \"storage\": 0.5 },\n    \"vas\": { \"activity_1\": 2, \"activity_2\": 5, \"activity_3\": 15 }\n};\n\nlet syncData = global.get('external_sync_status') || { last_updated: 0, sync_records: [] };\nsyncData.sync_records = syncData.sync_records.filter(r => r.ref_no !== newDN.dn_no);\n\nlet recordType = newDN.doc_type === \"OUTBOUND\" ? \"OUTBOUND_DN\" : \"INBOUND_ASN\";\nsyncData.sync_records.unshift({\n    ref_no: newDN.dn_no,\n    type: recordType,\n    \"3pl_provider\": \"DHL\",\n    sku: newDN.sku,\n    sync_status: \"PENDING\",\n    timestamp: Date.now()\n});\nif (syncData.sync_records.length > 10) syncData.sync_records.pop();\nsyncData.last_updated = Math.floor(Date.now() / 1000);\nglobal.set('external_sync_status', syncData);\n\nlet qty = newDN.qty || 100;\nlet storage_days = 10;\n\nlet inboundCost  = (newDN.doc_type === \"INBOUND\") ? (qty * rates.basic.inbound) : 0;\nlet outboundCost = (newDN.doc_type === \"OUTBOUND\") ? (qty * rates.basic.outbound) : 0;\nlet storageCost  = qty * storage_days * rates.basic.storage;\nlet totalBasic = inboundCost + outboundCost + storageCost;\n\nlet financeRecord = {\n    dn_no: newDN.dn_no,\n    doc_type: newDN.doc_type,\n    destination: \"Shanghai Hub (Auto)\",\n    qty: qty,\n    submitted_by: \"SAP Integration\",\n    status: \"PENDING_APPROVAL\",\n    timestamp: Date.now(),\n    breakdown: {\n        inbound_unit_price: rates.basic.inbound,\n        inbound_total: inboundCost,\n        outbound_unit_price: rates.basic.outbound,\n        outbound_total: outboundCost,\n        storage_days: storage_days,\n        storage_unit_price: rates.basic.storage,\n        storage_total: storageCost\n    },\n    basic_cost: totalBasic,\n    vas_cost: 0,\n    total_cost: totalBasic\n};\n\nlet allDNs = global.get('dn_db') || {};\nallDNs[newDN.dn_no] = financeRecord;\nglobal.set('dn_db', allDNs);\n\nlet msgOps = {\n    topic: TOPIC_SYNC,\n    payload: {\n        \"version\": \"1.0\",\n        \"topics\": [{ \"path\": TOPIC_SYNC, \"type\": \"state\", \"value\": syncData }]\n    }\n};\n\nlet msgFinance = {\n    topic: TOPIC_COST_DB,\n    payload: {\n        \"version\": \"1.0\",\n        \"topics\": [{ \"path\": TOPIC_COST_DB, \"type\": \"state\", \"value\": Object.values(allDNs) }]\n    }\n};\n\nreturn [[msgOps, msgFinance]];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1710,
+        "y": 260,
+        "wires": [
+            [
+                "84be03be13dbc434",
+                "21163b42d1261a86"
+            ],
+            [
+                "b3b3dc53441b5f68",
+                "8c2d697137744859"
+            ]
+        ]
+    },
+    {
+        "id": "84be03be13dbc434",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "Publish: Sync Status",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 2020,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "b3b3dc53441b5f68",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "Publish: Cost DB",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 2010,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "5f65a5d0d921b0b3",
+        "type": "debug",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "View Internal",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1990,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "21163b42d1261a86",
+        "type": "debug",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "View External",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1990,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "8c2d697137744859",
+        "type": "debug",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "View Finance",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1990,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "f83674cbb25ff970",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "Sim SAP (External)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.2,
+        "topic": "",
+        "payload": "{\"dn_no\":\"DN_EXT_\"+Math.floor(Math.random()*100000),\"warehouse_type\":\"EXTERNAL\",\"doc_type\":\"INBOUND\",\"sku\":\"SEALANT-X\",\"qty\":Math.floor(Math.random()*500)+50}",
+        "payloadType": "jsonata",
+        "x": 1170,
+        "y": 120,
+        "wires": [
+            [
+                "1842d82103e22563"
+            ]
+        ]
+    },
+    {
+        "id": "4d33c868654c82df",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "Sim SAP (Internal)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"dn_no\":\"DN_INT_\"+Math.floor(Math.random()*100000),\"warehouse_type\":\"INTERNAL\",\"doc_type\":\"INBOUND\",\"sku\":\"GLUE-500\",\"qty\":Math.floor(Math.random()*200)+20}",
+        "payloadType": "jsonata",
+        "x": 1180,
+        "y": 180,
+        "wires": [
+            [
+                "1842d82103e22563"
+            ]
+        ]
+    },
+    {
+        "id": "78772856fe11fd6f",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "5537d7f87b30f6d5",
+        "name": "Sim Outbound (DN)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"dn_no\":\"DN_OUT_\"+Math.floor(Math.random()*100000),\"warehouse_type\":\"EXTERNAL\",\"doc_type\":\"OUTBOUND\",\"sku\":\"GLUE-500\",\"qty\":Math.floor(Math.random()*100)+10}",
+        "payloadType": "jsonata",
+        "x": 1190,
+        "y": 240,
+        "wires": [
+            [
+                "1842d82103e22563"
+            ]
+        ]
+    },
+    {
+        "id": "a749d056cff1a785",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "emqx",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "2a38c4b3bb8c00eb",
+        "type": "group",
+        "z": "99f9fe79da9e4937",
+        "g": "6e44470160f289d7",
+        "name": "2. Outbound Actions (Frontend Compatible)",
+        "style": {
+            "fill": "#a3e635",
+            "fill-opacity": "0.3",
+            "label": true,
+            "stroke": "#8cd121"
+        },
+        "nodes": [
+            "5a96d0513b0fdeeb",
+            "dccac24a2dde98bc",
+            "12175ebc68bfd4f8",
+            "abc30d8ef66b848b",
+            "e5fe3d8b47c819f7",
+            "a65d2183b625cf56",
+            "c1ee720f7e27cd40",
+            "a87a0f093b13c318",
+            "e67005b393f39e52",
+            "079444d2262a4e8c",
+            "3b82b2a202fbb40d",
+            "c360a1d4a96207d6",
+            "f771d7e09ee5e8c7",
+            "df803ee9608434a4",
+            "2b2101d4437cb06b"
+        ],
+        "x": 1304,
+        "y": 419,
+        "w": 822,
+        "h": 462
+    },
+    {
+        "id": "5a96d0513b0fdeeb",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Listen: Review_DN",
+        "topic": "Henkelv2/Shanghai/Logistics/Costing/Action/Review_DN",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 1430,
+        "y": 520,
+        "wires": [
+            [
+                "dccac24a2dde98bc"
+            ]
+        ]
+    },
+    {
+        "id": "dccac24a2dde98bc",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Process Approve/Reject",
+        "func": "let action = msg.payload;\nlet allDNs = global.get('dn_db') || {};\n\nif (!allDNs || Object.keys(allDNs).length === 0) {\n    node.warn(\"DN Database is empty!\");\n    return null;\n}\n\nlet dnRecord = allDNs[action.dn_no];\nif (!dnRecord) {\n    node.warn(\"DN not found: \" + action.dn_no);\n    return null;\n}\n\nif (action.action === 'APPROVE') {\n    dnRecord.status = 'APPROVED';\n    dnRecord.approved_by = action.operator || 'System';\n    dnRecord.approved_at = action.timestamp || Date.now();\n} else if (action.action === 'REJECT') {\n    dnRecord.status = 'REJECTED';\n    dnRecord.reject_reason = action.reason || 'No reason provided';\n    dnRecord.rejected_by = action.operator || 'System';\n    dnRecord.rejected_at = action.timestamp || Date.now();\n}\n\nglobal.set('dn_db', allDNs);\n\nlet syncData = global.get('external_sync_status') || { sync_records: [] };\nlet syncRecord = syncData.sync_records.find(r => r.ref_no === action.dn_no);\nif (syncRecord) {\n    syncRecord.sync_status = dnRecord.status;\n    syncRecord.status = dnRecord.status;\n    global.set('external_sync_status', syncData);\n    \n    let msgSync = {\n        topic: \"Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status\",\n        payload: {\n            version: \"1.0\",\n            topics: [{\n                path: \"Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status\",\n                type: \"state\",\n                value: syncData\n            }]\n        }\n    };\n    node.send([null, msgSync]);\n}\n\nconst TOPIC_COST_DB = \"Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB\";\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{\n        path: TOPIC_COST_DB,\n        type: \"state\",\n        value: Object.values(allDNs)\n    }]\n};\nmsg.topic = TOPIC_COST_DB;\n\nreturn msg;",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1680,
+        "y": 520,
+        "wires": [
+            [
+                "12175ebc68bfd4f8",
+                "f771d7e09ee5e8c7"
+            ],
+            [
+                "abc30d8ef66b848b"
+            ]
+        ]
+    },
+    {
+        "id": "12175ebc68bfd4f8",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Publish: DN DB",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 1960,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "abc30d8ef66b848b",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Publish: Sync Status",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 1960,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "e5fe3d8b47c819f7",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Listen: Create_Order",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Order",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 1430,
+        "y": 620,
+        "wires": [
+            [
+                "a65d2183b625cf56"
+            ]
+        ]
+    },
+    {
+        "id": "a65d2183b625cf56",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Create New Order",
+        "func": "let newOrder = msg.payload;\nlet rates = global.get('rate_card_db') || {\n    \"basic\": { \"inbound\": 2.0, \"outbound\": 3.0, \"storage\": 0.5 },\n    \"vas\": { \"activity_1\": 2, \"activity_2\": 5, \"activity_3\": 15 }\n};\n\nlet dnNo = `DN_OUT_${Date.now()}`;\nlet totalQty = newOrder.lines.reduce((sum, line) => sum + (Number(line.qty) || 0), 0);\nlet storage_days = 10;\nlet outboundCost = totalQty * rates.basic.outbound;\nlet storageCost = totalQty * storage_days * rates.basic.storage;\nlet totalBasic = outboundCost + storageCost;\nlet docType = newOrder.type === 'SALES_ORDER' ? 'OUTBOUND' : 'TRANSFER';\n\nlet financeRecord = {\n    dn_no: dnNo,\n    doc_type: docType,\n    destination: newOrder.destination || newOrder.customer || 'Unknown',\n    customer: newOrder.customer || newOrder.destination || 'Unknown',\n    qty: totalQty,\n    submitted_by: newOrder.operator || 'System',\n    status: 'NEW',\n    timestamp: Date.now(),\n    breakdown: {\n        inbound_unit_price: rates.basic.inbound,\n        inbound_total: 0,\n        outbound_unit_price: rates.basic.outbound,\n        outbound_total: outboundCost,\n        storage_days: storage_days,\n        storage_unit_price: rates.basic.storage,\n        storage_total: storageCost\n    },\n    basic_cost: totalBasic,\n    vas_cost: 0,\n    total_cost: totalBasic\n};\n\nlet allDNs = global.get('dn_db') || {};\nallDNs[dnNo] = financeRecord;\nglobal.set('dn_db', allDNs);\n\nlet syncData = global.get('external_sync_status') || { last_updated: 0, sync_records: [] };\nsyncData.sync_records.unshift({\n    ref_no: dnNo,\n    type: 'OUTBOUND_DN',\n    '3pl_provider': newOrder.customer || 'Unknown',\n    sku: newOrder.lines[0]?.code || 'Unknown',\n    sync_status: 'NEW',\n    timestamp: Date.now()\n});\nif (syncData.sync_records.length > 10) syncData.sync_records.pop();\nsyncData.last_updated = Math.floor(Date.now() / 1000);\nglobal.set('external_sync_status', syncData);\n\nconst TOPIC_SYNC = \"Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status\";\nconst TOPIC_COST_DB = \"Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB\";\n\nlet msgSync = {\n    topic: TOPIC_SYNC,\n    payload: {\n        version: \"1.0\",\n        topics: [{\n            path: TOPIC_SYNC,\n            type: \"state\",\n            value: syncData\n        }]\n    }\n};\n\nlet msgCost = {\n    topic: TOPIC_COST_DB,\n    payload: {\n        version: \"1.0\",\n        topics: [{\n            path: TOPIC_COST_DB,\n            type: \"state\",\n            value: Object.values(allDNs)\n        }]\n    }\n};\n\nreturn [[msgSync, msgCost]];",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1680,
+        "y": 620,
+        "wires": [
+            [
+                "c1ee720f7e27cd40",
+                "a87a0f093b13c318",
+                "df803ee9608434a4"
+            ]
+        ]
+    },
+    {
+        "id": "c1ee720f7e27cd40",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Publish: Sync Status",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 1980,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "a87a0f093b13c318",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Publish: Cost DB",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 1990,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "e67005b393f39e52",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Listen: Update_Status",
+        "topic": "Henkelv2/Shanghai/Logistics/External/Integration/Action/Update_Status",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 1430,
+        "y": 720,
+        "wires": [
+            [
+                "079444d2262a4e8c"
+            ]
+        ]
+    },
+    {
+        "id": "079444d2262a4e8c",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Update Status & Preserve Tracking",
+        "func": "let action = msg.payload;\nlet currentData = global.get('external_sync_status') || { sync_records: [] };\n\nif (!currentData) return null;\n\nlet record = currentData.sync_records.find(r => r.ref_no === action.ref_no);\nif (record) {\n    record.status = action.new_status;\n    record.sync_status = action.new_status;\n    record.last_updated = Date.now();\n    \n    if (action.carrier) record.carrier = action.carrier;\n    if (action.tracking_number) record.tracking_number = action.tracking_number;\n    \n    let allDNs = global.get('dn_db') || {};\n    if (allDNs[action.ref_no]) {\n        allDNs[action.ref_no].status = action.new_status;\n        if (action.carrier) allDNs[action.ref_no].carrier = action.carrier;\n        if (action.tracking_number) allDNs[action.ref_no].tracking_number = action.tracking_number;\n        global.set('dn_db', allDNs);\n        \n        let msgDN = {\n            topic: \"Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB\",\n            payload: {\n                \"version\": \"1.0\",\n                \"topics\": [{ \"path\": \"Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB\", \"type\": \"state\", \"value\": Object.values(allDNs) }]\n            }\n        };\n        node.send([null, msgDN]);\n    }\n    \n    global.set('external_sync_status', currentData);\n    \n    const TOPIC_PATH = \"Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status\";\n    msg.payload = {\n        \"version\": \"1.0\",\n        \"topics\": [{\n            \"path\": TOPIC_PATH,\n            \"type\": \"state\",\n            \"value\": currentData\n        }]\n    };\n    msg.topic = TOPIC_PATH;\n    return msg;\n}\n\nreturn null;",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1680,
+        "y": 720,
+        "wires": [
+            [
+                "3b82b2a202fbb40d",
+                "2b2101d4437cb06b"
+            ],
+            [
+                "c360a1d4a96207d6"
+            ]
+        ]
+    },
+    {
+        "id": "3b82b2a202fbb40d",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Publish: Sync Status",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 2000,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "c360a1d4a96207d6",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "Publish: Cost DB",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 1970,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "f771d7e09ee5e8c7",
+        "type": "debug",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "View Review",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1940,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "df803ee9608434a4",
+        "type": "debug",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "View Create",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1950,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "2b2101d4437cb06b",
+        "type": "debug",
+        "z": "99f9fe79da9e4937",
+        "g": "2a38c4b3bb8c00eb",
+        "name": "View Update",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1970,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "c7ca76b09ddf4c7e",
+        "type": "group",
+        "z": "99f9fe79da9e4937",
+        "g": "6e44470160f289d7",
+        "name": "Outbound Module V2",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "mqtt_in_hold_order",
+            "func_hold_order",
+            "mqtt_out_dn_state_hold",
+            "debug_hold",
+            "mqtt_in_release_hold",
+            "func_release_hold",
+            "mqtt_in_wave_create",
+            "func_wave_create",
+            "mqtt_out_wave_state",
+            "mqtt_in_wave_release",
+            "func_wave_release",
+            "mqtt_in_allocate_dn",
+            "func_allocate_dn",
+            "mqtt_in_confirm_delivery",
+            "func_confirm_delivery",
+            "mqtt_in_add_to_wave",
+            "func_add_to_wave",
+            "mqtt_in_remove_from_wave",
+            "func_remove_from_wave",
+            "ff5a3613a7e0c68a",
+            "6ef1104b6dd3bd38",
+            "644d2ed067396b10",
+            "d0c280245a809b9f",
+            "cbc6dd3e2c879e60",
+            "5f8f02afcf37c1bf",
+            "dd30d1d3580decc9",
+            "c13dd48144cccb93",
+            "d85103a00b23afe1",
+            "acb21882422359f6",
+            "d5e92a0f6382c622",
+            "f713127bc4b0733c",
+            "054e476b1041cfdd",
+            "4bdc0aedfe317b31",
+            "81e1617a87243222",
+            "6fbfb170d4926d6b",
+            "d6ebe2f695609e22",
+            "c14d2f48376b5821",
+            "dbd36ebc92e418f6",
+            "02d8feca6451bb7d",
+            "895d2eb5fe3f7502",
+            "ce898418c9eb46f8"
+        ],
+        "x": 2174,
+        "y": 79,
+        "w": 992,
+        "h": 1002
+    },
+    {
+        "id": "mqtt_in_hold_order",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Hold_Order",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Hold_Order",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 2290,
+        "y": 120,
+        "wires": [
+            [
+                "func_hold_order"
+            ]
+        ]
+    },
+    {
+        "id": "func_hold_order",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Put Order On Hold",
+        "func": "// TOPICS\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\n\nlet action = msg.payload;\n// Expected: { dn_no, reason, action: 'HOLD' }\n\n// 1. Get order DB\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\n\n// 2. Find the order\nlet orderIndex = dnDB.items.findIndex(o => o.dn_no === action.dn_no || o.id === action.dn_no);\nif (orderIndex === -1) {\n    node.warn(\"Hold Error: Order not found \" + action.dn_no);\n    return null;\n}\n\nlet order = dnDB.items[orderIndex];\n\n// 3. Validate - can only hold RELEASED or WAVE_ASSIGNED orders\nconst canHold = ['RELEASED', 'WAVE_ASSIGNED', 'NEW', 'APPROVED'].includes((order.status || '').toUpperCase());\nif (!canHold) {\n    node.warn(\"Hold Error: Cannot hold order in status \" + order.status);\n    return null;\n}\n\n// 4. Store previous status and update\norder.previous_status = order.status;\norder.status = 'ON_HOLD';\norder.on_hold = true;\norder.hold_reason = action.reason || 'Manual hold';\norder.hold_timestamp = Date.now();\norder.hold_by = action.operator || 'System';\n\n// 5. If in a wave, remove from wave\nif (order.wave_id) {\n    let waveDB = global.get('wave_db') || { items: [] };\n    let wave = waveDB.items.find(w => w.wave_id === order.wave_id);\n    if (wave) {\n        wave.delivery_ids = (wave.delivery_ids || []).filter(id => id !== order.dn_no && id !== order.id);\n        wave.delivery_count = wave.delivery_ids.length;\n        global.set('wave_db', waveDB);\n    }\n    order.previous_wave_id = order.wave_id;\n    order.wave_id = null;\n}\n\n// 6. Save\nglobal.set('outbound_dn_db', dnDB);\n\n// 7. Publish\nmsg.topic = TOPIC_DN_STATE;\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2590,
+        "y": 120,
+        "wires": [
+            [
+                "mqtt_out_dn_state_hold",
+                "debug_hold"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_dn_state_hold",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Publish: DN State",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "a749d056cff1a785",
+        "x": 3030,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "debug_hold",
+        "type": "debug",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Order Held",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2890,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "mqtt_in_release_hold",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Release_Hold",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Release_Hold",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "inputs": 0,
+        "x": 2300,
+        "y": 180,
+        "wires": [
+            [
+                "func_release_hold"
+            ]
+        ]
+    },
+    {
+        "id": "func_release_hold",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Release Hold",
+        "func": "// TOPICS\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\n\nlet action = msg.payload;\n// Expected: { dn_no, action: 'RELEASE_HOLD' }\n\n// 1. Get order DB\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\n\n// 2. Find the order\nlet orderIndex = dnDB.items.findIndex(o => o.dn_no === action.dn_no || o.id === action.dn_no);\nif (orderIndex === -1) {\n    node.warn(\"Release Hold Error: Order not found \" + action.dn_no);\n    return null;\n}\n\nlet order = dnDB.items[orderIndex];\n\n// 3. Validate - must be on hold\nif ((order.status || '').toUpperCase() !== 'ON_HOLD') {\n    node.warn(\"Release Hold Error: Order not on hold. Current status: \" + order.status);\n    return null;\n}\n\n// 4. Restore previous status or default to RELEASED\norder.status = order.previous_status || 'RELEASED';\norder.on_hold = false;\norder.hold_reason = null;\norder.released_hold_at = Date.now();\norder.released_hold_by = action.operator || 'System';\n\n// Clear previous status tracking\ndelete order.previous_status;\ndelete order.hold_timestamp;\ndelete order.hold_by;\n\n// 5. Save\nglobal.set('outbound_dn_db', dnDB);\n\n// 6. Publish\nmsg.topic = TOPIC_DN_STATE;\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2560,
+        "y": 180,
+        "wires": [
+            [
+                "mqtt_out_dn_state_hold"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_in_wave_create",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Create_Wave",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Wave",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "inputs": 0,
+        "x": 2300,
+        "y": 240,
+        "wires": [
+            [
+                "func_wave_create"
+            ]
+        ]
+    },
+    {
+        "id": "func_wave_create",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Create Wave",
+        "func": "// TOPICS\nconst TOPIC_WAVE_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List\";\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\n\nlet action = msg.payload;\n// Expected: { wave_id?, ship_date, carrier, route, pick_method, delivery_ids: [] }\n\n// 1. Get DBs\nlet waveDB = global.get('wave_db') || { items: [] };\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\n\n// 2. Create wave\nlet newWave = {\n    wave_id: action.wave_id || 'WAVE-' + Date.now(),\n    status: 'PLANNED',\n    ship_date: action.ship_date || null,\n    carrier: action.carrier || null,\n    route: action.route || null,\n    pick_method: action.pick_method || 'BATCH',\n    delivery_ids: action.delivery_ids || [],\n    delivery_count: (action.delivery_ids || []).length,\n    line_count: 0,\n    picks_completed: 0,\n    picks_total: 0,\n    created_at: Date.now(),\n    created_by: action.operator || 'System'\n};\n\n// 3. Count lines from deliveries\nlet lineCount = 0;\naction.delivery_ids?.forEach(dnId => {\n    let order = dnDB.items.find(o => o.dn_no === dnId || o.id === dnId);\n    if (order) {\n        lineCount += (order.lines || []).length;\n        // Update order status and wave assignment\n        order.wave_id = newWave.wave_id;\n        order.status = 'WAVE_ASSIGNED';\n    }\n});\nnewWave.line_count = lineCount;\n\n// 4. Add to DB\nwaveDB.items.unshift(newWave);\n\n// 5. Save\nglobal.set('wave_db', waveDB);\nglobal.set('outbound_dn_db', dnDB);\n\n// 6. Prepare outputs\nlet msgWave = {\n    topic: TOPIC_WAVE_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_WAVE_STATE, type: \"state\", value: waveDB }] }\n};\n\nlet msgDN = {\n    topic: TOPIC_DN_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }] }\n};\n\nreturn [msgWave, msgDN];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2570,
+        "y": 240,
+        "wires": [
+            [
+                "mqtt_out_wave_state"
+            ],
+            [
+                "mqtt_out_dn_state_hold"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_wave_state",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Publish: Wave List",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 3050,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "mqtt_in_wave_release",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Release_Wave",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Release_Wave",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "inputs": 0,
+        "x": 2300,
+        "y": 600,
+        "wires": [
+            [
+                "func_wave_release"
+            ]
+        ]
+    },
+    {
+        "id": "func_wave_release",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Release Wave (Trigger Allocation)",
+        "func": "// TOPICS\nconst TOPIC_WAVE_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List\";\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\nconst TOPIC_INVENTORY = \"Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level\";\nconst TOPIC_TASKS = \"Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Tasks\";\n\nlet action = msg.payload;\n// Expected: { wave_id }\n\n// 1. Get DBs\nlet waveDB = global.get('wave_db') || { items: [] };\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\nlet inventory = global.get('internal_stock_list') || [];\nlet taskDB = global.get('outbound_task_db') || { items: [] };\n\n// 2. Find wave\nlet wave = waveDB.items.find(w => w.wave_id === action.wave_id);\nif (!wave) {\n    node.warn(\"Release Wave Error: Wave not found \" + action.wave_id);\n    return null;\n}\n\nif (wave.status !== 'PLANNED') {\n    node.warn(\"Release Wave Error: Wave not in PLANNED status\");\n    return null;\n}\n\n// 3. Update wave status\nwave.status = 'RELEASED';\nwave.released_at = Date.now();\nwave.released_by = action.operator || 'System';\n\n// 4. Process each delivery in the wave - Run allocation\nlet totalPicks = 0;\nlet allocationResults = [];\n\nwave.delivery_ids.forEach(dnId => {\n    let order = dnDB.items.find(o => o.dn_no === dnId || o.id === dnId);\n    if (!order) return;\n    \n    order.status = 'ALLOCATING';\n    \n    // Simple FEFO allocation logic\n    (order.lines || []).forEach(line => {\n        // Find available stock\n        let candidates = inventory.filter(item =>\n            item.sku === line.code &&\n            item.status === 'AVAILABLE'\n        );\n        \n        // Sort by expiry (FEFO)\n        candidates.sort((a, b) => {\n            let dateA = a.expiry_date || 9999999999999;\n            let dateB = b.expiry_date || 9999999999999;\n            return dateA - dateB;\n        });\n        \n        let needed = line.qty || 0;\n        let allocated = 0;\n        \n        for (let batch of candidates) {\n            if (needed <= 0) break;\n            if (batch.qty <= 0) continue;\n            \n            let takeQty = Math.min(batch.qty, needed);\n            \n            // Mark batch as allocated\n            batch.status = 'ALLOCATED';\n            batch.allocated_to = order.dn_no || order.id;\n            \n            // Create pick task\n            let newTask = {\n                task_id: 'PICK-' + Date.now() + '-' + Math.floor(Math.random() * 1000),\n                wave_id: wave.wave_id,\n                dn_no: order.dn_no || order.id,\n                batch_id: batch.batch_id,\n                material_code: batch.sku,\n                material_name: batch.desc,\n                qty: takeQty,\n                from_loc: batch.location || 'ZONE-A',\n                to_loc: 'STAGING-01',\n                status: 'PENDING',\n                priority: order.priority || 'NORMAL',\n                created_at: Date.now()\n            };\n            taskDB.items.unshift(newTask);\n            totalPicks++;\n            \n            needed -= takeQty;\n            allocated += takeQty;\n        }\n        \n        // Update line allocation\n        line.qty_allocated = allocated;\n        \n        allocationResults.push({\n            dn_no: order.dn_no || order.id,\n            line_code: line.code,\n            requested: line.qty,\n            allocated: allocated,\n            short: needed > 0 ? needed : 0\n        });\n    });\n    \n    // Update order status based on allocation\n    let allAllocated = (order.lines || []).every(l => (l.qty_allocated || 0) >= (l.qty || 0));\n    let anyAllocated = (order.lines || []).some(l => (l.qty_allocated || 0) > 0);\n    \n    if (allAllocated) {\n        order.status = 'ALLOCATED';\n        order.allocated_at = Date.now();\n    } else if (anyAllocated) {\n        order.status = 'ALLOCATED'; // Partial - proceed anyway\n        order.partial_allocation = true;\n    } else {\n        order.status = 'BACKORDER';\n    }\n});\n\nwave.picks_total = totalPicks;\nwave.status = 'IN_PROGRESS';\n\n// 5. Save all\nglobal.set('wave_db', waveDB);\nglobal.set('outbound_dn_db', dnDB);\nglobal.set('internal_stock_list', inventory);\nglobal.set('outbound_task_db', taskDB);\n\n// 6. Prepare outputs\nlet msgWave = {\n    topic: TOPIC_WAVE_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_WAVE_STATE, type: \"state\", value: waveDB }] }\n};\n\nlet msgDN = {\n    topic: TOPIC_DN_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }] }\n};\n\nlet msgInv = {\n    topic: TOPIC_INVENTORY,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_INVENTORY, type: \"state\", value: { last_updated: Date.now(), stock_items: inventory } }] }\n};\n\nlet msgTasks = {\n    topic: TOPIC_TASKS,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_TASKS, type: \"state\", value: taskDB }] }\n};\n\nreturn [msgWave, msgDN, msgInv, msgTasks];",
+        "outputs": 4,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2640,
+        "y": 600,
+        "wires": [
+            [
+                "mqtt_out_wave_state"
+            ],
+            [
+                "mqtt_out_dn_state_hold"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "mqtt_in_allocate_dn",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Allocate_DN (Direct)",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Allocate_DN",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "inputs": 0,
+        "x": 2320,
+        "y": 660,
+        "wires": [
+            [
+                "func_allocate_dn"
+            ]
+        ]
+    },
+    {
+        "id": "func_allocate_dn",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Direct Allocation (Manufacturing)",
+        "func": "// TOPICS\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\nconst TOPIC_INVENTORY = \"Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level\";\nconst TOPIC_TASKS = \"Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Tasks\";\n\nlet action = msg.payload;\n// Expected: { dn_no }\n\n// 1. Get DBs\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\nlet inventory = global.get('internal_stock_list') || [];\nlet taskDB = global.get('outbound_task_db') || { items: [] };\n\n// 2. Find order\nlet order = dnDB.items.find(o => o.dn_no === action.dn_no || o.id === action.dn_no);\nif (!order) {\n    node.warn(\"Allocate DN Error: Order not found \" + action.dn_no);\n    return null;\n}\n\n// 3. Validate status\nconst canAllocate = ['RELEASED', 'APPROVED', 'NEW'].includes((order.status || '').toUpperCase());\nif (!canAllocate) {\n    node.warn(\"Allocate DN Error: Cannot allocate order in status \" + order.status);\n    return null;\n}\n\norder.status = 'ALLOCATING';\n\n// 4. FEFO Allocation for each line\n(order.lines || []).forEach(line => {\n    let candidates = inventory.filter(item =>\n        item.sku === line.code &&\n        item.status === 'AVAILABLE'\n    );\n    \n    candidates.sort((a, b) => {\n        let dateA = a.expiry_date || 9999999999999;\n        let dateB = b.expiry_date || 9999999999999;\n        return dateA - dateB;\n    });\n    \n    let needed = line.qty || 0;\n    let allocated = 0;\n    \n    for (let batch of candidates) {\n        if (needed <= 0) break;\n        if (batch.qty <= 0) continue;\n        \n        let takeQty = Math.min(batch.qty, needed);\n        \n        batch.status = 'ALLOCATED';\n        batch.allocated_to = order.dn_no || order.id;\n        \n        // Create pick task - for manufacturing, destination is production line\n        let newTask = {\n            task_id: 'PICK-' + Date.now() + '-' + Math.floor(Math.random() * 1000),\n            dn_no: order.dn_no || order.id,\n            batch_id: batch.batch_id,\n            material_code: batch.sku,\n            material_name: batch.desc,\n            qty: takeQty,\n            from_loc: batch.location || 'ZONE-A',\n            to_loc: order.production_line || order.destination || 'LINE-SIDE-A',\n            status: 'PENDING',\n            context: 'MANUFACTURING',\n            priority: order.priority || 'NORMAL',\n            created_at: Date.now()\n        };\n        taskDB.items.unshift(newTask);\n        \n        needed -= takeQty;\n        allocated += takeQty;\n    }\n    \n    line.qty_allocated = allocated;\n});\n\n// 5. Update order status\nlet allAllocated = (order.lines || []).every(l => (l.qty_allocated || 0) >= (l.qty || 0));\n\nif (allAllocated) {\n    order.status = 'ALLOCATED';\n    order.allocated_at = Date.now();\n} else {\n    order.status = 'BACKORDER';\n}\n\n// 6. Save\nglobal.set('outbound_dn_db', dnDB);\nglobal.set('internal_stock_list', inventory);\nglobal.set('outbound_task_db', taskDB);\n\n// 7. Prepare outputs\nlet msgDN = {\n    topic: TOPIC_DN_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }] }\n};\n\nlet msgInv = {\n    topic: TOPIC_INVENTORY,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_INVENTORY, type: \"state\", value: { last_updated: Date.now(), stock_items: inventory } }] }\n};\n\nlet msgTasks = {\n    topic: TOPIC_TASKS,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_TASKS, type: \"state\", value: taskDB }] }\n};\n\nreturn [msgDN, msgInv, msgTasks];",
+        "outputs": 3,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2630,
+        "y": 660,
+        "wires": [
+            [
+                "mqtt_out_dn_state_hold"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "mqtt_in_confirm_delivery",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Confirm_Delivery",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Delivery",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "inputs": 0,
+        "x": 2310,
+        "y": 740,
+        "wires": [
+            [
+                "func_confirm_delivery"
+            ]
+        ]
+    },
+    {
+        "id": "func_confirm_delivery",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Delivery (Manufacturing)",
+        "func": "// TOPICS\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\nconst TOPIC_INVENTORY = \"Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level\";\n\nlet action = msg.payload;\n// Expected: { dn_no, production_line }\n\n// 1. Get DBs\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\nlet inventory = global.get('internal_stock_list') || [];\nlet taskDB = global.get('outbound_task_db') || { items: [] };\n\n// 2. Find order\nlet order = dnDB.items.find(o => o.dn_no === action.dn_no || o.id === action.dn_no);\nif (!order) {\n    node.warn(\"Confirm Delivery Error: Order not found \" + action.dn_no);\n    return null;\n}\n\n// 3. Validate status - must be PICKED\nconst canDeliver = ['PICKED', 'PICKING'].includes((order.status || '').toUpperCase());\nif (!canDeliver) {\n    node.warn(\"Confirm Delivery Error: Order not ready for delivery. Status: \" + order.status);\n    return null;\n}\n\n// 4. Update order status to DELIVERED (terminal for manufacturing)\norder.status = 'DELIVERED';\norder.delivered_at = Date.now();\norder.delivered_by = action.operator || 'System';\norder.production_line = action.production_line || order.destination;\n\n// 5. Deduct inventory for all allocated batches\n(order.lines || []).forEach(line => {\n    // Find and remove allocated inventory\n    let allocated = inventory.filter(item =>\n        item.allocated_to === (order.dn_no || order.id) &&\n        item.sku === line.code\n    );\n    \n    allocated.forEach(item => {\n        // Mark as consumed (could also remove from inventory)\n        item.status = 'CONSUMED';\n        item.consumed_at = Date.now();\n        item.consumed_by = order.dn_no || order.id;\n        item.location = action.production_line || 'PRODUCTION';\n    });\n});\n\n// 6. Update related pick tasks to COMPLETED\ntaskDB.items.forEach(task => {\n    if (task.dn_no === (order.dn_no || order.id)) {\n        task.status = 'COMPLETED';\n        task.completed_at = Date.now();\n    }\n});\n\n// 7. Save\nglobal.set('outbound_dn_db', dnDB);\nglobal.set('internal_stock_list', inventory);\nglobal.set('outbound_task_db', taskDB);\n\n// 8. Prepare outputs\nlet msgDN = {\n    topic: TOPIC_DN_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }] }\n};\n\nlet msgInv = {\n    topic: TOPIC_INVENTORY,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_INVENTORY, type: \"state\", value: { last_updated: Date.now(), stock_items: inventory } }] }\n};\n\nreturn [msgDN, msgInv];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2640,
+        "y": 740,
+        "wires": [
+            [
+                "mqtt_out_dn_state_hold"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "mqtt_in_add_to_wave",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Add_To_Wave",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Add_To_Wave",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "inputs": 0,
+        "x": 2320,
+        "y": 820,
+        "wires": [
+            [
+                "func_add_to_wave"
+            ]
+        ]
+    },
+    {
+        "id": "func_add_to_wave",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Add Order to Wave",
+        "func": "// TOPICS\nconst TOPIC_WAVE_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List\";\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\n\nlet action = msg.payload;\n// Expected: { dn_no, wave_id }\n\n// 1. Get DBs\nlet waveDB = global.get('wave_db') || { items: [] };\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\n\n// 2. Find wave\nlet wave = waveDB.items.find(w => w.wave_id === action.wave_id);\nif (!wave) {\n    node.warn(\"Add to Wave Error: Wave not found \" + action.wave_id);\n    return null;\n}\n\nif (wave.status !== 'PLANNED') {\n    node.warn(\"Add to Wave Error: Cannot add to wave in status \" + wave.status);\n    return null;\n}\n\n// 3. Find order\nlet order = dnDB.items.find(o => o.dn_no === action.dn_no || o.id === action.dn_no);\nif (!order) {\n    node.warn(\"Add to Wave Error: Order not found \" + action.dn_no);\n    return null;\n}\n\n// 4. Add order to wave\nif (!wave.delivery_ids.includes(order.dn_no || order.id)) {\n    wave.delivery_ids.push(order.dn_no || order.id);\n    wave.delivery_count = wave.delivery_ids.length;\n    wave.line_count += (order.lines || []).length;\n}\n\n// 5. Update order\norder.wave_id = wave.wave_id;\norder.status = 'WAVE_ASSIGNED';\n\n// 6. Save\nglobal.set('wave_db', waveDB);\nglobal.set('outbound_dn_db', dnDB);\n\n// 7. Prepare outputs\nlet msgWave = {\n    topic: TOPIC_WAVE_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_WAVE_STATE, type: \"state\", value: waveDB }] }\n};\n\nlet msgDN = {\n    topic: TOPIC_DN_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }] }\n};\n\nreturn [msgWave, msgDN];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2590,
+        "y": 820,
+        "wires": [
+            [
+                "mqtt_out_wave_state"
+            ],
+            [
+                "mqtt_out_dn_state_hold"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_in_remove_from_wave",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Remove_From_Wave",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Remove_From_Wave",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "a749d056cff1a785",
+        "inputs": 0,
+        "x": 2320,
+        "y": 880,
+        "wires": [
+            [
+                "func_remove_from_wave"
+            ]
+        ]
+    },
+    {
+        "id": "func_remove_from_wave",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Remove Order from Wave",
+        "func": "// TOPICS\nconst TOPIC_WAVE_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List\";\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\n\nlet action = msg.payload;\n// Expected: { dn_no }\n\n// 1. Get DBs\nlet waveDB = global.get('wave_db') || { items: [] };\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\n\n// 2. Find order\nlet order = dnDB.items.find(o => o.dn_no === action.dn_no || o.id === action.dn_no);\nif (!order) {\n    node.warn(\"Remove from Wave Error: Order not found \" + action.dn_no);\n    return null;\n}\n\nif (!order.wave_id) {\n    node.warn(\"Remove from Wave Error: Order not in a wave\");\n    return null;\n}\n\n// 3. Find wave and remove order\nlet wave = waveDB.items.find(w => w.wave_id === order.wave_id);\nif (wave) {\n    if (wave.status !== 'PLANNED') {\n        node.warn(\"Remove from Wave Error: Cannot modify wave in status \" + wave.status);\n        return null;\n    }\n    \n    wave.delivery_ids = wave.delivery_ids.filter(id => id !== order.dn_no && id !== order.id);\n    wave.delivery_count = wave.delivery_ids.length;\n    wave.line_count -= (order.lines || []).length;\n}\n\n// 4. Update order\norder.wave_id = null;\norder.status = 'RELEASED';\n\n// 5. Save\nglobal.set('wave_db', waveDB);\nglobal.set('outbound_dn_db', dnDB);\n\n// 6. Prepare outputs\nlet msgWave = {\n    topic: TOPIC_WAVE_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_WAVE_STATE, type: \"state\", value: waveDB }] }\n};\n\nlet msgDN = {\n    topic: TOPIC_DN_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }] }\n};\n\nreturn [msgWave, msgDN];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2610,
+        "y": 880,
+        "wires": [
+            [
+                "mqtt_out_wave_state"
+            ],
+            [
+                "mqtt_out_dn_state_hold"
+            ]
+        ]
+    },
+    {
+        "id": "ff5a3613a7e0c68a",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Delete_Wave",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Delete_Wave",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2310,
+        "y": 300,
+        "wires": [
+            [
+                "6ef1104b6dd3bd38"
+            ]
+        ]
+    },
+    {
+        "id": "6ef1104b6dd3bd38",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Delete Wave",
+        "func": "const TOPIC_WAVE_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List\";\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\n\nlet action = msg.payload;\n// Expected: { wave_id, action: 'CANCEL_WAVE', reason?, timestamp }\n\nlet waveDB = global.get('wave_db') || { items: [] };\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\n\nlet wave = waveDB.items.find(w => w.wave_id === action.wave_id);\nif (!wave) {\n    node.warn(\"Delete Wave: Wave not found \" + action.wave_id);\n    return null;\n}\n\nif (wave.status !== 'PLANNED' && wave.status !== 'RELEASED') {\n    node.warn(\"Delete Wave: Cannot delete wave in status \" + wave.status);\n    return null;\n}\n\n// Unassign orders from this wave\n(wave.delivery_ids || []).forEach(dnId => {\n    let order = dnDB.items.find(o => o.dn_no === dnId || o.id === dnId);\n    if (order) {\n        order.wave_id = null;\n        order.status = 'RELEASED';\n    }\n});\n\n// Remove wave\nwaveDB.items = waveDB.items.filter(w => w.wave_id !== action.wave_id);\n\nglobal.set('wave_db', waveDB);\nglobal.set('outbound_dn_db', dnDB);\n\nlet msgWave = {\n    topic: TOPIC_WAVE_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_WAVE_STATE, type: \"state\", value: waveDB }] }\n};\nlet msgDN = {\n    topic: TOPIC_DN_STATE,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }] }\n};\n\nreturn [msgWave, msgDN];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2570,
+        "y": 300,
+        "wires": [
+            [
+                "mqtt_out_wave_state"
+            ],
+            [
+                "mqtt_out_dn_state_hold"
+            ]
+        ]
+    },
+    {
+        "id": "644d2ed067396b10",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Confirm_Pick",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Pick",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2310,
+        "y": 340,
+        "wires": [
+            [
+                "d0c280245a809b9f"
+            ]
+        ]
+    },
+    {
+        "id": "d0c280245a809b9f",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Pick",
+        "func": "const TOPIC_PICK_QUEUE = \"Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Queue\";\nconst TOPIC_DN_STATE = \"Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow\";\n\nlet action = msg.payload;\n// Expected: { task_id, picked_qty?, qty_picked?, operator, timestamp } or { task_id, order_id, sku, qty_picked, ... }\n\nlet taskDB = global.get('outbound_task_db') || { items: [] };\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\nlet waveDB = global.get('wave_db') || { items: [] };\n\nlet task = taskDB.items.find(t => t.task_id === action.task_id || t.task_id === action.task_id);\nif (!task) {\n    node.warn(\"Confirm Pick: Task not found \" + action.task_id);\n    return null;\n}\n\ntask.status = 'COMPLETED';\ntask.completed_at = Date.now();\ntask.picked_qty = action.picked_qty ?? action.qty_picked ?? task.qty;\ntask.operator = action.operator || 'System';\n\nlet dnNo = task.dn_no || task.order_id;\nlet order = dnDB.items.find(o => o.dn_no === dnNo || o.id === dnNo);\nif (order) {\n    order.status = 'PICKING';\n    let wave = waveDB.items.find(w => w.wave_id === (task.wave_id || order.wave_id));\n    if (wave) {\n        wave.picks_completed = (wave.picks_completed || 0) + 1;\n    }\n}\n\nglobal.set('outbound_task_db', taskDB);\nglobal.set('outbound_dn_db', dnDB);\nglobal.set('wave_db', waveDB);\n\nlet payloadQueue = { version: \"1.0\", topics: [{ path: TOPIC_PICK_QUEUE, type: \"state\", value: { tasks: taskDB.items } }] };\nlet payloadDN = { version: \"1.0\", topics: [{ path: TOPIC_DN_STATE, type: \"state\", value: dnDB }] };\n\nreturn [\n    [{ topic: TOPIC_PICK_QUEUE, payload: payloadQueue }, { topic: TOPIC_DN_STATE, payload: payloadDN }]\n];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2570,
+        "y": 340,
+        "wires": [
+            [
+                "cbc6dd3e2c879e60"
+            ]
+        ]
+    },
+    {
+        "id": "cbc6dd3e2c879e60",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Publish: Other State",
+        "topic": "",
+        "qos": "",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "85bb67b2dbefe3ba",
+        "x": 3040,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "5f8f02afcf37c1bf",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Stage",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Stage",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2330,
+        "y": 380,
+        "wires": [
+            [
+                "dd30d1d3580decc9"
+            ]
+        ]
+    },
+    {
+        "id": "dd30d1d3580decc9",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Stage",
+        "func": "const TOPIC_STAGING = \"Henkelv2/Shanghai/Logistics/Outbound/State/Staging_Area\";\n\nlet action = msg.payload;\n// Expected: { area_id, dn_no, operator, timestamp }\n\nlet staging = global.get('staging_areas') || { areas: [] };\nif (!staging.areas || !Array.isArray(staging.areas)) {\n    staging.areas = [\n        { area_id: 'STAGE-01', items: [] },\n        { area_id: 'STAGE-02', items: [] },\n        { area_id: 'STAGE-03', items: [] }\n    ];\n}\n\nlet area = staging.areas.find(a => a.area_id === action.area_id);\nif (!area) {\n    area = { area_id: action.area_id, items: [] };\n    staging.areas.push(area);\n}\n\narea.items = area.items.filter(i => i.dn_no !== action.dn_no);\narea.items.push({\n    dn_no: action.dn_no,\n    staged_at: Date.now(),\n    operator: action.operator || 'System'\n});\n\nglobal.set('staging_areas', staging);\n\nmsg.topic = TOPIC_STAGING;\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{ path: TOPIC_STAGING, type: \"state\", value: staging }]\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2580,
+        "y": 380,
+        "wires": [
+            [
+                "cbc6dd3e2c879e60"
+            ]
+        ]
+    },
+    {
+        "id": "c13dd48144cccb93",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Load",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Load",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2330,
+        "y": 420,
+        "wires": [
+            [
+                "d85103a00b23afe1"
+            ]
+        ]
+    },
+    {
+        "id": "d85103a00b23afe1",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Load",
+        "func": "const TOPIC_SHIPMENT = \"Henkelv2/Shanghai/Logistics/Outbound/State/Shipment_List\";\nconst TOPIC_DOCKS = \"Henkelv2/Shanghai/Logistics/Outbound/State/Loading_Docks\";\n\nlet action = msg.payload;\n// Expected: { dock_id, shipment_id, operator, timestamp }\n\nlet shipmentList = global.get('shipment_list') || { items: [] };\nif (!shipmentList.items) shipmentList.items = [];\n\nlet docks = global.get('loading_docks') || { docks: [] };\nif (!docks.docks || !Array.isArray(docks.docks)) {\n    docks.docks = [\n        { dock_id: 'DOCK-01', status: 'AVAILABLE', shipment_id: null },\n        { dock_id: 'DOCK-02', status: 'AVAILABLE', shipment_id: null }\n    ];\n}\n\nlet ship = shipmentList.items.find(s => s.shipment_id === action.shipment_id || s.dn_id === action.shipment_id);\nif (ship) {\n    ship.status = 'LOADED';\n    ship.loaded_at = Date.now();\n    ship.dock_id = action.dock_id;\n}\n\nlet dock = docks.docks.find(d => d.dock_id === action.dock_id);\nif (dock) {\n    dock.status = 'AVAILABLE';\n    dock.shipment_id = null;\n}\n\nglobal.set('shipment_list', shipmentList);\nglobal.set('loading_docks', docks);\n\nlet msgShip = {\n    topic: TOPIC_SHIPMENT,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_SHIPMENT, type: \"state\", value: shipmentList }] }\n};\nlet msgDocks = {\n    topic: TOPIC_DOCKS,\n    payload: { version: \"1.0\", topics: [{ path: TOPIC_DOCKS, type: \"state\", value: docks }] }\n};\n\nreturn [msgShip, msgDocks];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2580,
+        "y": 420,
+        "wires": [
+            [
+                "cbc6dd3e2c879e60"
+            ]
+        ]
+    },
+    {
+        "id": "acb21882422359f6",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Action: Report Short Pick",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Report_Short_Pick",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2310,
+        "y": 460,
+        "wires": [
+            [
+                "d5e92a0f6382c622"
+            ]
+        ]
+    },
+    {
+        "id": "d5e92a0f6382c622",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Report Short Pick",
+        "func": "const TOPIC_PICK_QUEUE = \"Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Queue\";\n\nlet action = msg.payload;\n// Expected: { task_id, sku?, location?, reason, operator, timestamp } or { task_id, expected_qty, actual_qty, reason, ... }\n\nlet taskDB = global.get('outbound_task_db') || { items: [] };\n\nlet task = taskDB.items.find(t => t.task_id === action.task_id);\nif (!task) {\n    node.warn(\"Report Short Pick: Task not found \" + action.task_id);\n    return null;\n}\n\ntask.status = 'SHORT_PICK';\ntask.short_reason = action.reason || 'UNKNOWN';\ntask.actual_qty = action.actual_qty ?? action.qty_picked ?? 0;\ntask.expected_qty = action.expected_qty ?? task.qty;\ntask.operator = action.operator || 'System';\ntask.updated_at = Date.now();\n\nglobal.set('outbound_task_db', taskDB);\n\nmsg.topic = TOPIC_PICK_QUEUE;\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{ path: TOPIC_PICK_QUEUE, type: \"state\", value: { tasks: taskDB.items } }]\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2590,
+        "y": 460,
+        "wires": [
+            [
+                "cbc6dd3e2c879e60"
+            ]
+        ]
+    },
+    {
+        "id": "f713127bc4b0733c",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Create Shipment",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Shipment",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2360,
+        "y": 940,
+        "wires": [
+            [
+                "054e476b1041cfdd"
+            ]
+        ]
+    },
+    {
+        "id": "054e476b1041cfdd",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Create Shipment",
+        "func": "const TOPIC_SHIPMENT = \"Henkelv2/Shanghai/Logistics/Outbound/State/Shipment_List\";\n\nlet action = msg.payload;\n// Expected: { customer, destination, items: [{ sku, qty }], created_by }\n\nlet shipmentList = global.get('shipment_list') || { items: [] };\nif (!shipmentList.items) shipmentList.items = [];\n\nlet shipment_id = 'SHP-' + Date.now();\nlet newShipment = {\n    shipment_id: shipment_id,\n    dn_id: shipment_id,\n    customer: action.customer || 'Unknown',\n    destination: action.destination || '',\n    items: action.items || [],\n    status: 'READY_TO_PICK',\n    created_at: Date.now(),\n    created_by: action.created_by || 'System'\n};\n\nshipmentList.items.unshift(newShipment);\nif (shipmentList.items.length > 50) shipmentList.items = shipmentList.items.slice(0, 50);\n\nglobal.set('shipment_list', shipmentList);\n\nmsg.topic = TOPIC_SHIPMENT;\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{ path: TOPIC_SHIPMENT, type: \"state\", value: shipmentList }]\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2610,
+        "y": 940,
+        "wires": [
+            [
+                "cbc6dd3e2c879e60"
+            ]
+        ]
+    },
+    {
+        "id": "4bdc0aedfe317b31",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": " Confirm_Outbound_Pick",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Outbound_Pick",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2310,
+        "y": 500,
+        "wires": [
+            [
+                "81e1617a87243222"
+            ]
+        ]
+    },
+    {
+        "id": "81e1617a87243222",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Outbound Pick",
+        "func": "const TOPIC_SHIPMENT = \"Henkelv2/Shanghai/Logistics/Outbound/State/Shipment_List\";\n\nlet action = msg.payload;\n// Expected: { dn_id, operator, timestamp }\n\nlet shipmentList = global.get('shipment_list') || { items: [] };\n\nlet ship = shipmentList.items.find(s => s.dn_id === action.dn_id || s.shipment_id === action.dn_id);\nif (!ship) {\n    node.warn(\"Confirm Outbound Pick: Shipment not found \" + action.dn_id);\n    return null;\n}\n\nship.status = 'PICKED';\nship.picked_at = Date.now();\nship.picked_by = action.operator || 'System';\n\nglobal.set('shipment_list', shipmentList);\n\nmsg.topic = TOPIC_SHIPMENT;\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{ path: TOPIC_SHIPMENT, type: \"state\", value: shipmentList }] \n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2610,
+        "y": 500,
+        "wires": [
+            [
+                "cbc6dd3e2c879e60"
+            ]
+        ]
+    },
+    {
+        "id": "6fbfb170d4926d6b",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Pack",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Pack",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2350,
+        "y": 540,
+        "wires": [
+            [
+                "d6ebe2f695609e22"
+            ]
+        ]
+    },
+    {
+        "id": "d6ebe2f695609e22",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Pack",
+        "func": "const TOPIC_SHIPMENT = \"Henkelv2/Shanghai/Logistics/Outbound/State/Shipment_List\";\n\nlet action = msg.payload;\n// Expected: { dn_id, packer, timestamp }\n\nlet shipmentList = global.get('shipment_list') || { items: [] };\n\nlet ship = shipmentList.items.find(s => s.dn_id === action.dn_id || s.shipment_id === action.dn_id);\nif (!ship) {\n    node.warn(\"Confirm Pack: Shipment not found \" + action.dn_id);\n    return null;\n}\n\nship.status = 'READY_TO_SHIP';\nship.packed_at = Date.now();\nship.packer = action.packer || 'System';\n\nglobal.set('shipment_list', shipmentList);\n\nmsg.topic = TOPIC_SHIPMENT;\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{ path: TOPIC_SHIPMENT, type: \"state\", value: shipmentList }]\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2580,
+        "y": 540,
+        "wires": [
+            [
+                "cbc6dd3e2c879e60"
+            ]
+        ]
+    },
+    {
+        "id": "c14d2f48376b5821",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Ship",
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Ship",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2370,
+        "y": 1000,
+        "wires": [
+            [
+                "dbd36ebc92e418f6"
+            ]
+        ]
+    },
+    {
+        "id": "dbd36ebc92e418f6",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Confirm Ship",
+        "func": "const TOPIC_SHIPMENT = \"Henkelv2/Shanghai/Logistics/Outbound/State/Shipment_List\";\n\nlet action = msg.payload;\n// Expected: { dn_id, carrier_info: { driver, plate, time } }\n\nlet shipmentList = global.get('shipment_list') || { items: [] };\n\nlet ship = shipmentList.items.find(s => s.dn_id === action.dn_id || s.shipment_id === action.dn_id);\nif (!ship) {\n    node.warn(\"Confirm Ship: Shipment not found \" + action.dn_id);\n    return null;\n}\n\nship.status = 'SHIPPED';\nship.shipped_at = Date.now();\nship.carrier_info = action.carrier_info || {};\n\nglobal.set('shipment_list', shipmentList);\n\nmsg.topic = TOPIC_SHIPMENT;\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{ path: TOPIC_SHIPMENT, type: \"state\", value: shipmentList }]\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2630,
+        "y": 1000,
+        "wires": [
+            [
+                "cbc6dd3e2c879e60"
+            ]
+        ]
+    },
+    {
+        "id": "02d8feca6451bb7d",
+        "type": "mqtt in",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Submit VAS",
+        "topic": "Henkelv2/Shanghai/Logistics/Costing/Action/Submit_VAS",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "85bb67b2dbefe3ba",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 2410,
+        "y": 1040,
+        "wires": [
+            [
+                "895d2eb5fe3f7502"
+            ]
+        ]
+    },
+    {
+        "id": "895d2eb5fe3f7502",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "Submit VAS",
+        "func": "const TOPIC_COST_DB = \"Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB\";\n\nlet action = msg.payload;\n// Expected: { dn_no, destination?, is_urgent, need_repack, custom_label, special_notes }\n\nlet allDNs = global.get('dn_db') || {};\nlet dnRecord = allDNs[action.dn_no];\nif (!dnRecord) {\n    node.warn(\"Submit VAS: DN not found \" + action.dn_no);\n    return null;\n}\n\ndnRecord.vas_requested = true;\ndnRecord.vas_urgent = action.is_urgent || false;\ndnRecord.vas_repack = action.need_repack || false;\ndnRecord.vas_custom_label = action.custom_label || false;\ndnRecord.vas_notes = action.special_notes || '';\ndnRecord.vas_submitted_at = Date.now();\n\nglobal.set('dn_db', allDNs);\n\nmsg.topic = TOPIC_COST_DB;\nmsg.payload = {\n    version: \"1.0\",\n    topics: [{ path: TOPIC_COST_DB, type: \"state\", value: Object.values(allDNs) }]\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2630,
+        "y": 1040,
+        "wires": [
+            [
+                "ce898418c9eb46f8"
+            ]
+        ]
+    },
+    {
+        "id": "ce898418c9eb46f8",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "c7ca76b09ddf4c7e",
+        "name": "",
+        "topic": "",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "85bb67b2dbefe3ba",
+        "x": 2830,
+        "y": 1040,
+        "wires": []
+    },
+    {
+        "id": "85bb67b2dbefe3ba",
+        "type": "mqtt-broker",
+        "name": "emqx:1883",
+        "broker": "emqx",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "group_mock_data_generators",
+        "type": "group",
+        "z": "99f9fe79da9e4937",
+        "g": "6e44470160f289d7",
+        "name": "🧪 Mock Data Generators (Click to Test)",
+        "style": {
+            "fill": "#ffeb3b",
+            "fill-opacity": "0.3",
+            "label": true,
+            "stroke": "#f9a825"
+        },
+        "nodes": [
+            "inject_dn_workflow",
+            "func_generate_dn_workflow",
+            "inject_wave_list",
+            "func_generate_wave_list",
+            "inject_picking_queue",
+            "func_generate_picking_queue",
+            "inject_staging_area",
+            "func_generate_staging_area",
+            "inject_loading_docks",
+            "func_generate_loading_docks",
+            "mqtt_out_mock_state",
+            "debug_mock_output"
+        ],
+        "x": 1334,
+        "y": 899,
+        "w": 802,
+        "h": 322
+    },
+    {
+        "id": "inject_dn_workflow",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 DN_Workflow (Orders)",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 1490,
+        "y": 940,
+        "wires": [
+            [
+                "func_generate_dn_workflow"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_dn_workflow",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Orders",
+        "func": "const statuses = ['NEW', 'RELEASED', 'ON_HOLD', 'WAVE_ASSIGNED', 'ALLOCATED', 'PICKING', 'PACKING', 'READY_TO_SHIP'];\nconst customers = ['CUSTOMER-A', 'CUSTOMER-B', 'HENKEL-SUZHOU', 'HENKEL-BEIJING'];\nconst materials = ['GLUE-500', 'SEALANT-X', 'ADHESIVE-PRO', 'COATING-UV'];\n\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\n\n// Generate 3-5 new orders\nlet count = Math.floor(Math.random() * 3) + 3;\nfor (let i = 0; i < count; i++) {\n    let status = statuses[Math.floor(Math.random() * statuses.length)];\n    let order = {\n        dn_no: 'DN-' + Date.now() + '-' + Math.floor(Math.random() * 1000),\n        id: 'DN-' + Date.now() + '-' + Math.floor(Math.random() * 1000),\n        type: Math.random() > 0.3 ? 'SALES_ORDER' : 'TRANSFER_OUT',\n        status: status,\n        customer: customers[Math.floor(Math.random() * customers.length)],\n        destination: 'Shanghai-' + (Math.floor(Math.random() * 3) + 1),\n        warehouse: 'WH-SHANGHAI',\n        requested_date: new Date(Date.now() + 86400000 * Math.floor(Math.random() * 7)).toISOString().split('T')[0],\n        wave_id: status === 'WAVE_ASSIGNED' ? 'WAVE-' + Math.floor(Math.random() * 100) : null,\n        lines: [\n            { code: materials[Math.floor(Math.random() * materials.length)], qty: Math.floor(Math.random() * 100) + 10 },\n            { code: materials[Math.floor(Math.random() * materials.length)], qty: Math.floor(Math.random() * 50) + 5 }\n        ],\n        created_at: Date.now(),\n        priority: Math.random() > 0.7 ? 'HIGH' : 'NORMAL'\n    };\n    dnDB.items.unshift(order);\n}\n\n// Keep only last 20\nif (dnDB.items.length > 20) dnDB.items = dnDB.items.slice(0, 20);\nglobal.set('outbound_dn_db', dnDB);\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: dnDB }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1730,
+        "y": 940,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "inject_wave_list",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 Wave_List",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 1450,
+        "y": 1000,
+        "wires": [
+            [
+                "func_generate_wave_list"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_wave_list",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Waves",
+        "func": "const statuses = ['PLANNED', 'RELEASED', 'IN_PROGRESS', 'COMPLETED'];\nconst carriers = ['SF-EXPRESS', 'DHL', 'SINOTRANS', 'JD-LOGISTICS'];\nconst routes = ['Shanghai North', 'Shanghai South', 'Suzhou Route', 'Hangzhou Line'];\n\nlet waveDB = global.get('wave_db') || { items: [] };\n\n// Generate 2-4 new waves\nlet count = Math.floor(Math.random() * 3) + 2;\nfor (let i = 0; i < count; i++) {\n    let status = statuses[Math.floor(Math.random() * statuses.length)];\n    let totalPicks = Math.floor(Math.random() * 20) + 5;\n    let completedPicks = status === 'COMPLETED' ? totalPicks :\n        status === 'IN_PROGRESS' ? Math.floor(totalPicks * Math.random()) : 0;\n\n    // 格式: WAVE-20260205-001 — 在对象外面先算好\n    let datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');\n    let key = 'wave_seq_' + datePart;\n    let seq = (global.get(key) || 0) + 1;\n    global.set(key, seq);\n\n    let wave = {\n        wave_id: 'WAVE-' + datePart + '-' + String(seq).padStart(3, '0'),\n        status: status,\n        ship_date: new Date(Date.now() + 86400000 * Math.floor(Math.random() * 3)).toISOString().split('T')[0],\n        carrier: carriers[Math.floor(Math.random() * carriers.length)],\n        route: routes[Math.floor(Math.random() * routes.length)],\n        pick_method: Math.random() > 0.5 ? 'BATCH' : 'DISCRETE',\n        delivery_ids: [],\n        delivery_count: Math.floor(Math.random() * 5) + 1,\n        line_count: Math.floor(Math.random() * 15) + 3,\n        picks_completed: completedPicks,\n        picks_total: totalPicks,\n        created_at: Date.now()\n    };\n    waveDB.items.unshift(wave);\n}\n\nif (waveDB.items.length > 15) waveDB.items = waveDB.items.slice(0, 15);\nglobal.set('wave_db', waveDB);\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: waveDB }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1730,
+        "y": 1000,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "inject_picking_queue",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 Picking_Queue",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Queue",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 1470,
+        "y": 1060,
+        "wires": [
+            [
+                "func_generate_picking_queue"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_picking_queue",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Pick Tasks",
+        "func": "const statuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED'];\nconst materials = ['GLUE-500', 'SEALANT-X', 'ADHESIVE-PRO', 'COATING-UV'];\nconst locations = ['A-01-01', 'A-02-03', 'B-01-02', 'B-03-01', 'C-02-04'];\n\nlet tasks = [];\nlet count = Math.floor(Math.random() * 8) + 5;\n\nfor (let i = 0; i < count; i++) {\n    let task = {\n        task_id: 'PICK-' + Date.now() + '-' + i,\n        status: statuses[Math.floor(Math.random() * statuses.length)],\n        material_code: materials[Math.floor(Math.random() * materials.length)],\n        material_name: 'Material ' + (i + 1),\n        batch: 'B2026' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),\n        from_location: locations[Math.floor(Math.random() * locations.length)],\n        to_location: 'STAGE-0' + (Math.floor(Math.random() * 3) + 1),\n        qty: Math.floor(Math.random() * 50) + 10,\n        uom: 'EA',\n        wave_id: 'WAVE-' + Math.floor(Math.random() * 100),\n        dn_no: 'DN-' + Math.floor(Math.random() * 10000),\n        priority: Math.random() > 0.7 ? 'HIGH' : 'NORMAL',\n        created_at: Date.now()\n    };\n    tasks.push(task);\n}\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: { tasks: tasks } }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1750,
+        "y": 1060,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "inject_staging_area",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 Staging_Area",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/Staging_Area",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 1460,
+        "y": 1120,
+        "wires": [
+            [
+                "func_generate_staging_area"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_staging_area",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Staging",
+        "func": "const areas = ['STAGE-01', 'STAGE-02', 'STAGE-03', 'STAGE-04'];\nconst materials = ['GLUE-500', 'SEALANT-X', 'ADHESIVE-PRO'];\n\nlet stagingAreas = areas.map(areaId => {\n    let itemCount = Math.floor(Math.random() * 5);\n    let items = [];\n    for (let i = 0; i < itemCount; i++) {\n        items.push({\n            hu_id: 'HU-' + Math.floor(Math.random() * 10000),\n            material_code: materials[Math.floor(Math.random() * materials.length)],\n            qty: Math.floor(Math.random() * 100) + 10,\n            dn_no: 'DN-' + Math.floor(Math.random() * 10000),\n            wave_id: 'WAVE-' + Math.floor(Math.random() * 100),\n            staged_at: Date.now() - Math.floor(Math.random() * 3600000)\n        });\n    }\n    return {\n        area_id: areaId,\n        capacity: 20,\n        used: items.length,\n        items: items\n    };\n});\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: { areas: stagingAreas } }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1740,
+        "y": 1120,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "inject_loading_docks",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 Loading_Docks",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/Loading_Docks",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 1470,
+        "y": 1180,
+        "wires": [
+            [
+                "func_generate_loading_docks"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_loading_docks",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Docks",
+        "func": "const dockStatuses = ['AVAILABLE', 'WAITING', 'LOADING', 'COMPLETED'];\nconst carriers = ['SF-EXPRESS', 'DHL', 'SINOTRANS', 'JD-LOGISTICS'];\n\nlet docks = [];\nfor (let i = 1; i <= 6; i++) {\n    let status = dockStatuses[Math.floor(Math.random() * dockStatuses.length)];\n    let dock = {\n        dock_id: 'DOCK-0' + i,\n        status: status,\n        carrier: status !== 'AVAILABLE' ? carriers[Math.floor(Math.random() * carriers.length)] : null,\n        vehicle: status !== 'AVAILABLE' ? '沪A' + String(Math.floor(Math.random() * 90000) + 10000) : null,\n        shipments: status === 'LOADING' || status === 'WAITING' ? Math.floor(Math.random() * 3) + 1 : 0,\n        total_items: status === 'LOADING' ? Math.floor(Math.random() * 50) + 10 : 0,\n        loaded_items: status === 'LOADING' ? Math.floor(Math.random() * 30) : 0,\n        arrival_time: status !== 'AVAILABLE' ? Date.now() - Math.floor(Math.random() * 7200000) : null\n    };\n    docks.push(dock);\n}\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: { docks: docks } }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1730,
+        "y": 1180,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_mock_state",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Publish State",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 2000,
+        "y": 1040,
+        "wires": []
+    },
+    {
+        "id": "debug_mock_output",
+        "type": "debug",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "View Mock Data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2010,
+        "y": 1120,
+        "wires": []
+    }
+]

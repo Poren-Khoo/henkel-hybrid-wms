@@ -36,9 +36,9 @@ export default function InventoryList() {
   // CRITICAL: DATA MAPPING LOGIC (DO NOT CHANGE)
   const stockItems = useMemo(() => {
     const rawData = data.raw[TOPIC_INVENTORY]
-    const rawItems = Array.isArray(rawData) ? rawData : rawData?.stock_items || rawData?.items || rawData?.inventory || []
-    
-    return Array.isArray(rawItems) ? rawItems.map((item, index) => ({
+    let rawItems = Array.isArray(rawData) ? rawData : (rawData?.stock_items ?? rawData?.items ?? rawData?.inventory ?? [])
+    if (!Array.isArray(rawItems)) rawItems = []
+    return rawItems.map((item, index) => ({
       hu: item.hu || item.handling_unit || item.handlingUnit || item.hu_id || item.inv_id || `INV-${Date.now()}-${index}`,
       batch_id: item.batch_id || item.batch || item.batchId || 'N/A',
       sku: item.sku || item.material || item.material_code || item.materialCode || 'N/A',
@@ -48,7 +48,7 @@ export default function InventoryList() {
       location: item.location || item.bin || item.bin_location || item.binLocation || 'N/A',
       supplier: item.supplier || item.supplier_lot || item.supplierLot || 'N/A',
       expiry_date: item.expiry_date || item.expiry || item.expiryDate || null
-    })) : []
+    }))
   }, [data.raw])
 
   // --- DERIVED DATA FOR FILTERS ---

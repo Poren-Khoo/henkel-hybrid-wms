@@ -4,7 +4,13 @@
  * Enterprise wave planning for Trading context outbound operations.
  * Allows planners to group orders into waves for efficient picking.
  * 
- * Follows patterns from OutboundOrders.jsx and InboundOrders.jsx
+ * DDD Pattern Applied:
+ * - Uses WaveService for business logic, command building, status helpers
+ * - Uses OutboundOrderValidationError for error handling
+ * - UNS envelope unwrapping for MQTT data
+ * - No inline validation or payload building in component
+ * 
+ * @see src/domain/outbound/WaveService.js
  */
 
 import React, { useState, useMemo } from 'react'
@@ -40,10 +46,13 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table'
 import {
     Layers, Plus, Play, Truck, Calendar, MapPin, Package,
-    CheckCircle, Clock, AlertCircle, Eye, Trash2, RefreshCw
+    AlertCircle, Eye, Trash2
 } from 'lucide-react'
 import PageContainer from '../../../components/PageContainer'
 import { useGlobalUNS } from '../../../context/UNSContext'
+// Domain Layer (DDD Pattern)
+import { WaveService } from '../../../domain/outbound/WaveService'
+import { OutboundOrderValidationError } from '../../../domain/outbound/OutboundOrderValidator'
 
 // --- MQTT TOPICS ---
 const TOPIC_WAVE_LIST = "Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List"
@@ -51,20 +60,8 @@ const TOPIC_CREATE_WAVE = "Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Wa
 const TOPIC_RELEASE_WAVE = "Henkelv2/Shanghai/Logistics/Outbound/Action/Release_Wave"
 const TOPIC_DELETE_WAVE = "Henkelv2/Shanghai/Logistics/Outbound/Action/Delete_Wave"
 
-// --- STATUS CONFIG ---
-const WAVE_STATUS_CONFIG = {
-    'PLANNED': { label: 'Planned', color: 'bg-slate-100 text-slate-700', icon: Clock },
-    'RELEASED': { label: 'Released', color: 'bg-blue-100 text-blue-700', icon: Play },
-    'IN_PROGRESS': { label: 'In Progress', color: 'bg-amber-100 text-amber-700', icon: RefreshCw },
-    'COMPLETED': { label: 'Completed', color: 'bg-green-100 text-green-700', icon: CheckCircle }
-}
-
-const PICK_METHODS = {
-    'DISCRETE': { label: 'Discrete (1 order at a time)', description: 'Best for small operations' },
-    'BATCH': { label: 'Batch (Multiple orders)', description: 'Good for similar items' },
-    'ZONE': { label: 'Zone (By location)', description: 'Best for large warehouses' },
-    'CLUSTER': { label: 'Cluster (Multiple totes)', description: 'Optimized for ecommerce' }
-}
+// --- STATUS CONFIG & PICK METHODS ---
+// Now using WaveService.getStatusBadgeConfig() and WaveService.PICK_METHODS (DDD Pattern)
 
 // --- TABS ---
 const STATUS_TABS = [
@@ -151,24 +148,39 @@ export default function WavePlanning() {
     const [newWave, setNewWave] = useState(INITIAL_WAVE_FORM)
     const [selectedWave, setSelectedWave] = useState(null)
 
-    // --- DATA ---
+    // --- DATA (DDD Pattern: Use service for normalization) ---
     const waves = useMemo(() => {
         const rawData = data.raw?.[TOPIC_WAVE_LIST]
 
         // Use mock data if no real data
-        if (!rawData || (Array.isArray(rawData) && rawData.length === 0)) {
+        if (!rawData) {
             return MOCK_WAVES
         }
 
-        const list = Array.isArray(rawData) ? rawData : rawData?.waves || []
-        return list
+        // Handle UNS envelope unwrapping (mqtt-uns-patterns)
+        let packet = rawData
+        if (rawData?.topics && Array.isArray(rawData.topics) && rawData.topics.length > 0) {
+            packet = rawData.topics[0].value || rawData.topics[0]
+        }
+
+        // Handle different data structures
+        const list = Array.isArray(packet) 
+            ? packet 
+            : packet?.items || packet?.waves || []
+
+        // Return mock if empty
+        if (list.length === 0) {
+            return MOCK_WAVES
+        }
+
+        // Normalize using WaveService (DDD Pattern)
+        return list.map(wave => WaveService.normalizeWave(wave)).filter(Boolean)
     }, [data.raw])
 
-    // --- FILTERING ---
+    // --- FILTERING (DDD Pattern: Use service for filtering) ---
     const filteredWaves = useMemo(() => {
         const tab = STATUS_TABS.find(t => t.id === activeTab)
-        if (!tab?.filter) return waves
-        return waves.filter(w => w.status === tab.filter)
+        return WaveService.filterByStatus(waves, tab?.filter || 'all')
     }, [waves, activeTab])
 
     // --- COUNTS ---
@@ -182,58 +194,63 @@ export default function WavePlanning() {
         return counts
     }, [waves])
 
-    // --- ACTIONS ---
+    // --- ACTIONS (DDD Pattern: Use service for command building + error handling) ---
     const handleCreateWave = () => {
-        const waveId = `WAVE-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
-        const payload = {
-            wave_id: waveId,
-            ...newWave,
-            status: 'PLANNED',
-            delivery_count: 0,
-            line_count: 0,
-            picks_completed: 0,
-            picks_total: 0,
-            created_at: new Date().toISOString(),
-            operator: 'Current User',
-            timestamp: Date.now()
+        try {
+            // Service handles validation + command building (DDD Pattern)
+            const payload = WaveService.buildCreateWaveCommand({
+                shipDate: newWave.ship_date,
+                carrier: newWave.carrier,
+                route: newWave.route,
+                pickMethod: newWave.pick_method,
+                deliveryIds: []
+            })
+            publish(TOPIC_CREATE_WAVE, payload)
+            setIsCreateOpen(false)
+            setNewWave(INITIAL_WAVE_FORM)
+        } catch (error) {
+            if (error instanceof OutboundOrderValidationError) {
+                alert(error.message)
+                return
+            }
+            throw error
         }
-        publish(TOPIC_CREATE_WAVE, payload)
-        setIsCreateOpen(false)
-        setNewWave(INITIAL_WAVE_FORM)
     }
 
     const handleReleaseWave = (wave) => {
-        const payload = {
-            wave_id: wave.wave_id,
-            action: 'RELEASE',
-            operator: 'Current User',
-            timestamp: Date.now()
+        try {
+            // Service handles validation + command building (DDD Pattern)
+            const payload = WaveService.buildReleaseWaveCommand(wave.wave_id, wave.status)
+            publish(TOPIC_RELEASE_WAVE, payload)
+        } catch (error) {
+            if (error instanceof OutboundOrderValidationError) {
+                alert(error.message)
+                return
+            }
+            throw error
         }
-        publish(TOPIC_RELEASE_WAVE, payload)
     }
 
     const handleDeleteWave = (wave) => {
         if (!confirm(`Delete wave ${wave.wave_id}? This action cannot be undone.`)) return
-        const payload = {
-            wave_id: wave.wave_id,
-            operator: 'Current User',
-            timestamp: Date.now()
+        try {
+            // Service handles validation + command building (DDD Pattern)
+            const payload = WaveService.buildCancelWaveCommand(wave.wave_id, 'Deleted by user')
+            publish(TOPIC_DELETE_WAVE, payload)
+        } catch (error) {
+            if (error instanceof OutboundOrderValidationError) {
+                alert(error.message)
+                return
+            }
+            throw error
         }
-        publish(TOPIC_DELETE_WAVE, payload)
     }
 
-    // --- HELPERS ---
-    const getProgressPercentage = (wave) => {
-        if (!wave.picks_total) return 0
-        return Math.round((wave.picks_completed / wave.picks_total) * 100)
-    }
-
+    // --- HELPERS (DDD Pattern: Use service for business logic) ---
     const getStatusBadge = (status) => {
-        const config = WAVE_STATUS_CONFIG[status] || WAVE_STATUS_CONFIG['PLANNED']
-        const Icon = config.icon
+        const config = WaveService.getStatusBadgeConfig(status)
         return (
-            <Badge variant="secondary" className={`${config.color} font-medium text-[10px] px-2`}>
-                <Icon className="h-3 w-3 mr-1" />
+            <Badge variant="secondary" className={`${config.className} font-medium text-[10px] px-2`}>
                 {config.label}
             </Badge>
         )
@@ -311,7 +328,7 @@ export default function WavePlanning() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {Object.entries(PICK_METHODS).map(([key, val]) => (
+                                            {Object.entries(WaveService.PICK_METHODS).map(([key, val]) => (
                                                 <SelectItem key={key} value={key}>
                                                     <div>
                                                         <div className="font-medium">{val.label}</div>
@@ -393,9 +410,9 @@ export default function WavePlanning() {
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-xs">
                                             <span className="text-slate-500">Picks: {wave.picks_completed}/{wave.picks_total}</span>
-                                            <span className="font-medium">{getProgressPercentage(wave)}%</span>
+                                            <span className="font-medium">{WaveService.calculateProgress(wave)}%</span>
                                         </div>
-                                        <Progress value={getProgressPercentage(wave)} className="h-2" />
+                                        <Progress value={WaveService.calculateProgress(wave)} className="h-2" />
                                     </div>
 
                                     {/* Actions */}
@@ -411,7 +428,7 @@ export default function WavePlanning() {
                                         >
                                             <Eye className="h-3.5 w-3.5 mr-1" /> View
                                         </Button>
-                                        {wave.status === 'PLANNED' && (
+                                        {WaveService.isPlanned(wave.status) && (
                                             <>
                                                 <Button
                                                     size="sm"
@@ -483,7 +500,7 @@ export default function WavePlanning() {
                                                 </div>
                                                 <div>
                                                     <span className="text-slate-500">Pick Method</span>
-                                                    <p className="font-medium">{PICK_METHODS[selectedWave.pick_method]?.label || selectedWave.pick_method}</p>
+                                                    <p className="font-medium">{WaveService.PICK_METHODS[selectedWave.pick_method]?.label || selectedWave.pick_method}</p>
                                                 </div>
                                             </div>
                                         </CardContent>
@@ -505,7 +522,7 @@ export default function WavePlanning() {
                                                     <p className="text-xs text-slate-500">Lines</p>
                                                 </div>
                                                 <div className="p-3 bg-slate-50 rounded-lg">
-                                                    <p className="text-2xl font-bold text-green-600">{getProgressPercentage(selectedWave)}%</p>
+                                                    <p className="text-2xl font-bold text-green-600">{WaveService.calculateProgress(selectedWave)}%</p>
                                                     <p className="text-xs text-slate-500">Picked</p>
                                                 </div>
                                             </div>
@@ -514,7 +531,7 @@ export default function WavePlanning() {
                                                     <span>Pick Progress</span>
                                                     <span>{selectedWave.picks_completed} / {selectedWave.picks_total} picks</span>
                                                 </div>
-                                                <Progress value={getProgressPercentage(selectedWave)} className="h-3" />
+                                                <Progress value={WaveService.calculateProgress(selectedWave)} className="h-3" />
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -555,8 +572,8 @@ export default function WavePlanning() {
                                         </CardContent>
                                     </Card>
 
-                                    {/* Actions */}
-                                    {selectedWave.status === 'PLANNED' && (
+                                    {/* Actions (DDD Pattern: Use service for status checks) */}
+                                    {WaveService.isPlanned(selectedWave.status) && (
                                         <div className="flex gap-3">
                                             <Button
                                                 className="flex-1 bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121] font-bold"

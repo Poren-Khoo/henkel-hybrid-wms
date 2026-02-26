@@ -21,7 +21,8 @@ export default function WarehouseList() {
   const warehouses = useMemo(() => {
     const packet = data.raw[TOPIC_WH]
     if (!packet) return []
-    return Array.isArray(packet) ? packet : packet.items || []
+    const list = Array.isArray(packet) ? packet : (packet.items ?? [])
+    return Array.isArray(list) ? list : []
   }, [data.raw])
 
   // 2. FILTER

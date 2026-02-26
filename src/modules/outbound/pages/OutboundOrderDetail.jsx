@@ -43,19 +43,17 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
     if (syncRaw?.topics && Array.isArray(syncRaw.topics) && syncRaw.topics.length > 0) {
       syncPacket = syncRaw.topics[0].value || syncRaw.topics[0]
     }
-    const syncRecords = Array.isArray(syncPacket) 
-      ? syncPacket 
-      : syncPacket?.sync_records || syncPacket?.items || []
-    
+    let syncRecords = Array.isArray(syncPacket) ? syncPacket : (syncPacket?.sync_records ?? syncPacket?.items ?? [])
+    if (!Array.isArray(syncRecords)) syncRecords = []
+
     // Unwrap UNS envelope for shipment list
     const shipmentRaw = data.raw[TOPIC_SHIPMENT_LIST]
     let shipmentPacket = shipmentRaw
     if (shipmentRaw?.topics && Array.isArray(shipmentRaw.topics) && shipmentRaw.topics.length > 0) {
       shipmentPacket = shipmentRaw.topics[0].value || shipmentRaw.topics[0]
     }
-    const rawShipments = Array.isArray(shipmentPacket)
-      ? shipmentPacket
-      : shipmentPacket?.items || shipmentPacket?.shipments || []
+    let rawShipments = Array.isArray(shipmentPacket) ? shipmentPacket : (shipmentPacket?.items ?? shipmentPacket?.shipments ?? [])
+    if (!Array.isArray(rawShipments)) rawShipments = []
 
     // Normalize and merge all sources
     const costingOrders = rawCostDNs
@@ -89,46 +87,53 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
 
   // Update when initialOrder prop changes
   useEffect(() => {
-    setCurrentOrder(initialOrder)
+    if (initialOrder) {
+      setCurrentOrder(initialOrder)
+    }
   }, [initialOrder])
 
+  // Use initialOrder as fallback if currentOrder hasn't been set yet
+  // This must be defined before any useMemo that depends on it
+  const orderToDisplay = currentOrder || initialOrder
+
   // --- DDD PATTERN: Use domain service for progress steps ---
+  // All hooks must be called unconditionally (before any early returns)
   const progressSteps = useMemo(() => {
-    if (!currentOrder?.status) return []
-    return OutboundOrderService.getProgressSteps(currentOrder.status)
-  }, [currentOrder?.status])
+    if (!orderToDisplay?.status) return []
+    return OutboundOrderService.getProgressSteps(orderToDisplay.status)
+  }, [orderToDisplay?.status])
 
   // --- DDD PATTERN: Use domain validator for status badge ---
   const statusConfig = useMemo(() => {
-    if (!currentOrder?.status) {
+    if (!orderToDisplay?.status) {
       return { label: 'Unknown', className: 'bg-slate-100 text-slate-600' }
     }
-    return OutboundOrderValidator.getStatusBadgeConfig(currentOrder.status)
-  }, [currentOrder?.status])
+    return OutboundOrderValidator.getStatusBadgeConfig(orderToDisplay.status)
+  }, [orderToDisplay?.status])
 
   // --- Handle line items from multiple sources ---
   const lineItems = useMemo(() => {
-    if (!currentOrder) return []
+    if (!orderToDisplay) return []
     // Priority: order.lines > order.items > empty array
-    if (currentOrder.lines && Array.isArray(currentOrder.lines) && currentOrder.lines.length > 0) {
-      return currentOrder.lines
+    if (orderToDisplay.lines && Array.isArray(orderToDisplay.lines) && orderToDisplay.lines.length > 0) {
+      return orderToDisplay.lines
     }
-    if (currentOrder.items && Array.isArray(currentOrder.items) && currentOrder.items.length > 0) {
-      return currentOrder.items.map(item => ({
+    if (orderToDisplay.items && Array.isArray(orderToDisplay.items) && orderToDisplay.items.length > 0) {
+      return orderToDisplay.items.map(item => ({
         code: item.sku || item.code || 'UNKNOWN',
         qty: item.qty || 0,
         desc: item.desc || item.description || 'Standard Material'
       }))
     }
     return []
-  }, [currentOrder?.lines, currentOrder?.items])
+  }, [orderToDisplay?.lines, orderToDisplay?.items])
 
-  // Early return AFTER all hooks
-  if (!currentOrder) return null
+  // Early return AFTER all hooks have been called (React Rules of Hooks)
+  if (!open || !initialOrder) return null
 
   // --- Cost Breakdown with Fallbacks (reused from OutboundOrders) ---
   const renderCostBreakdown = () => {
-    if (!currentOrder.breakdown) {
+    if (!orderToDisplay.breakdown) {
       return (
         <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 shadow-sm">
           <div className="flex items-center gap-2 text-amber-700">
@@ -138,9 +143,9 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
           <p className="text-xs text-amber-600 mt-2">
             This order does not have cost breakdown data. It may have been created from a non-costing source.
           </p>
-          {currentOrder.cost && (
+          {orderToDisplay.cost && (
             <p className="text-xs text-amber-600 mt-1">
-              Total Cost: ¥{Number(currentOrder.cost).toFixed(2)}
+              Total Cost: ¥{Number(orderToDisplay.cost).toFixed(2)}
             </p>
           )}
         </div>
@@ -148,7 +153,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
     }
 
     // Normalize breakdown values with fallbacks
-    const breakdown = currentOrder.breakdown
+    const breakdown = orderToDisplay.breakdown
     const inboundTotal = Number(breakdown.inbound_total || breakdown.inboundTotal || 0)
     const inboundUnitPrice = Number(breakdown.inbound_unit_price || breakdown.inboundUnitPrice || breakdown.inbound_unit || 0)
     const outboundTotal = Number(breakdown.outbound_total || breakdown.outboundTotal || 0)
@@ -173,7 +178,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
                   {inboundTotal === 0 && <span className="ml-2 text-xs text-slate-400">(Not calculated)</span>}
                 </div>
                 <div className="text-xs text-slate-500">
-                  {currentOrder.qty || 0} Units × ¥{inboundUnitPrice.toFixed(2)}
+                  {orderToDisplay.qty || 0} Units × ¥{inboundUnitPrice.toFixed(2)}
                 </div>
               </div>
             </div>
@@ -194,7 +199,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
                   {outboundTotal === 0 && <span className="ml-2 text-xs text-slate-400">(Not calculated)</span>}
                 </div>
                 <div className="text-xs text-slate-500">
-                  {currentOrder.qty || 0} Units × ¥{outboundUnitPrice.toFixed(2)}
+                  {orderToDisplay.qty || 0} Units × ¥{outboundUnitPrice.toFixed(2)}
                 </div>
               </div>
             </div>
@@ -215,7 +220,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
                   {storageTotal === 0 && <span className="ml-2 text-xs text-slate-400">(Not calculated)</span>}
                 </div>
                 <div className="text-xs text-slate-500">
-                  {currentOrder.qty || 0} Units × {storageDays} Days × ¥{storageUnitPrice.toFixed(2)}
+                  {orderToDisplay.qty || 0} Units × {storageDays} Days × ¥{storageUnitPrice.toFixed(2)}
                 </div>
               </div>
             </div>
@@ -226,22 +231,22 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
         </div>
         {/* Totals */}
         <div className="pt-2">
-          {currentOrder.basic_cost !== undefined && (
+          {orderToDisplay.basic_cost !== undefined && (
             <div className="flex justify-between text-sm mb-1">
               <span className="text-slate-500">Basic Cost Total:</span>
-              <span className="font-mono text-slate-700">¥{Number(currentOrder.basic_cost).toFixed(2)}</span>
+              <span className="font-mono text-slate-700">¥{Number(orderToDisplay.basic_cost).toFixed(2)}</span>
             </div>
           )}
-          {currentOrder.vas_cost !== undefined && (
+          {orderToDisplay.vas_cost !== undefined && (
             <div className="flex justify-between text-sm mb-2">
               <span className="text-slate-500">VAS Cost:</span>
-              <span className="font-mono text-slate-700">¥{Number(currentOrder.vas_cost).toFixed(2)}</span>
+              <span className="font-mono text-slate-700">¥{Number(orderToDisplay.vas_cost).toFixed(2)}</span>
             </div>
           )}
-          {currentOrder.cost && (
+          {orderToDisplay.cost && (
             <div className="flex justify-between text-lg pt-3 border-t border-slate-200">
               <span className="font-bold text-slate-900">Total Billable:</span>
-              <span className="font-bold text-[#b2ed1d] text-xl">¥{Number(currentOrder.cost).toFixed(2)}</span>
+              <span className="font-bold text-[#b2ed1d] text-xl">¥{Number(orderToDisplay.cost).toFixed(2)}</span>
             </div>
           )}
         </div>
@@ -257,13 +262,13 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="font-mono text-xs">
-                  {BUSINESS_TYPES[currentOrder.type]?.label || currentOrder.type}
+                  {BUSINESS_TYPES[orderToDisplay.type]?.label || orderToDisplay.type}
                 </Badge>
                 <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
               </div>
-              <DialogTitle className="text-2xl font-mono text-slate-900">{currentOrder.id}</DialogTitle>
+              <DialogTitle className="text-2xl font-mono text-slate-900">{orderToDisplay.id}</DialogTitle>
               <DialogDescription>
-                {currentOrder.customer || currentOrder.destination || 'Unknown'}
+                {orderToDisplay.customer || orderToDisplay.destination || 'Unknown'}
               </DialogDescription>
             </div>
             <div className="flex gap-2">
@@ -271,7 +276,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
                 <Printer className="w-4 h-4 mr-2" /> Print
               </Button>
               {onAction && (
-                <Button size="sm" className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121]" onClick={() => onAction(currentOrder)}>
+                <Button size="sm" className="bg-[#b2ed1d] text-slate-900 hover:bg-[#8cd121]" onClick={() => onAction(orderToDisplay)}>
                   Actions
                 </Button>
               )}
@@ -291,7 +296,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
               <TabsTrigger value="lines" className="data-[state=active]:border-b-2 data-[state=active]:border-[#b2ed1d] data-[state=active]:shadow-none rounded-none px-0 pb-2">
                 Line Items ({lineItems.length})
               </TabsTrigger>
-              {currentOrder.type === 'SALES_ORDER' && (
+              {orderToDisplay.type === 'SALES_ORDER' && (
                 <TabsTrigger value="financials" className="data-[state=active]:border-b-2 data-[state=active]:border-[#b2ed1d] data-[state=active]:shadow-none rounded-none px-0 pb-2">Financials</TabsTrigger>
               )}
               <TabsTrigger value="documents" className="data-[state=active]:border-b-2 data-[state=active]:border-[#b2ed1d] data-[state=active]:shadow-none rounded-none px-0 pb-2">Documents</TabsTrigger>
@@ -333,17 +338,17 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
 
             {/* Key Details Grid */}
             <div className="grid grid-cols-2 gap-4">
-              <InfoCard icon={User} label="Operator" value={currentOrder.operator || currentOrder.submitted_by || "System"} />
-              <InfoCard icon={Calendar} label="Requested Date" value={currentOrder.requestedDate || currentOrder.requested_date || "ASAP"} />
-              <InfoCard icon={MapPin} label="Destination" value={currentOrder.destination || currentOrder.customer || "Unknown"} />
-              <InfoCard icon={Package} label="Total Qty" value={currentOrder.qty || 0} sub="Units" />
+              <InfoCard icon={User} label="Operator" value={orderToDisplay.operator || orderToDisplay.submitted_by || "System"} />
+              <InfoCard icon={Calendar} label="Requested Date" value={orderToDisplay.requestedDate || orderToDisplay.requested_date || "ASAP"} />
+              <InfoCard icon={MapPin} label="Destination" value={orderToDisplay.destination || orderToDisplay.customer || "Unknown"} />
+              <InfoCard icon={Package} label="Total Qty" value={orderToDisplay.qty || 0} sub="Units" />
               
               {/* Carrier and Tracking (for shipped orders) */}
-              {currentOrder.status === 'SHIPPED' && currentOrder.carrier && (
-                <InfoCard icon={Truck} label="Carrier" value={currentOrder.carrier} />
+              {orderToDisplay.status === 'SHIPPED' && orderToDisplay.carrier && (
+                <InfoCard icon={Truck} label="Carrier" value={orderToDisplay.carrier} />
               )}
-              {currentOrder.status === 'SHIPPED' && currentOrder.trackingNumber && (
-                <InfoCard icon={FileCheck} label="Tracking Number" value={currentOrder.trackingNumber} />
+              {orderToDisplay.status === 'SHIPPED' && orderToDisplay.trackingNumber && (
+                <InfoCard icon={FileCheck} label="Tracking Number" value={orderToDisplay.trackingNumber} />
               )}
             </div>
               </div>
@@ -373,7 +378,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
                       </TableCell>
                       <TableCell className="text-right font-mono">{line.qty}</TableCell>
                       <TableCell className="text-center">
-                          {currentOrder.status === 'NEW' || currentOrder.status === 'PENDING_APPROVAL' ? (
+                          {orderToDisplay.status === 'NEW' || orderToDisplay.status === 'PENDING_APPROVAL' ? (
                           <Badge variant="outline" className="text-slate-400 border-slate-200">Pending</Badge>
                         ) : (
                           <Badge variant="outline" className="text-green-600 bg-green-50 border-green-200">
@@ -406,9 +411,9 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
             <TabsContent value="documents" className="pt-6 pb-6 flex-1 overflow-y-auto min-h-0">
               <div>
                 <div className="grid grid-cols-2 gap-4">
-                <DocCard title="Pick List" type="PDF" status={currentOrder.status === 'PICKING' || currentOrder.status === 'PACKING' || currentOrder.status === 'READY_TO_SHIP' || currentOrder.status === 'SHIPPED' ? 'Ready' : 'Pending'} />
-                <DocCard title="Delivery Note (DN)" type="PDF" status={currentOrder.status === 'SHIPPED' ? 'Final' : 'Draft'} />
-                <DocCard title="Shipping Label" type="ZPL" status={currentOrder.status === 'SHIPPED' ? 'Ready' : 'Pending'} />
+                <DocCard title="Pick List" type="PDF" status={orderToDisplay.status === 'PICKING' || orderToDisplay.status === 'PACKING' || orderToDisplay.status === 'READY_TO_SHIP' || orderToDisplay.status === 'SHIPPED' ? 'Ready' : 'Pending'} />
+                <DocCard title="Delivery Note (DN)" type="PDF" status={orderToDisplay.status === 'SHIPPED' ? 'Final' : 'Draft'} />
+                <DocCard title="Shipping Label" type="ZPL" status={orderToDisplay.status === 'SHIPPED' ? 'Ready' : 'Pending'} />
                 </div>
               </div>
             </TabsContent>

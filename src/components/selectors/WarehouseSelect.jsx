@@ -7,9 +7,10 @@ const TOPIC_WH = "Henkelv2/Shanghai/Logistics/MasterData/State/Warehouses"
 export function WarehouseSelect({ value, onChange }) {
   const { data } = useGlobalUNS()
   
-  const warehouses = data.raw[TOPIC_WH] 
-    ? (Array.isArray(data.raw[TOPIC_WH]) ? data.raw[TOPIC_WH] : data.raw[TOPIC_WH].items || [])
+  let warehouses = data.raw[TOPIC_WH]
+    ? (Array.isArray(data.raw[TOPIC_WH]) ? data.raw[TOPIC_WH] : (data.raw[TOPIC_WH].items ?? []))
     : []
+  if (!Array.isArray(warehouses)) warehouses = []
 
   return (
     <Select value={value} onValueChange={onChange}>

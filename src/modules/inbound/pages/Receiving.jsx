@@ -79,15 +79,17 @@ export default function Receiving() {
   const materialMap = useMemo(() => {
     const packet = data?.raw?.[TOPIC_MAT]
     if (!packet) return new Map()
-    const list = (packet.topics && packet.topics[0]?.value) || (Array.isArray(packet) ? packet : packet.items) || []
+    let list = (packet.topics?.[0]?.value) ?? (Array.isArray(packet) ? packet : packet.items) ?? []
+    if (!Array.isArray(list)) list = []
     return new Map(list.map(m => [m.code, m]))
   }, [data.raw])
 
   // --- 2. ROBUST INBOUND QUEUE ---
   const livePendingDocs = useMemo(() => {
-    const rawData = data?.raw?.[TOPIC_INBOUND_PLAN]?.asns || [] 
+    const raw = data?.raw?.[TOPIC_INBOUND_PLAN]?.asns
+    let rawData = Array.isArray(raw) ? raw : []
     return rawData
-      .filter(r => r.status === 'PLANNED' || r.status === 'PENDING')
+      .filter(r => r?.status === 'PLANNED' || r?.status === 'PENDING')
       .map(r => ({
         id: r.id,
         supplier: r.supplier,

@@ -24,16 +24,20 @@ export default function DispatchOrders() {
   const [customer, setCustomer] = useState('')
   const [selectedProduct, setSelectedProduct] = useState('')
 
-  // 1. Get Live Shipments
+  // 1. Get Live Shipments (ensure array)
   const shipments = useMemo(() => {
-    return data.raw[TOPIC_SHIPMENT_LIST]?.items || []
+    const raw = data.raw[TOPIC_SHIPMENT_LIST]
+    let packet = raw?.topics?.[0] ? (raw.topics[0].value ?? raw.topics[0]) : raw
+    let list = Array.isArray(packet) ? packet : (packet?.items ?? packet?.shipments ?? [])
+    return Array.isArray(list) ? list : []
   }, [data.raw])
 
   // 2. Get Available Finished Goods (for the dropdown)
   const availableFG = useMemo(() => {
-    const inv = data.raw[TOPIC_INVENTORY]?.stock_items || []
-    // Only show items that are NOT quarantined and NOT allocated
-    return inv.filter(i => (i.status === 'AVAILABLE' || i.status === 'RELEASED') && !i.allocated_to)
+    const raw = data.raw[TOPIC_INVENTORY]
+    let inv = Array.isArray(raw) ? raw : (raw?.stock_items ?? raw?.items ?? [])
+    if (!Array.isArray(inv)) inv = []
+    return inv.filter(i => (i?.status === 'AVAILABLE' || i?.status === 'RELEASED') && !i.allocated_to)
   }, [data.raw])
 
   // Submit Handler

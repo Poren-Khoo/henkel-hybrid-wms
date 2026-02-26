@@ -20,20 +20,26 @@ export default function InternalDashboard() {
   const { data } = useGlobalUNS()
   const navigate = useNavigate()
 
-  // --- DATA AGGREGATION ---
-  const invData = data.raw[TOPIC_INVENTORY] || { stock_items: [] }
-  const inventory = invData.stock_items || []
-  const totalStock = inventory.reduce((sum, item) => sum + (Number(item.qty) || 0), 0)
-  
-  const expiredItems = inventory.filter(i => i.status === 'EXPIRED' || i.status === 'BLOCKED')
-  const qcData = data.raw[TOPIC_QC] || { items: [] }
-  const qcQueue = qcData.items || []
-  
-  const orderData = data.raw[TOPIC_ORDERS] || { items: [] }
-  const activeOrders = (orderData.items || []).filter(o => o.status === 'IN_PROGRESS' || o.status === 'PLANNED')
-  
-  const taskData = data.raw[TOPIC_TASKS] || { items: [] }
-  const pendingPicks = (taskData.items || []).filter(t => t.status === 'PENDING').length
+  // --- DATA AGGREGATION (ensure arrays before .filter / .reduce) ---
+  const invData = data.raw[TOPIC_INVENTORY] || {}
+  let inventory = Array.isArray(invData) ? invData : (invData.stock_items ?? invData.items ?? [])
+  if (!Array.isArray(inventory)) inventory = []
+  const totalStock = inventory.reduce((sum, item) => sum + (Number(item?.qty) || 0), 0)
+  const expiredItems = inventory.filter(i => i?.status === 'EXPIRED' || i?.status === 'BLOCKED')
+
+  const qcData = data.raw[TOPIC_QC] || {}
+  let qcQueue = Array.isArray(qcData) ? qcData : (qcData.items ?? [])
+  if (!Array.isArray(qcQueue)) qcQueue = []
+
+  const orderData = data.raw[TOPIC_ORDERS] || {}
+  let orderItems = Array.isArray(orderData) ? orderData : (orderData.items ?? [])
+  if (!Array.isArray(orderItems)) orderItems = []
+  const activeOrders = orderItems.filter(o => o?.status === 'IN_PROGRESS' || o?.status === 'PLANNED')
+
+  const taskData = data.raw[TOPIC_TASKS] || {}
+  let taskItems = Array.isArray(taskData) ? taskData : (taskData.items ?? [])
+  if (!Array.isArray(taskItems)) taskItems = []
+  const pendingPicks = taskItems.filter(t => t?.status === 'PENDING').length
 
   // --- COMPONENT: STAT CARD (Neutral) ---
   const StatCard = ({ title, value, subtext, icon: Icon, onClick }) => (

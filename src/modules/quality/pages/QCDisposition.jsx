@@ -26,9 +26,10 @@ export default function QCDisposition() {
     // console.log("📍 [QC Disposition] Component Mounted.");
   }, []);
 
-  // 1. Get Live Data (Preserved)
-  const queueData = data.raw[TOPIC_DISPO_QUEUE] || { items: [] }
-  const items = queueData.items || []
+  // 1. Get Live Data (ensure items is array before .map)
+  const queueRaw = data.raw[TOPIC_DISPO_QUEUE] || {}
+  let items = Array.isArray(queueRaw) ? queueRaw : (queueRaw.items ?? [])
+  if (!Array.isArray(items)) items = []
 
   // 2. Handle Action (Preserved Logic)
   const handleDisposition = (batchId, actionType) => {

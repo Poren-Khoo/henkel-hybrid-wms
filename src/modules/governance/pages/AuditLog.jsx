@@ -13,8 +13,9 @@ const TOPIC_AUDIT = "Henkelv2/Shanghai/Logistics/Exceptions/State/Audit_Log"
 
 export default function AuditLog() {
   const { data } = useGlobalUNS()
-  const auditData = data.raw[TOPIC_AUDIT] || { items: [] }
-  const logs = auditData.items || []
+  const auditData = data.raw[TOPIC_AUDIT] || {}
+  let logs = Array.isArray(auditData) ? auditData : (auditData.items ?? [])
+  if (!Array.isArray(logs)) logs = []
 
   return (
     <PageContainer title="Audit Log" subtitle="Immutable record of all system actions">

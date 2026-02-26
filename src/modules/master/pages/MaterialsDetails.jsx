@@ -39,10 +39,9 @@ export default function MaterialDetail() {
   useEffect(() => {
     if (!isNew && data.raw[TOPIC_MAT]) {
       // Handle both array and object wrapper formats from UNS
-      const materials = Array.isArray(data.raw[TOPIC_MAT]) 
-        ? data.raw[TOPIC_MAT] 
-        : data.raw[TOPIC_MAT].items || []
-      
+      const raw = data.raw[TOPIC_MAT]
+      let materials = Array.isArray(raw) ? raw : (raw?.items ?? [])
+      if (!Array.isArray(materials)) materials = []
       const found = materials.find(m => m.code === id)
       
       if (found) {

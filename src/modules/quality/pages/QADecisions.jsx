@@ -37,9 +37,9 @@ export default function QADecisions() {
   // DATA MAPPING (Preserved Logic)
   const samples = useMemo(() => {
     const rawData = data.raw[TOPIC_DECISION_QUEUE]
-    const rawSamples = Array.isArray(rawData) ? rawData : rawData?.items || rawData?.queue || rawData?.samples || []
-    
-    const mappedSamples = Array.isArray(rawSamples) ? rawSamples.map((item, index) => ({
+    let rawSamples = Array.isArray(rawData) ? rawData : (rawData?.items ?? rawData?.queue ?? rawData?.samples ?? [])
+    if (!Array.isArray(rawSamples)) rawSamples = []
+    const mappedSamples = rawSamples.map((item, index) => ({
       id: item.sample_id || item.batch_id || item.id || item.sampleId || `QA-${Date.now()}-${index}`,
       material: item.sku || item.material || item.material_code || item.materialCode || 'N/A',
       desc: item.description || item.desc || item.material_name || item.materialName || '',
@@ -50,8 +50,7 @@ export default function QADecisions() {
       lab_result: item.lab_result || item.labResult || item.result || '', 
       reason: item.reason || item.decision_reason || item.decisionReason || '',
       decidedBy: item.decided_by || item.decidedBy || item.decider || item.manager || ''
-    })) : []
-    
+    }))
     const filteredByStatus = mappedSamples.filter(item => {
       const status = item.status.toUpperCase()
       return status === 'PENDING_APPROVAL' || status === 'AWAITING_APPROVAL'

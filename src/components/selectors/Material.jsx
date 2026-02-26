@@ -11,12 +11,13 @@ export function MaterialSelect({ value, onChange, disabled, className }) {
   const packet = data.raw[TOPIC_MAT];
   let materials = [];
   
-  // Handle UNS Envelope structure
+  // Handle UNS Envelope structure (ensure materials is always an array)
   if (packet) {
-    if (packet.topics && packet.topics[0] && Array.isArray(packet.topics[0].value)) {
+    if (packet.topics?.[0] && Array.isArray(packet.topics[0].value)) {
       materials = packet.topics[0].value;
     } else {
-      materials = Array.isArray(packet) ? packet : packet.items || [];
+      const raw = Array.isArray(packet) ? packet : (packet.items ?? []);
+      materials = Array.isArray(raw) ? raw : [];
     }
   }
 

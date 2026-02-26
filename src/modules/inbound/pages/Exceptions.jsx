@@ -51,12 +51,11 @@ export default function Exceptions() {
   const [resolutionNote, setResolutionNote] = useState('')
   const [isResolving, setIsResolving] = useState(false)
 
-  // 1. DATA HANDLING
+  // 1. DATA HANDLING (ensure list is array before .map)
   const exceptions = useMemo(() => {
     const rawData = data.raw[TOPIC_EXCEPTIONS]
-    const list = Array.isArray(rawData) ? rawData : rawData?.items || []
-    
-    // Normalize exceptions using service
+    let list = Array.isArray(rawData) ? rawData : (rawData?.items ?? [])
+    if (!Array.isArray(list)) list = []
     return list.map(ex => ExceptionService.normalizeException(ex))
   }, [data.raw])
 

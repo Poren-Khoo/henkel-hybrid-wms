@@ -76,9 +76,10 @@ const Sidebar = React.forwardRef(({
           data-side={side}
           data-mobile={isMobile}
           className={cn(
-            "group fixed z-50 flex h-full flex-col gap-2 border-r bg-background transition-all duration-300 ease-linear overflow-hidden",
+            "group fixed z-50 flex h-full flex-col gap-2 border-r bg-background overflow-hidden",
+            "transition-[width] duration-300 ease-out",
             "data-[side=left]:left-0 data-[side=right]:right-0",
-            "data-[mobile=true]:data-[state=collapsed]:-translate-x-full",
+            "data-[mobile=true]:data-[state=collapsed]:-translate-x-full data-[mobile=true]:transition-[transform] data-[mobile=true]:duration-300",
             "w-[240px]",
             "md:data-[state=collapsed]:w-[80px]",
             className
@@ -95,7 +96,8 @@ const Sidebar = React.forwardRef(({
       data-state={open ? "expanded" : "collapsed"}
       data-side={side}
       className={cn(
-        "group flex h-full flex-col gap-2 border-r bg-background transition-all duration-300 ease-linear overflow-hidden",
+        "group flex h-full flex-col gap-2 border-r bg-background overflow-hidden",
+        "transition-[width] duration-300 ease-out",
         "w-[240px]",
         "data-[state=collapsed]:w-[80px]",
         className

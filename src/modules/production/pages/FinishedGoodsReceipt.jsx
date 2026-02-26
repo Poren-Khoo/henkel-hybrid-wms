@@ -28,9 +28,9 @@ export default function FinishedGoodsReceipt() {
   // 1. Get Active Orders (IN_PROGRESS)
   const orders = useMemo(() => {
     const rawData = data.raw[TOPIC_ORDER_LIST]
-    const list = rawData?.items || []
-    // Only show orders that are currently being made
-    return list.filter(o => o.status === 'IN_PROGRESS')
+    let list = Array.isArray(rawData) ? rawData : (rawData?.items ?? [])
+    if (!Array.isArray(list)) list = []
+    return list.filter(o => o?.status === 'IN_PROGRESS')
   }, [data.raw])
 
   // Derived state from selection

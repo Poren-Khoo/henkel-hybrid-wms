@@ -24,19 +24,27 @@ export default function ShipmentConfirmation() {
   const [plateNo, setPlateNo] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Ensure shipment list from UNS is always an array (unwrap envelope, handle .items/.shipments)
+  const shipmentList = useMemo(() => {
+    const rawData = data.raw[TOPIC_SHIPMENT_LIST]
+    let packet = rawData
+    if (rawData?.topics?.[0]) {
+      packet = rawData.topics[0].value ?? rawData.topics[0]
+    }
+    let list = Array.isArray(packet) ? packet : (packet?.items ?? packet?.shipments ?? [])
+    if (!Array.isArray(list)) list = []
+    return list
+  }, [data.raw])
+
   // 1. Get Shipments ready to go (PACKED)
   const readyToShip = useMemo(() => {
-    const rawData = data.raw[TOPIC_SHIPMENT_LIST]
-    const list = rawData?.items || []
-    return list.filter(s => s.status === 'PACKED')
-  }, [data.raw])
+    return shipmentList.filter(s => s?.status === 'PACKED')
+  }, [shipmentList])
 
   // 2. Get Shipped History (For reference)
   const history = useMemo(() => {
-    const rawData = data.raw[TOPIC_SHIPMENT_LIST]
-    const list = rawData?.items || []
-    return list.filter(s => s.status === 'SHIPPED')
-  }, [data.raw])
+    return shipmentList.filter(s => s?.status === 'SHIPPED')
+  }, [shipmentList])
 
   // 3. Handle Dispatch
   const handleDispatch = () => {
