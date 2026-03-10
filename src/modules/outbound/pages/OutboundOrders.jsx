@@ -101,8 +101,9 @@ export default function OutboundOrders() {
 
   // --- DATA MERGING (The "Control Tower" Logic) ---
   const orders = useMemo(() => {
-    // 1. Commercial DNs (from costing workflow)
-    const rawCostDNs = Array.isArray(data.dns) ? data.dns : []
+    // 1. Commercial DNs (from costing workflow; backend may send { items: [...] })
+    let rawCostDNs = Array.isArray(data.dns) ? data.dns : (data.dns?.items ?? [])
+    if (!Array.isArray(rawCostDNs)) rawCostDNs = []
 
     // 2. Commercial DNs (from sync status - for logistics view)
     // Handle UNS envelope unwrapping

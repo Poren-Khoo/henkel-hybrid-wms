@@ -27,6 +27,7 @@ Node-RED Backend (Flows process Actions, publish State)
 ```
 
 **Key Files:**
+
 - `src/context/UNSContext.jsx` - Global MQTT connection manager
 - `src/mqttConfig.js` - Broker connection configuration
 - `src/hooks/useUNS.js` - Per-component MQTT hook (legacy)
@@ -53,35 +54,41 @@ export const MQTT_OPTIONS = {
 
 ### 2.1 Topic Types (ONLY 3 ALLOWED)
 
-| Type | Purpose | Direction | Example |
-|------|---------|-----------|---------|
-| `State` | System current state | Backend → Frontend | `.../State/Inventory_Level` |
-| `Action` | Triggers system actions | Frontend → Backend | `.../Action/Confirm_Putaway` |
-| `Metrics` | Time-series data | Devices → System | `.../Metrics/Temperature` |
+
+| Type      | Purpose                 | Direction          | Example                      |
+| --------- | ----------------------- | ------------------ | ---------------------------- |
+| `State`   | System current state    | Backend → Frontend | `.../State/Inventory_Level`  |
+| `Action`  | Triggers system actions | Frontend → Backend | `.../Action/Confirm_Putaway` |
+| `Metrics` | Time-series data        | Devices → System   | `.../Metrics/Temperature`    |
+
 
 **Critical Rule**: Topic type MUST be in the **second-to-last level** of the topic path.
 
 ### 2.2 Topic Naming Convention
 
 **Pattern:**
+
 ```
 {Version}/{Site}/{Function}/{Module}/{Submodule}/State|Action|Metrics/{Entity}
 ```
 
 **Current Implementation:**
+
 ```
 Henkelv2/Shanghai/Logistics/{Module}/{Submodule}/State|Action/{Entity}
 ```
 
-| Segment | Value | Description |
-|---------|-------|-------------|
-| Version | `Henkelv2` | Schema version / project identifier |
-| Site | `Shanghai` | Geographic location |
-| Function | `Logistics` | Business domain |
-| Module | `Internal`, `External`, `MasterData`, `Costing`, etc. | Functional area |
-| Submodule | `Ops`, `Quality`, `Integration`, etc. | Sub-category |
-| Type | `State`, `Action`, `Metrics` | **Must be second-to-last** |
-| Entity | `Task_Queue`, `Confirm_Putaway`, etc. | Specific data/action |
+
+| Segment   | Value                                                 | Description                         |
+| --------- | ----------------------------------------------------- | ----------------------------------- |
+| Version   | `Henkelv2`                                            | Schema version / project identifier |
+| Site      | `Shanghai`                                            | Geographic location                 |
+| Function  | `Logistics`                                           | Business domain                     |
+| Module    | `Internal`, `External`, `MasterData`, `Costing`, etc. | Functional area                     |
+| Submodule | `Ops`, `Quality`, `Integration`, etc.                 | Sub-category                        |
+| Type      | `State`, `Action`, `Metrics`                          | **Must be second-to-last**          |
+| Entity    | `Task_Queue`, `Confirm_Putaway`, etc.                 | Specific data/action                |
+
 
 ### 2.3 Topic Naming Rules
 
@@ -116,21 +123,25 @@ All messages use the UNS envelope format:
 
 **Required Fields:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `version` | string | Schema version (e.g., "v1") |
-| `topics` | array | Array of topic objects |
-| `topics[].path` | string | Full UNS topic path |
-| `topics[].type` | string | Topic type: "state", "action", or "metrics" |
-| `topics[].value` | any | Actual data payload |
+
+| Field            | Type   | Description                                 |
+| ---------------- | ------ | ------------------------------------------- |
+| `version`        | string | Schema version (e.g., "v1")                 |
+| `topics`         | array  | Array of topic objects                      |
+| `topics[].path`  | string | Full UNS topic path                         |
+| `topics[].type`  | string | Topic type: "state", "action", or "metrics" |
+| `topics[].value` | any    | Actual data payload                         |
+
 
 **Optional Fields:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `topics[].estMps` | number | Estimated messages per second |
-| `topics[].description` | string | Human-readable description |
-| `topics[].template` | object | Example payload structure |
+
+| Field                  | Type   | Description                   |
+| ---------------------- | ------ | ----------------------------- |
+| `topics[].estMps`      | number | Estimated messages per second |
+| `topics[].description` | string | Human-readable description    |
+| `topics[].template`    | object | Example payload structure     |
+
 
 ### 3.2 Frontend Envelope Unwrapping
 
@@ -171,122 +182,150 @@ When frontend publishes to Action topics, include:
 
 #### Internal Operations (`Internal/Ops`)
 
-| Topic | Entity | Description |
-|-------|--------|-------------|
-| `Henkelv2/Shanghai/Logistics/Internal/Ops/State/Task_Queue` | Tasks | Putaway, pick, move tasks |
-| `Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inbound_Plan` | ASNs | Inbound orders/ASN list |
-| `Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level` | Inventory | Real-time stock levels |
-| `Henkelv2/Shanghai/Logistics/Internal/Ops/State/Exceptions` | Exceptions | Internal exception queue |
+
+| Topic                                                            | Entity     | Description               | State Payload Schema                 |
+| ---------------------------------------------------------------- | ---------- | ------------------------- | ------------------------------------ |
+| `Henkelv2/Shanghai/Logistics/Internal/Ops/State/Task_Queue`      | Tasks      | Putaway, pick, move tasks | -                                    |
+| `Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inbound_Plan`    | ASNs       | Inbound orders/ASN list   | `{ asns: InboundPlanRecord[] }`      |
+| `Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level` | Inventory  | Real-time stock levels    | `{ stock_items: InventoryItem[] }`   |
+| `Henkelv2/Shanghai/Logistics/Internal/Ops/State/Exceptions`      | Exceptions | Internal exception queue  | -                                    |
+
 
 #### Quality (`Internal/Quality`)
 
-| Topic | Entity | Description |
-|-------|--------|-------------|
-| `Henkelv2/Shanghai/Logistics/Internal/Quality/State/Inspection_Queue` | Samples | QC inspection queue |
-| `Henkelv2/Shanghai/Logistics/Internal/Quality/State/Decision_Queue` | Decisions | QA approval queue |
+
+| Topic                                                                  | Entity       | Description                 |
+| ---------------------------------------------------------------------- | ------------ | --------------------------- |
+| `Henkelv2/Shanghai/Logistics/Internal/Quality/State/Inspection_Queue`  | Samples      | QC inspection queue         |
+| `Henkelv2/Shanghai/Logistics/Internal/Quality/State/Decision_Queue`    | Decisions    | QA approval queue           |
 | `Henkelv2/Shanghai/Logistics/Internal/Quality/State/Disposition_Queue` | Dispositions | Disposition execution queue |
-| `Henkelv2/Shanghai/Logistics/Internal/Quality/State/Trace_Result` | Trace | Traceability query results |
+| `Henkelv2/Shanghai/Logistics/Internal/Quality/State/Trace_Result`      | Trace        | Traceability query results  |
+
 
 #### Master Data (`MasterData`)
 
-| Topic | Entity | Description |
-|-------|--------|-------------|
-| `Henkelv2/Shanghai/Logistics/MasterData/State/Materials` | Materials | Material master data |
-| `Henkelv2/Shanghai/Logistics/MasterData/State/Locations` | Locations | Location master data |
-| `Henkelv2/Shanghai/Logistics/MasterData/State/Containers` | Containers | Container/HU master data |
-| `Henkelv2/Shanghai/Logistics/MasterData/State/Warehouses` | Warehouses | Warehouse master data |
-| `Henkelv2/Shanghai/Logistics/MasterData/State/BusinessPartners` | Partners | Customer/supplier data |
-| `Henkelv2/Shanghai/Logistics/MasterData/State/Workers` | Workers | Worker/operator data |
-| `Henkelv2/Shanghai/Logistics/MasterData/State/Rate_Cards` | Rates | Costing rate cards |
+
+| Topic                                                           | Entity     | Description              |
+| --------------------------------------------------------------- | ---------- | ------------------------ |
+| `Henkelv2/Shanghai/Logistics/MasterData/State/Materials`        | Materials  | Material master data     |
+| `Henkelv2/Shanghai/Logistics/MasterData/State/Locations`        | Locations  | Location master data     |
+| `Henkelv2/Shanghai/Logistics/MasterData/State/Containers`       | Containers | Container/HU master data |
+| `Henkelv2/Shanghai/Logistics/MasterData/State/Warehouses`       | Warehouses | Warehouse master data    |
+| `Henkelv2/Shanghai/Logistics/MasterData/State/BusinessPartners` | Partners   | Customer/supplier data   |
+| `Henkelv2/Shanghai/Logistics/MasterData/State/Workers`          | Workers    | Worker/operator data     |
+| `Henkelv2/Shanghai/Logistics/MasterData/State/Rate_Cards`       | Rates      | Costing rate cards       |
+
 
 #### Outbound (`Outbound`)
 
-| Topic | Entity | Description |
-|-------|--------|-------------|
-| `Henkelv2/Shanghai/Logistics/Outbound/State/Shipment_List` | Shipments | Outbound shipment list |
+
+| Topic                                                      | Entity     | Description            |
+| ---------------------------------------------------------- | ---------- | ---------------------- |
+| `Henkelv2/Shanghai/Logistics/Outbound/State/Shipment_List` | Shipments  | Outbound shipment list |
 | `Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Queue` | Pick Tasks | Outbound picking queue |
+
 
 #### Costing & Finance (`Costing`, `Finance`)
 
-| Topic | Entity | Description |
-|-------|--------|-------------|
-| `Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB` | Orders | Outbound order database with costs |
-| `Henkelv2/Shanghai/Logistics/Costing/State/Financial_Trends` | Trends | Financial trend data |
-| `Henkelv2/Shanghai/Logistics/Costing/State/Bill_Generated` | Bills | Generated billing data |
-| `Henkelv2/Shanghai/Logistics/Finance/State/Monthly_Billing` | Monthly | Monthly billing records |
+
+| Topic                                                        | Entity  | Description                        | State Payload Schema              |
+| ------------------------------------------------------------ | ------- | ---------------------------------- | --------------------------------- |
+| `Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB`   | Orders  | Outbound order database with costs | `{ items: DNRecord[] }`           |
+| `Henkelv2/Shanghai/Logistics/Costing/State/Financial_Trends` | Trends  | Financial trend data               | -                                 |
+| `Henkelv2/Shanghai/Logistics/Costing/State/Bill_Generated`   | Bills   | Generated billing data             | -                                 |
+| `Henkelv2/Shanghai/Logistics/Finance/State/Monthly_Billing`  | Monthly | Monthly billing records            | -                                 |
+
 
 #### External/3PL (`External/Integration`)
 
-| Topic | Entity | Description |
-|-------|--------|-------------|
-| `Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status` | Sync | 3PL sync status |
+
+| Topic                                                                | Entity | Description     |
+| -------------------------------------------------------------------- | ------ | --------------- |
+| `Henkelv2/Shanghai/Logistics/External/Integration/State/Sync_Status` | Sync   | 3PL sync status |
+
 
 #### Production (`Production`)
 
-| Topic | Entity | Description |
-|-------|--------|-------------|
-| `Henkelv2/Shanghai/Logistics/Production/State/Order_List` | Prod Orders | Production order schedule |
-| `Henkelv2/Shanghai/Logistics/Production/State/Reservation_List` | Reservations | Material reservations |
-| `Henkelv2/Shanghai/Logistics/Production/State/Picking_Tasks` | Prod Picks | Production picking tasks |
+
+| Topic                                                           | Entity       | Description               |
+| --------------------------------------------------------------- | ------------ | ------------------------- |
+| `Henkelv2/Shanghai/Logistics/Production/State/Order_List`       | Prod Orders  | Production order schedule |
+| `Henkelv2/Shanghai/Logistics/Production/State/Reservation_List` | Reservations | Material reservations     |
+| `Henkelv2/Shanghai/Logistics/Production/State/Picking_Tasks`    | Prod Picks   | Production picking tasks  |
+
 
 #### Exceptions & Governance (`Exceptions`)
 
-| Topic | Entity | Description |
-|-------|--------|-------------|
-| `Henkelv2/Shanghai/Logistics/Exceptions/State/Dispute_List` | Disputes | 3PL dispute queue |
-| `Henkelv2/Shanghai/Logistics/Exceptions/State/Audit_Log` | Audit | Audit trail entries |
+
+| Topic                                                       | Entity   | Description         |
+| ----------------------------------------------------------- | -------- | ------------------- |
+| `Henkelv2/Shanghai/Logistics/Exceptions/State/Dispute_List` | Disputes | 3PL dispute queue   |
+| `Henkelv2/Shanghai/Logistics/Exceptions/State/Audit_Log`    | Audit    | Audit trail entries |
+
 
 ### 4.2 Action Topics (Publish)
 
 #### Internal Operations (`Internal/Ops`)
 
-| Topic | Action | Payload |
-|-------|--------|---------|
-| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Create_Inbound_Plan` | Create ASN | See schema below |
-| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Post_Goods_Receipt` | Confirm Receipt | See schema below |
-| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Confirm_Putaway` | Confirm Putaway | See schema below |
-| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Report_Exception` | Report Exception | See schema below |
-| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Resolve_Exception` | Resolve Exception | See schema below |
+
+| Topic                                                                 | Action            | Payload          |
+| --------------------------------------------------------------------- | ----------------- | ---------------- |
+| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Create_Inbound_Plan` | Create ASN        | See schema below |
+| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Post_Goods_Receipt`  | Confirm Receipt   | See schema below |
+| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Confirm_Putaway`     | Confirm Putaway   | See schema below |
+| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Report_Exception`    | Report Exception  | See schema below |
+| `Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Resolve_Exception`   | Resolve Exception | See schema below |
+
 
 #### Quality (`Internal/Quality`)
 
-| Topic | Action | Payload |
-|-------|--------|---------|
-| `Henkelv2/Shanghai/Logistics/Internal/Quality/Action/Submit_Result` | Submit QC Result | See schema below |
+
+| Topic                                                                     | Action              | Payload          |
+| ------------------------------------------------------------------------- | ------------------- | ---------------- |
+| `Henkelv2/Shanghai/Logistics/Internal/Quality/Action/Submit_Result`       | Submit QC Result    | See schema below |
 | `Henkelv2/Shanghai/Logistics/Internal/Quality/Action/Execute_Disposition` | Execute Disposition | See schema below |
+
 
 #### Outbound (`Outbound`)
 
-| Topic | Action | Payload |
-|-------|--------|---------|
-| `Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Order` | Create Order | See schema below |
-| `Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Shipment` | Create Shipment | See schema below |
-| `Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Pick` | Confirm Pick | See schema below |
+
+| Topic                                                               | Action                | Payload          |
+| ------------------------------------------------------------------- | --------------------- | ---------------- |
+| `Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Order`          | Create Order          | See schema below |
+| `Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Shipment`       | Create Shipment       | See schema below |
+| `Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Pick`          | Confirm Pick          | See schema below |
 | `Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Outbound_Pick` | Confirm Dispatch Pick | See schema below |
-| `Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Pack` | Confirm Pack | See schema below |
-| `Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Ship` | Confirm Ship | See schema below |
-| `Henkelv2/Shanghai/Logistics/Outbound/Action/Report_Short_Pick` | Report Short Pick | See schema below |
+| `Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Pack`          | Confirm Pack          | See schema below |
+| `Henkelv2/Shanghai/Logistics/Outbound/Action/Confirm_Ship`          | Confirm Ship          | See schema below |
+| `Henkelv2/Shanghai/Logistics/Outbound/Action/Report_Short_Pick`     | Report Short Pick     | See schema below |
+
 
 #### Costing (`Costing`)
 
-| Topic | Action | Payload |
-|-------|--------|---------|
-| `Henkelv2/Shanghai/Logistics/Costing/Action/Review_DN` | Approve/Reject DN | See schema below |
+
+| Topic                                                   | Action             | Payload          |
+| ------------------------------------------------------- | ------------------ | ---------------- |
+| `Henkelv2/Shanghai/Logistics/Costing/Action/Review_DN`  | Approve/Reject DN  | See schema below |
 | `Henkelv2/Shanghai/Logistics/Costing/Action/Submit_VAS` | Submit VAS Pricing | See schema below |
+
 
 #### External (`External/Integration`)
 
-| Topic | Action | Payload |
-|-------|--------|---------|
+
+| Topic                                                                   | Action             | Payload          |
+| ----------------------------------------------------------------------- | ------------------ | ---------------- |
 | `Henkelv2/Shanghai/Logistics/External/Integration/Action/Update_Status` | Update Sync Status | See schema below |
+
 
 #### Master Data (`MasterData`)
 
-| Topic | Action | Payload |
-|-------|--------|---------|
-| `Henkelv2/Shanghai/Logistics/MasterData/Action/Update_Worker` | Update Worker | See schema below |
+
+| Topic                                                           | Action          | Payload          |
+| --------------------------------------------------------------- | --------------- | ---------------- |
+| `Henkelv2/Shanghai/Logistics/MasterData/Action/Update_Worker`   | Update Worker   | See schema below |
 | `Henkelv2/Shanghai/Logistics/MasterData/Action/Update_Material` | Update Material | See schema below |
 | `Henkelv2/Shanghai/Logistics/MasterData/Action/Update_Location` | Update Location | See schema below |
+
 
 ---
 
@@ -323,16 +362,18 @@ Every action payload SHOULD include:
 }
 ```
 
-| Field | Type | Required | Validation |
-|-------|------|----------|------------|
-| `type` | enum | Yes | `SALES_ORDER`, `TRANSFER_OUT` |
-| `warehouse` | string | Yes | Valid warehouse code |
-| `customer` | string | If SALES_ORDER | Valid partner code |
-| `destination` | string | If TRANSFER_OUT | Valid warehouse code |
-| `requested_date` | string | Yes | ISO date (YYYY-MM-DD) |
-| `lines[]` | array | Yes | Min 1 item |
-| `lines[].code` | string | Yes | Valid material code |
-| `lines[].qty` | number | Yes | > 0 |
+
+| Field            | Type   | Required        | Validation                    |
+| ---------------- | ------ | --------------- | ----------------------------- |
+| `type`           | enum   | Yes             | `SALES_ORDER`, `TRANSFER_OUT` |
+| `warehouse`      | string | Yes             | Valid warehouse code          |
+| `customer`       | string | If SALES_ORDER  | Valid partner code            |
+| `destination`    | string | If TRANSFER_OUT | Valid warehouse code          |
+| `requested_date` | string | Yes             | ISO date (YYYY-MM-DD)         |
+| `lines[]`        | array  | Yes             | Min 1 item                    |
+| `lines[].code`   | string | Yes             | Valid material code           |
+| `lines[].qty`    | number | Yes             | > 0                           |
+
 
 #### Review DN (Approve/Reject)
 
@@ -467,13 +508,15 @@ For rejection, include reason:
 }
 ```
 
-| Action | Description |
-|--------|-------------|
-| `ACCEPT` | Accept the exception as-is |
-| `REJECT` | Reject/return goods |
-| `WRITE_OFF` | Write off the variance |
-| `RECOUNT` | Trigger recount |
-| `RETURN` | Return to vendor/source |
+
+| Action      | Description                |
+| ----------- | -------------------------- |
+| `ACCEPT`    | Accept the exception as-is |
+| `REJECT`    | Reject/return goods        |
+| `WRITE_OFF` | Write off the variance     |
+| `RECOUNT`   | Trigger recount            |
+| `RETURN`    | Return to vendor/source    |
+
 
 ### 5.5 Quality Actions
 
@@ -511,15 +554,17 @@ For rejection, include reason:
 }
 ```
 
-| Decision | Description |
-|----------|-------------|
-| `RELEASE` | Release to available stock |
-| `REJECT` | Reject lot |
+
+| Decision      | Description                           |
+| ------------- | ------------------------------------- |
+| `RELEASE`     | Release to available stock            |
+| `REJECT`      | Reject lot                            |
 | `CONDITIONAL` | Conditional release with restrictions |
-| `RTV` | Return to vendor |
-| `SCRAP` | Scrap/dispose |
-| `REWORK` | Send for rework |
-| `DOWNGRADE` | Downgrade to lower grade |
+| `RTV`         | Return to vendor                      |
+| `SCRAP`       | Scrap/dispose                         |
+| `REWORK`      | Send for rework                       |
+| `DOWNGRADE`   | Downgrade to lower grade              |
+
 
 ---
 
@@ -527,12 +572,14 @@ For rejection, include reason:
 
 ### 6.1 MQTT vs REST: Key Differences
 
-| Aspect | REST API | MQTT (UNS) |
-|--------|----------|------------|
-| Error Codes | HTTP 200/400/500 | **No built-in codes** |
-| Timeout | Protocol handles | **Must implement client-side** |
-| Request/Response | Synchronous | **Asynchronous** |
-| Inspection | Chrome DevTools | Binary (use MQTT Explorer) |
+
+| Aspect           | REST API         | MQTT (UNS)                     |
+| ---------------- | ---------------- | ------------------------------ |
+| Error Codes      | HTTP 200/400/500 | **No built-in codes**          |
+| Timeout          | Protocol handles | **Must implement client-side** |
+| Request/Response | Synchronous      | **Asynchronous**               |
+| Inspection       | Chrome DevTools  | Binary (use MQTT Explorer)     |
+
 
 ### 6.2 Error Handling Strategy
 
@@ -562,17 +609,19 @@ const handleAction = async () => {
 
 For validation errors caught by domain validators:
 
-| Code | Domain | Message |
-|------|--------|---------|
-| `OUT_001` | Outbound | Order not found |
-| `OUT_002` | Outbound | Invalid status transition |
-| `OUT_003` | Outbound | Missing required field |
-| `INB_001` | Inbound | ASN not found |
-| `INB_002` | Inbound | Material not in master |
-| `INB_003` | Inbound | Lot required |
-| `TSK_001` | Task | Task not found |
-| `TSK_002` | Task | Task already completed |
-| `EXC_001` | Exception | Reason code required |
+
+| Code      | Domain    | Message                   |
+| --------- | --------- | ------------------------- |
+| `OUT_001` | Outbound  | Order not found           |
+| `OUT_002` | Outbound  | Invalid status transition |
+| `OUT_003` | Outbound  | Missing required field    |
+| `INB_001` | Inbound   | ASN not found             |
+| `INB_002` | Inbound   | Material not in master    |
+| `INB_003` | Inbound   | Lot required              |
+| `TSK_001` | Task      | Task not found            |
+| `TSK_002` | Task      | Task already completed    |
+| `EXC_001` | Exception | Reason code required      |
+
 
 ---
 
@@ -658,9 +707,10 @@ const items = useMemo(() => {
 
 ### 8.1 MQTT Explorer
 
-Download: https://mqtt-explorer.com/
+Download: [https://mqtt-explorer.com/](https://mqtt-explorer.com/)
 
 Use to:
+
 - Subscribe to all topics
 - View message payloads (including UNS envelope)
 - Publish test messages
@@ -669,6 +719,7 @@ Use to:
 ### 8.2 Browser Console
 
 The UNSContext logs all MQTT activity:
+
 - `📤 Global Publish to {topic}` - Outgoing actions
 - `📨 [MasterData] Received on topic:` - Incoming state
 - `🔔 {Entity} RAW/CLEAN:` - Debug logging for specific entities
@@ -689,13 +740,13 @@ import UNSConnectionInfo from '@/components/UNSConnectionInfo';
 
 When creating new topics, verify:
 
-- [ ] Topic type (`State`, `Action`, `Metrics`) is in **second-to-last** position
-- [ ] Entity/action name is in **last** position
-- [ ] Topic depth is ≤ 7 levels
-- [ ] Names use underscores for multi-word: `Task_Queue`
-- [ ] Entity IDs are in **payload**, not topic path
-- [ ] Message uses UNS envelope format (backend responsibility)
-- [ ] Action payloads include `operator` and `timestamp`
+- Topic type (`State`, `Action`, `Metrics`) is in **second-to-last** position
+- Entity/action name is in **last** position
+- Topic depth is ≤ 7 levels
+- Names use underscores for multi-word: `Task_Queue`
+- Entity IDs are in **payload**, not topic path
+- Message uses UNS envelope format (backend responsibility)
+- Action payloads include `operator` and `timestamp`
 
 ---
 
@@ -707,33 +758,35 @@ This index shows which frontend files use each topic. **This is the single sourc
 
 The following topics are subscribed globally at app startup in `src/context/UNSContext.jsx`:
 
-| Category | Topic | Description |
-|----------|-------|-------------|
-| External | `.../External/Integration/State/Sync_Status` | 3PL sync status |
-| Costing | `.../Costing/State/DN_Workflow_DB` | Order database with costs |
-| Costing | `.../Costing/State/Financial_Trends` | Chart data |
-| Costing | `.../Costing/State/Bill_Generated` | Calculator result |
-| Finance | `.../Finance/State/Monthly_Billing` | Reconciliation data |
-| Master | `.../MasterData/State/Rate_Cards` | Rate cards |
-| Master | `.../MasterData/State/Materials` | Materials |
-| Master | `.../MasterData/State/Locations` | Locations |
-| Master | `.../MasterData/State/Containers` | Containers |
-| Master | `.../MasterData/State/Warehouses` | Warehouses |
-| Master | `.../MasterData/State/BusinessPartners` | Partners |
-| Master | `.../MasterData/State/Workers` | Workers |
-| Internal | `.../Internal/Ops/State/Inventory_Level` | Stock levels |
-| Internal | `.../Internal/Ops/State/Task_Queue` | Putaway tasks |
-| Internal | `.../Internal/Ops/State/Inbound_Plan` | ASN list |
-| Internal | `.../Internal/Ops/State/Exceptions` | Exception queue |
-| Quality | `.../Internal/Quality/State/Disposition_Queue` | QC disposition |
-| Quality | `.../Internal/Quality/State/Decision_Queue` | QA approval |
-| Quality | `.../Internal/Quality/State/Inspection_Queue` | QC inspection |
-| Quality | `.../Internal/Quality/State/Trace_Result` | Traceability |
-| Production | `.../Production/State/Order_List` | Production orders |
-| Production | `.../Production/State/Reservation_List` | Reservations |
-| Production | `.../Production/State/Picking_Tasks` | Production picks |
-| Exceptions | `.../Exceptions/State/Dispute_List` | 3PL disputes |
-| Exceptions | `.../Exceptions/State/Audit_Log` | Audit trail |
+
+| Category   | Topic                                          | Description               |
+| ---------- | ---------------------------------------------- | ------------------------- |
+| External   | `.../External/Integration/State/Sync_Status`   | 3PL sync status           |
+| Costing    | `.../Costing/State/DN_Workflow_DB`             | Order database with costs |
+| Costing    | `.../Costing/State/Financial_Trends`           | Chart data                |
+| Costing    | `.../Costing/State/Bill_Generated`             | Calculator result         |
+| Finance    | `.../Finance/State/Monthly_Billing`            | Reconciliation data       |
+| Master     | `.../MasterData/State/Rate_Cards`              | Rate cards                |
+| Master     | `.../MasterData/State/Materials`               | Materials                 |
+| Master     | `.../MasterData/State/Locations`               | Locations                 |
+| Master     | `.../MasterData/State/Containers`              | Containers                |
+| Master     | `.../MasterData/State/Warehouses`              | Warehouses                |
+| Master     | `.../MasterData/State/BusinessPartners`        | Partners                  |
+| Master     | `.../MasterData/State/Workers`                 | Workers                   |
+| Internal   | `.../Internal/Ops/State/Inventory_Level`       | Stock levels              |
+| Internal   | `.../Internal/Ops/State/Task_Queue`            | Putaway tasks             |
+| Internal   | `.../Internal/Ops/State/Inbound_Plan`          | ASN list                  |
+| Internal   | `.../Internal/Ops/State/Exceptions`            | Exception queue           |
+| Quality    | `.../Internal/Quality/State/Disposition_Queue` | QC disposition            |
+| Quality    | `.../Internal/Quality/State/Decision_Queue`    | QA approval               |
+| Quality    | `.../Internal/Quality/State/Inspection_Queue`  | QC inspection             |
+| Quality    | `.../Internal/Quality/State/Trace_Result`      | Traceability              |
+| Production | `.../Production/State/Order_List`              | Production orders         |
+| Production | `.../Production/State/Reservation_List`        | Reservations              |
+| Production | `.../Production/State/Picking_Tasks`           | Production picks          |
+| Exceptions | `.../Exceptions/State/Dispute_List`            | 3PL disputes              |
+| Exceptions | `.../Exceptions/State/Audit_Log`               | Audit trail               |
+
 
 ### 10.2 Page-Level Action Topics
 
@@ -741,69 +794,81 @@ Topics defined locally in page files for **publishing** actions:
 
 #### Outbound Module (`src/modules/outbound/pages/`)
 
-| File | Topic Constant | Full Topic |
-|------|----------------|------------|
-| `OutboundOrders.jsx` | `TOPIC_ACTION_REVIEW` | `.../Costing/Action/Review_DN` |
-| `OutboundOrders.jsx` | `TOPIC_UPDATE_ACTION` | `.../External/Integration/Action/Update_Status` |
-| `OutboundOrders.jsx` | `TOPIC_CREATE_ACTION` | `.../Outbound/Action/Create_Order` |
-| `OutboundOrderCreate.jsx` | `TOPIC_CREATE_ACTION` | `.../Outbound/Action/Create_Order` |
-| `DnApproval.jsx` | `TOPIC_ACTION` | `.../Costing/Action/Review_DN` |
-| `DnOperatorQueue.jsx` | `TOPIC_ACTION` | `.../Costing/Action/Submit_VAS` |
-| `DispatchOrders.jsx` | `TOPIC_ACTION_CREATE` | `.../Outbound/Action/Create_Shipment` |
-| `DispatchPicking.jsx` | `TOPIC_ACTION_PICK` | `.../Outbound/Action/Confirm_Outbound_Pick` |
-| `DispatchPacking.jsx` | `TOPIC_ACTION_PACK` | `.../Outbound/Action/Confirm_Pack` |
-| `ShipmentConfirmation.jsx` | `TOPIC_ACTION_SHIP` | `.../Outbound/Action/Confirm_Ship` |
-| `PickingTask.jsx` | `TOPIC_ACTION_PICK` | `.../Outbound/Action/Confirm_Pick` |
-| `PickingTask.jsx` | `TOPIC_EXCEPTION` | `.../Outbound/Action/Report_Short_Pick` |
-| `OutboundDN.jsx` | `TOPIC_UPDATE_ACTION` | `.../External/Integration/Action/Update_Status` |
+
+| File                       | Topic Constant        | Full Topic                                      |
+| -------------------------- | --------------------- | ----------------------------------------------- |
+| `OutboundOrders.jsx`       | `TOPIC_ACTION_REVIEW` | `.../Costing/Action/Review_DN`                  |
+| `OutboundOrders.jsx`       | `TOPIC_UPDATE_ACTION` | `.../External/Integration/Action/Update_Status` |
+| `OutboundOrders.jsx`       | `TOPIC_CREATE_ACTION` | `.../Outbound/Action/Create_Order`              |
+| `OutboundOrderCreate.jsx`  | `TOPIC_CREATE_ACTION` | `.../Outbound/Action/Create_Order`              |
+| `DnApproval.jsx`           | `TOPIC_ACTION`        | `.../Costing/Action/Review_DN`                  |
+| `DnOperatorQueue.jsx`      | `TOPIC_ACTION`        | `.../Costing/Action/Submit_VAS`                 |
+| `DispatchOrders.jsx`       | `TOPIC_ACTION_CREATE` | `.../Outbound/Action/Create_Shipment`           |
+| `DispatchPicking.jsx`      | `TOPIC_ACTION_PICK`   | `.../Outbound/Action/Confirm_Outbound_Pick`     |
+| `DispatchPacking.jsx`      | `TOPIC_ACTION_PACK`   | `.../Outbound/Action/Confirm_Pack`              |
+| `ShipmentConfirmation.jsx` | `TOPIC_ACTION_SHIP`   | `.../Outbound/Action/Confirm_Ship`              |
+| `PickingTask.jsx`          | `TOPIC_ACTION_PICK`   | `.../Outbound/Action/Confirm_Pick`              |
+| `PickingTask.jsx`          | `TOPIC_EXCEPTION`     | `.../Outbound/Action/Report_Short_Pick`         |
+| `OutboundDN.jsx`           | `TOPIC_UPDATE_ACTION` | `.../External/Integration/Action/Update_Status` |
+
 
 #### Inbound Module (`src/modules/inbound/pages/`)
 
-| File | Topic Constant | Full Topic |
-|------|----------------|------------|
-| `PutawayMove.jsx` | `TOPIC_ACTION_CONFIRM` | `.../Internal/Ops/Action/Confirm_Putaway` |
+
+| File              | Topic Constant           | Full Topic                                 |
+| ----------------- | ------------------------ | ------------------------------------------ |
+| `PutawayMove.jsx` | `TOPIC_ACTION_CONFIRM`   | `.../Internal/Ops/Action/Confirm_Putaway`  |
 | `PutawayMove.jsx` | `TOPIC_ACTION_REPORT_EX` | `.../Internal/Ops/Action/Report_Exception` |
+
 
 #### Quality Module (`src/modules/quality/pages/`)
 
-| File | Topic Constant | Full Topic |
-|------|----------------|------------|
-| `QualityControl.jsx` | `TOPIC_ACTION` | `.../Internal/Quality/Action/Submit_Result` |
-| `QASamples.jsx` | `TOPIC_SUBMIT_RESULT` | `.../Internal/Quality/Action/Submit_Result` |
-| `QADecisions.jsx` | `TOPIC_ACTION_DISPOSITION` | `.../Internal/Quality/Action/Execute_Disposition` |
-| `QCDisposition.jsx` | `TOPIC_ACTION` | `.../Internal/Quality/Action/Execute_Disposition` |
+
+| File                 | Topic Constant             | Full Topic                                        |
+| -------------------- | -------------------------- | ------------------------------------------------- |
+| `QualityControl.jsx` | `TOPIC_ACTION`             | `.../Internal/Quality/Action/Submit_Result`       |
+| `QASamples.jsx`      | `TOPIC_SUBMIT_RESULT`      | `.../Internal/Quality/Action/Submit_Result`       |
+| `QADecisions.jsx`    | `TOPIC_ACTION_DISPOSITION` | `.../Internal/Quality/Action/Execute_Disposition` |
+| `QCDisposition.jsx`  | `TOPIC_ACTION`             | `.../Internal/Quality/Action/Execute_Disposition` |
+
 
 #### Production Module (`src/modules/production/pages/`)
 
-| File | Topic Constant | Full Topic |
-|------|----------------|------------|
-| `ProductionOrders.jsx` | `TOPIC_CREATE_ORDER` | `.../Production/Action/Create_Order` |
-| `ProductionRequests.jsx` | `TOPIC_ACTION_CREATE_RESERVATION` | `.../Production/Action/Create_Reservation` |
-| `ProductionPicking.jsx` | `TOPIC_ACTION_PICK` | `.../Production/Action/Confirm_Pick` |
-| `ProductionConsumption.jsx` | `TOPIC_ACTION_CONSUME` | `.../Production/Action/Consume_Material` |
-| `LineStaging.jsx` | `TOPIC_ACTION_STAGE` | `.../Production/Action/Confirm_Stage` |
-| `FinishedGoodsReceipt.jsx` | `TOPIC_ACTION_FG_RECEIPT` | `.../Production/Action/Post_FG_Receipt` |
-| `Reservations.jsx` | `TOPIC_ACTION_ALLOCATE` | `.../Production/Action/Run_Allocation` |
+
+| File                        | Topic Constant                    | Full Topic                                 |
+| --------------------------- | --------------------------------- | ------------------------------------------ |
+| `ProductionOrders.jsx`      | `TOPIC_CREATE_ORDER`              | `.../Production/Action/Create_Order`       |
+| `ProductionRequests.jsx`    | `TOPIC_ACTION_CREATE_RESERVATION` | `.../Production/Action/Create_Reservation` |
+| `ProductionPicking.jsx`     | `TOPIC_ACTION_PICK`               | `.../Production/Action/Confirm_Pick`       |
+| `ProductionConsumption.jsx` | `TOPIC_ACTION_CONSUME`            | `.../Production/Action/Consume_Material`   |
+| `LineStaging.jsx`           | `TOPIC_ACTION_STAGE`              | `.../Production/Action/Confirm_Stage`      |
+| `FinishedGoodsReceipt.jsx`  | `TOPIC_ACTION_FG_RECEIPT`         | `.../Production/Action/Post_FG_Receipt`    |
+| `Reservations.jsx`          | `TOPIC_ACTION_ALLOCATE`           | `.../Production/Action/Run_Allocation`     |
+
 
 #### Master Data Module (`src/modules/master/pages/`)
 
-| File | Topic Constant | Full Topic |
-|------|----------------|------------|
-| `Materials.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_Material` |
-| `MaterialsDetails.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_Material` |
-| `Locations.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_Location` |
-| `Containers.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_Container` |
-| `WorkerList.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_Worker` |
-| `WorkerDetail.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_Worker` |
-| `warehouse/WarehouseDetail.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_Warehouse` |
-| `warehouse/components/LocationsTable.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_Location` |
-| `partner/PartnerDetail.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_BusinessPartner` |
+
+| File                                      | Topic Constant | Full Topic                                     |
+| ----------------------------------------- | -------------- | ---------------------------------------------- |
+| `Materials.jsx`                           | `TOPIC_ACTION` | `.../MasterData/Action/Update_Material`        |
+| `MaterialsDetails.jsx`                    | `TOPIC_ACTION` | `.../MasterData/Action/Update_Material`        |
+| `Locations.jsx`                           | `TOPIC_ACTION` | `.../MasterData/Action/Update_Location`        |
+| `Containers.jsx`                          | `TOPIC_ACTION` | `.../MasterData/Action/Update_Container`       |
+| `WorkerList.jsx`                          | `TOPIC_ACTION` | `.../MasterData/Action/Update_Worker`          |
+| `WorkerDetail.jsx`                        | `TOPIC_ACTION` | `.../MasterData/Action/Update_Worker`          |
+| `warehouse/WarehouseDetail.jsx`           | `TOPIC_ACTION` | `.../MasterData/Action/Update_Warehouse`       |
+| `warehouse/components/LocationsTable.jsx` | `TOPIC_ACTION` | `.../MasterData/Action/Update_Location`        |
+| `partner/PartnerDetail.jsx`               | `TOPIC_ACTION` | `.../MasterData/Action/Update_BusinessPartner` |
+
 
 #### Integration Module (`src/modules/integration/pages/`)
 
-| File | Topic Constant | Full Topic |
-|------|----------------|------------|
+
+| File                    | Topic Constant | Full Topic                            |
+| ----------------------- | -------------- | ------------------------------------- |
 | `ThreePLExceptions.jsx` | `TOPIC_ACTION` | `.../Exceptions/Action/Raise_Dispute` |
+
 
 ### 10.3 Topic Naming Pattern
 
@@ -819,7 +884,8 @@ When seeing `.../Module/Submodule/Type/Entity` in this document, prepend the ful
 
 ## References
 
-- **Tier0 Platform**: https://tier0.app
+- **Tier0 Platform**: [https://tier0.app](https://tier0.app)
 - **Topic Patterns**: See `.cursor/skills/mqtt-uns-patterns/SKILL.md`
 - **Domain Model**: See `DOMAIN_MODEL.md`
 - **Workflows**: See `WORKFLOWS.md`
+
