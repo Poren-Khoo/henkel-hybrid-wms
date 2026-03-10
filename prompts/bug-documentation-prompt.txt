@@ -1,0 +1,26 @@
+You just helped me fix a bug. I need you to document this for my learning and future reference in 3 parts:
+
+1. **Bug Fix Summary** (for /docs/bug-fixes.md)
+Write a concise entry with:
+- Date and brief title
+- Problem description (what was broken)
+- Root cause (why it happened) 
+- Solution (what fixed it)
+- Key lesson (why it works)
+- Similar bugs to watch for
+
+2. **ELI5 Explanation** (teach me back)
+Explain this bug in simple terms without jargon. Use analogies if helpful. 
+Tell me what concepts I should learn/Google to understand this better myself.
+Mix Chinese and English if it helps explain technical terms.(pls also add the eli5 explanation to the detailed documentation)
+
+3. **Detailed Documentation** (for /docs/bugs/YYYY-MM-DD-bug-name.md)
+Create a standalone markdown file with:
+- Full problem context
+- Code before/after comparison
+- Step-by-step explanation of the fix
+- Related concepts/patterns to study
+- Links to relevant documentation
+- Tags for searchability (e.g., #react-router #iiot #state-management)
+
+Format everything in markdown so I can copy-paste directly into my docs folder.

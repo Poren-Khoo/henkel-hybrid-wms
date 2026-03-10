@@ -20,6 +20,9 @@ const GLOBAL_SUBSCRIPTIONS = [
   "Henkelv2/Shanghai/Logistics/MasterData/State/Materials",
   "Henkelv2/Shanghai/Logistics/MasterData/State/Locations",
   "Henkelv2/Shanghai/Logistics/MasterData/State/Containers",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/Warehouses",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/BusinessPartners",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/Workers",
 
   // --- 4. INTERNAL WAREHOUSE (Manufacturing Support) ---
   "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level", // Real-time Stock
@@ -35,10 +38,19 @@ const GLOBAL_SUBSCRIPTIONS = [
   "Henkelv2/Shanghai/Logistics/Exceptions/State/Dispute_List",      // [NEW] For 3PL Exceptions Page
   "Henkelv2/Shanghai/Logistics/Exceptions/State/Audit_Log",
   "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Trace_Result",
+  "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Exceptions",       // [NEW] For Internal Exception Management
 
 
   // --- 6. UPCOMING FEATURES (Pre-loading for next phase) ---
-  "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Inspection_Queue" // Ready for QC Page
+  "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Inspection_Queue", // Ready for QC Page
+
+  // --- 7. OUTBOUND (Trading Context) ---
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Queue",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Staging_Area",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Loading_Docks",
+  "Henkelv2/Shanghai/Logistics/Outbound/State/Shipment_List"
 ];
 
 export const UNSProvider = ({ children }) => {

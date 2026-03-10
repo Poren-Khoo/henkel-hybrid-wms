@@ -28,7 +28,8 @@ export default function GlobalSearchResults() {
 
     // 1. SCAN INVENTORY
     const rawInv = data.raw[TOPIC_INVENTORY]
-    const invList = Array.isArray(rawInv) ? rawInv : rawInv?.stock_items || []
+    let invList = Array.isArray(rawInv) ? rawInv : (rawInv?.stock_items ?? rawInv?.items ?? [])
+    if (!Array.isArray(invList)) invList = []
     const inventoryMatches = invList.filter(item => 
       (item.hu || '').toLowerCase().includes(lowerQ) ||
       (item.sku || '').toLowerCase().includes(lowerQ) ||
@@ -47,7 +48,8 @@ export default function GlobalSearchResults() {
 
     // 2. SCAN INBOUND (ASNs)
     const rawInbound = data.raw[TOPIC_INBOUND]
-    const inboundList = Array.isArray(rawInbound) ? rawInbound : rawInbound?.asns || []
+    let inboundList = Array.isArray(rawInbound) ? rawInbound : (rawInbound?.asns ?? [])
+    if (!Array.isArray(inboundList)) inboundList = []
     const inboundMatches = inboundList.filter(doc => 
       (doc.id || '').toLowerCase().includes(lowerQ) ||
       (doc.supplier || '').toLowerCase().includes(lowerQ) ||
@@ -64,7 +66,8 @@ export default function GlobalSearchResults() {
 
     // 3. SCAN TASKS
     const rawTasks = data.raw[TOPIC_TASKS]
-    const taskList = Array.isArray(rawTasks) ? rawTasks : rawTasks?.queue || []
+    let taskList = Array.isArray(rawTasks) ? rawTasks : (rawTasks?.queue ?? rawTasks?.items ?? [])
+    if (!Array.isArray(taskList)) taskList = []
     const taskMatches = taskList.filter(task => 
       (task.task_id || '').toLowerCase().includes(lowerQ) ||
       (task.hu || '').toLowerCase().includes(lowerQ) ||
@@ -99,8 +102,8 @@ export default function GlobalSearchResults() {
   // --- HELPER: Navigation ---
   const handleNavigate = (type, id) => {
     if (type === 'INVENTORY') navigate('/inventory/list') // Ideally navigate to detail
-    if (type === 'INBOUND') navigate('/inventory/receipt')
-    if (type === 'TASK') navigate('/inventory/putaway') // Or task list
+    if (type === 'INBOUND') navigate('/inbound/receipt')
+    if (type === 'TASK') navigate('/inbound/putaway') // Or task list
   }
 
   return (

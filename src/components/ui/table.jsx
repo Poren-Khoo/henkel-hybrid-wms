@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cn } from "../../lib/utils"
+import { Skeleton } from "./skeleton"
 
 const Table = React.forwardRef(({ className, ...props }, ref) => (
   <div className="relative w-full overflow-auto">
@@ -30,7 +31,7 @@ const TableRow = React.forwardRef(({ className, ...props }, ref) => (
   <tr
     ref={ref}
     className={cn(
-      "border-b border-gray-300 transition-colors hover:bg-gray-50 data-[state=selected]:bg-gray-100",
+      "border-b border-gray-300 transition-colors duration-150 hover:bg-slate-100 data-[state=selected]:bg-slate-100",
       className
     )}
     {...props}
@@ -59,6 +60,26 @@ const TableCell = React.forwardRef(({ className, ...props }, ref) => (
 ))
 TableCell.displayName = "TableCell"
 
+/**
+ * Renders placeholder rows with skeleton cells for table loading state.
+ * Usage: {isLoading ? <TableSkeletonRows rows={5} cols={4} /> : <actual rows>}
+ */
+function TableSkeletonRows({ rows = 5, cols = 4, className }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <TableRow key={i} className={className}>
+          {Array.from({ length: cols }).map((_, j) => (
+            <TableCell key={j}>
+              <Skeleton className={cn("h-4", j === 0 ? "w-20" : "w-full max-w-[120px]")} />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  )
+}
+
 export {
   Table,
   TableHeader,
@@ -66,5 +87,6 @@ export {
   TableHead,
   TableRow,
   TableCell,
+  TableSkeletonRows,
 }
 

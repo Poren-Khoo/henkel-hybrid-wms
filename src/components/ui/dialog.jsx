@@ -1,34 +1,39 @@
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { cn } from "../../lib/utils"
 import { X } from "lucide-react"
 
 const DialogContext = React.createContext()
 
 const Dialog = ({ open, onOpenChange, children, ...props }) => {
-  const contextValue = React.useMemo(() => ({ open, onOpenChange }), [open, onOpenChange])
-  
   return (
-    <DialogContext.Provider value={contextValue}>
+    <DialogContext.Provider value={{ open, onOpenChange }}>
       {children}
     </DialogContext.Provider>
   )
 }
 
 const DialogContent = React.forwardRef(({ className, children, ...props }, ref) => {
-  const { open, onOpenChange } = React.useContext(DialogContext)
+  const context = React.useContext(DialogContext)
   
-  if (!open) return null
+  // Safety check for context
+  if (!context || !context.open) return null
   
-  return (
+  const { onOpenChange } = context
+
+  // Use Portal to render outside parent DOM hierarchy (avoids z-index/overflow issues)
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div 
-        className="fixed inset-0 bg-black/50" 
+      <div
+        className="fixed inset-0 bg-black/50 animate-in fade-in duration-150"
         onClick={() => onOpenChange?.(false)}
+        aria-hidden
       />
       <div
         ref={ref}
         className={cn(
           "relative z-50 bg-white rounded-lg shadow-lg border border-slate-200 p-6 w-full max-w-lg mx-4",
+          "animate-in fade-in zoom-in-95 duration-200",
           className
         )}
         onClick={(e) => e.stopPropagation()}
@@ -36,13 +41,14 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
       >
         <button
           onClick={() => onOpenChange?.(false)}
-          className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+          className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity z-10"
         >
           <X className="h-4 w-4" />
         </button>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 })
 DialogContent.displayName = "DialogContent"

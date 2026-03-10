@@ -102,7 +102,7 @@ export default function UserSwitcher() {
               </AvatarFallback>
             </Avatar>
             {/* Status Dot */}
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#a3e635] border-2 border-white shadow-sm"></span>
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#b2ed1d] border-2 border-white shadow-sm"></span>
           </div>
           
           <ChevronsUpDown className="h-3 w-3 text-slate-400 opacity-50 group-hover:opacity-100" />
@@ -185,7 +185,7 @@ export default function UserSwitcher() {
 
                 {/* 3. Active Check */}
                 {isActive && (
-                  <Check className="h-4 w-4 text-[#a3e635] shrink-0" strokeWidth={3} />
+                  <Check className="h-4 w-4 text-[#b2ed1d] shrink-0" strokeWidth={3} />
                 )}
               </DropdownMenuItem>
             )

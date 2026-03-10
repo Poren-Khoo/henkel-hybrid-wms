@@ -1,0 +1,324 @@
+[
+    {
+        "id": "group_mock_data_generators",
+        "type": "group",
+        "z": "99f9fe79da9e4937",
+        "name": "🧪 Mock Data Generators (Click to Test)",
+        "style": {
+            "fill": "#ffeb3b",
+            "fill-opacity": "0.3",
+            "label": true,
+            "stroke": "#f9a825"
+        },
+        "nodes": [
+            "inject_dn_workflow",
+            "func_generate_dn_workflow",
+            "inject_wave_list",
+            "func_generate_wave_list",
+            "inject_picking_queue",
+            "func_generate_picking_queue",
+            "inject_staging_area",
+            "func_generate_staging_area",
+            "inject_loading_docks",
+            "func_generate_loading_docks",
+            "mqtt_out_mock_state",
+            "debug_mock_output"
+        ],
+        "x": 34,
+        "y": 39,
+        "w": 892,
+        "h": 442
+    },
+    {
+        "id": "inject_dn_workflow",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 DN_Workflow (Orders)",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 100,
+        "wires": [
+            [
+                "func_generate_dn_workflow"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_dn_workflow",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Orders",
+        "func": "const statuses = ['NEW', 'RELEASED', 'ON_HOLD', 'WAVE_ASSIGNED', 'ALLOCATED', 'PICKING', 'PACKING', 'READY_TO_SHIP'];\nconst customers = ['CUSTOMER-A', 'CUSTOMER-B', 'HENKEL-SUZHOU', 'HENKEL-BEIJING'];\nconst materials = ['GLUE-500', 'SEALANT-X', 'ADHESIVE-PRO', 'COATING-UV'];\n\nlet dnDB = global.get('outbound_dn_db') || { items: [] };\n\n// Generate 3-5 new orders\nlet count = Math.floor(Math.random() * 3) + 3;\nfor (let i = 0; i < count; i++) {\n    let status = statuses[Math.floor(Math.random() * statuses.length)];\n    let order = {\n        dn_no: 'DN-' + Date.now() + '-' + Math.floor(Math.random() * 1000),\n        id: 'DN-' + Date.now() + '-' + Math.floor(Math.random() * 1000),\n        type: Math.random() > 0.3 ? 'SALES_ORDER' : 'TRANSFER_OUT',\n        status: status,\n        customer: customers[Math.floor(Math.random() * customers.length)],\n        destination: 'Shanghai-' + (Math.floor(Math.random() * 3) + 1),\n        warehouse: 'WH-SHANGHAI',\n        requested_date: new Date(Date.now() + 86400000 * Math.floor(Math.random() * 7)).toISOString().split('T')[0],\n        wave_id: status === 'WAVE_ASSIGNED' ? 'WAVE-' + Math.floor(Math.random() * 100) : null,\n        lines: [\n            { code: materials[Math.floor(Math.random() * materials.length)], qty: Math.floor(Math.random() * 100) + 10 },\n            { code: materials[Math.floor(Math.random() * materials.length)], qty: Math.floor(Math.random() * 50) + 5 }\n        ],\n        created_at: Date.now(),\n        priority: Math.random() > 0.7 ? 'HIGH' : 'NORMAL'\n    };\n    dnDB.items.unshift(order);\n}\n\n// Keep only last 20\nif (dnDB.items.length > 20) dnDB.items = dnDB.items.slice(0, 20);\nglobal.set('outbound_dn_db', dnDB);\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: dnDB }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 100,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "inject_wave_list",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 Wave_List",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 120,
+        "y": 160,
+        "wires": [
+            [
+                "func_generate_wave_list"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_wave_list",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Waves",
+        "func": "const statuses = ['PLANNED', 'RELEASED', 'IN_PROGRESS', 'COMPLETED'];\nconst carriers = ['SF-EXPRESS', 'DHL', 'SINOTRANS', 'JD-LOGISTICS'];\nconst routes = ['Shanghai North', 'Shanghai South', 'Suzhou Route', 'Hangzhou Line'];\n\nlet waveDB = global.get('wave_db') || { items: [] };\n\n// Generate 2-4 new waves\nlet count = Math.floor(Math.random() * 3) + 2;\nfor (let i = 0; i < count; i++) {\n    let status = statuses[Math.floor(Math.random() * statuses.length)];\n    let totalPicks = Math.floor(Math.random() * 20) + 5;\n    let completedPicks = status === 'COMPLETED' ? totalPicks : \n                         status === 'IN_PROGRESS' ? Math.floor(totalPicks * Math.random()) : 0;\n    \n    let wave = {\n        wave_id: 'WAVE-' + Date.now() + '-' + Math.floor(Math.random() * 100),\n        status: status,\n        ship_date: new Date(Date.now() + 86400000 * Math.floor(Math.random() * 3)).toISOString().split('T')[0],\n        carrier: carriers[Math.floor(Math.random() * carriers.length)],\n        route: routes[Math.floor(Math.random() * routes.length)],\n        pick_method: Math.random() > 0.5 ? 'BATCH' : 'DISCRETE',\n        delivery_ids: [],\n        delivery_count: Math.floor(Math.random() * 5) + 1,\n        line_count: Math.floor(Math.random() * 15) + 3,\n        picks_completed: completedPicks,\n        picks_total: totalPicks,\n        created_at: Date.now()\n    };\n    waveDB.items.unshift(wave);\n}\n\nif (waveDB.items.length > 15) waveDB.items = waveDB.items.slice(0, 15);\nglobal.set('wave_db', waveDB);\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: waveDB }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 160,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "inject_picking_queue",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 Picking_Queue",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Queue",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 220,
+        "wires": [
+            [
+                "func_generate_picking_queue"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_picking_queue",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Pick Tasks",
+        "func": "const statuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED'];\nconst materials = ['GLUE-500', 'SEALANT-X', 'ADHESIVE-PRO', 'COATING-UV'];\nconst locations = ['A-01-01', 'A-02-03', 'B-01-02', 'B-03-01', 'C-02-04'];\n\nlet tasks = [];\nlet count = Math.floor(Math.random() * 8) + 5;\n\nfor (let i = 0; i < count; i++) {\n    let task = {\n        task_id: 'PICK-' + Date.now() + '-' + i,\n        status: statuses[Math.floor(Math.random() * statuses.length)],\n        material_code: materials[Math.floor(Math.random() * materials.length)],\n        material_name: 'Material ' + (i + 1),\n        batch: 'B2026' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),\n        from_location: locations[Math.floor(Math.random() * locations.length)],\n        to_location: 'STAGE-0' + (Math.floor(Math.random() * 3) + 1),\n        qty: Math.floor(Math.random() * 50) + 10,\n        uom: 'EA',\n        wave_id: 'WAVE-' + Math.floor(Math.random() * 100),\n        dn_no: 'DN-' + Math.floor(Math.random() * 10000),\n        priority: Math.random() > 0.7 ? 'HIGH' : 'NORMAL',\n        created_at: Date.now()\n    };\n    tasks.push(task);\n}\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: { tasks: tasks } }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 220,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "inject_staging_area",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 Staging_Area",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/Staging_Area",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 130,
+        "y": 280,
+        "wires": [
+            [
+                "func_generate_staging_area"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_staging_area",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Staging",
+        "func": "const areas = ['STAGE-01', 'STAGE-02', 'STAGE-03', 'STAGE-04'];\nconst materials = ['GLUE-500', 'SEALANT-X', 'ADHESIVE-PRO'];\n\nlet stagingAreas = areas.map(areaId => {\n    let itemCount = Math.floor(Math.random() * 5);\n    let items = [];\n    for (let i = 0; i < itemCount; i++) {\n        items.push({\n            hu_id: 'HU-' + Math.floor(Math.random() * 10000),\n            material_code: materials[Math.floor(Math.random() * materials.length)],\n            qty: Math.floor(Math.random() * 100) + 10,\n            dn_no: 'DN-' + Math.floor(Math.random() * 10000),\n            wave_id: 'WAVE-' + Math.floor(Math.random() * 100),\n            staged_at: Date.now() - Math.floor(Math.random() * 3600000)\n        });\n    }\n    return {\n        area_id: areaId,\n        capacity: 20,\n        used: items.length,\n        items: items\n    };\n});\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: { areas: stagingAreas } }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 280,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "inject_loading_docks",
+        "type": "inject",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "🔄 Loading_Docks",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Henkelv2/Shanghai/Logistics/Outbound/State/Loading_Docks",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 340,
+        "wires": [
+            [
+                "func_generate_loading_docks"
+            ]
+        ]
+    },
+    {
+        "id": "func_generate_loading_docks",
+        "type": "function",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Generate Docks",
+        "func": "const dockStatuses = ['AVAILABLE', 'WAITING', 'LOADING', 'COMPLETED'];\nconst carriers = ['SF-EXPRESS', 'DHL', 'SINOTRANS', 'JD-LOGISTICS'];\n\nlet docks = [];\nfor (let i = 1; i <= 6; i++) {\n    let status = dockStatuses[Math.floor(Math.random() * dockStatuses.length)];\n    let dock = {\n        dock_id: 'DOCK-0' + i,\n        status: status,\n        carrier: status !== 'AVAILABLE' ? carriers[Math.floor(Math.random() * carriers.length)] : null,\n        vehicle: status !== 'AVAILABLE' ? '沪A' + String(Math.floor(Math.random() * 90000) + 10000) : null,\n        shipments: status === 'LOADING' || status === 'WAITING' ? Math.floor(Math.random() * 3) + 1 : 0,\n        total_items: status === 'LOADING' ? Math.floor(Math.random() * 50) + 10 : 0,\n        loaded_items: status === 'LOADING' ? Math.floor(Math.random() * 30) : 0,\n        arrival_time: status !== 'AVAILABLE' ? Date.now() - Math.floor(Math.random() * 7200000) : null\n    };\n    docks.push(dock);\n}\n\nmsg.payload = {\n    version: '1.0',\n    topics: [{ path: msg.topic, type: 'state', value: { docks: docks } }]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 340,
+        "wires": [
+            [
+                "mqtt_out_mock_state",
+                "debug_mock_output"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_mock_state",
+        "type": "mqtt out",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "Publish State",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "broker": "a749d056cff1a785",
+        "x": 670,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "debug_mock_output",
+        "type": "debug",
+        "z": "99f9fe79da9e4937",
+        "g": "group_mock_data_generators",
+        "name": "View Mock Data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 680,
+        "y": 280,
+        "wires": []
+    }
+]

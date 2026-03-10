@@ -3,7 +3,7 @@ export const tier0Theme = {
     colors: {
       // Primary Brand Color (Tier0 Green)
       primary: {
-        DEFAULT: '#a3e635',    // Main green
+        DEFAULT: '#b2ed1d',    // Main green
         hover: '#84cc16',      // Darker green on hover
         light: '#d9f99d',      // Light green for backgrounds
         dark: '#65a30d',       // Dark green
