@@ -26,11 +26,10 @@ export function MaterialSelect({ value, onChange, disabled, className }) {
       <SelectTrigger className={className || "w-full"}>
         <SelectValue placeholder="Select Material..." />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent position="popper" className="max-h-60 overflow-y-auto">
         {materials.map(mat => (
           <SelectItem key={mat.code} value={mat.code}>
-            <span className="font-mono font-bold mr-2">{mat.code}</span>
-            <span className="text-slate-500 text-xs truncate">{mat.desc}</span>
+            {`${mat.code}${mat.desc ? ` - ${mat.desc}` : ''}`}
           </SelectItem>
         ))}
       </SelectContent>

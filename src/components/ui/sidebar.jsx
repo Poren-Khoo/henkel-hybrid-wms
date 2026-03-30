@@ -269,7 +269,7 @@ const SidebarMenuItem = React.forwardRef(({ className, ...props }, ref) => {
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition duration-150 ease-out active:scale-[0.98]",
   {
     variants: {
       variant: {

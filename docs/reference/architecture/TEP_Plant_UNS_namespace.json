@@ -1,0 +1,1118 @@
+{
+  "namespace": [
+    {
+      "type": "path",
+      "name": "TEP_Plant",
+      "alias": "TEP_Plant",
+      "dataType": "NORMAL",
+      "children": [
+        {
+          "type": "path",
+          "name": "Compressor",
+          "alias": "TEP_Plant_Compressor",
+          "dataType": "NORMAL",
+          "children": [
+            {
+              "type": "path",
+              "name": "Action",
+              "alias": "TEP_Plant_Compressor_Action",
+              "dataType": "ACTION",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "compressor_recycle_valve",
+                  "alias": "TEP_Plant_Compressor_Action_compressor_recycle_valve",
+                  "description": "XMV(5) - Compressor recycle valve",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(5)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "path",
+              "name": "Metric",
+              "alias": "TEP_Plant_Compressor_Metric",
+              "dataType": "METRIC",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "recycle_flow",
+                  "alias": "TEP_Plant_Compressor_Metric_recycle_flow",
+                  "description": "XMEAS(5) - Recycle flow stream 8",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(5)",
+                    "unit": "kscmh"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "compressor_work",
+                  "alias": "TEP_Plant_Compressor_Metric_compressor_work",
+                  "description": "XMEAS(20) - Compressor work",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(20)",
+                    "unit": "kW"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "path",
+          "name": "Feed_Section",
+          "alias": "TEP_Plant_Feed_Section",
+          "dataType": "NORMAL",
+          "children": [
+            {
+              "type": "path",
+              "name": "Action",
+              "alias": "TEP_Plant_Feed_Section_Action",
+              "dataType": "ACTION",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "D_feed_valve",
+                  "alias": "TEP_Plant_Feed_Section_Action_D_feed_valve",
+                  "description": "XMV(1) - D feed flow valve position",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(1)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "E_feed_valve",
+                  "alias": "TEP_Plant_Feed_Section_Action_E_feed_valve",
+                  "description": "XMV(2) - E feed flow valve position",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(2)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "A_feed_valve",
+                  "alias": "TEP_Plant_Feed_Section_Action_A_feed_valve",
+                  "description": "XMV(3) - A feed flow valve position",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(3)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "total_feed_valve",
+                  "alias": "TEP_Plant_Feed_Section_Action_total_feed_valve",
+                  "description": "XMV(4) - Total feed flow valve position",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(4)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "path",
+              "name": "Metric",
+              "alias": "TEP_Plant_Feed_Section_Metric",
+              "dataType": "METRIC",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "A_feed_flow",
+                  "alias": "TEP_Plant_Feed_Section_Metric_A_feed_flow",
+                  "description": "XMEAS(1) - Stream 1 A feed flow rate",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(1)",
+                    "unit": "kscmh"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "D_feed_flow",
+                  "alias": "TEP_Plant_Feed_Section_Metric_D_feed_flow",
+                  "description": "XMEAS(2) - Stream 2 D feed flow rate",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(2)",
+                    "unit": "kscmh"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "E_feed_flow",
+                  "alias": "TEP_Plant_Feed_Section_Metric_E_feed_flow",
+                  "description": "XMEAS(3) - Stream 3 E feed flow rate",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(3)",
+                    "unit": "kscmh"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "total_feed_flow",
+                  "alias": "TEP_Plant_Feed_Section_Metric_total_feed_flow",
+                  "description": "XMEAS(4) - Stream 4 total feed flow rate",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(4)",
+                    "unit": "kscmh"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "path",
+          "name": "Plant_Status",
+          "alias": "TEP_Plant_Plant_Status",
+          "dataType": "NORMAL",
+          "children": [
+            {
+              "type": "path",
+              "name": "State",
+              "alias": "TEP_Plant_Plant_Status_State",
+              "dataType": "STATE",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "process_status",
+                  "alias": "TEP_Plant_Plant_Status_State_process_status",
+                  "description": "Human-readable plant process status for HMI/demo (e.g. RUNNING, STOPPED, FAULT). Aligns with MQTT payload string value; use quality for data staleness / goodness where supported.",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "path",
+          "name": "Purge",
+          "alias": "TEP_Plant_Purge",
+          "dataType": "NORMAL",
+          "children": [
+            {
+              "type": "path",
+              "name": "Action",
+              "alias": "TEP_Plant_Purge_Action",
+              "dataType": "ACTION",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "purge_valve",
+                  "alias": "TEP_Plant_Purge_Action_purge_valve",
+                  "description": "XMV(6) - Purge valve stream 9",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(6)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "path",
+              "name": "Metric",
+              "alias": "TEP_Plant_Purge_Metric",
+              "dataType": "METRIC",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "purge_rate",
+                  "alias": "TEP_Plant_Purge_Metric_purge_rate",
+                  "description": "XMEAS(10) - Purge rate stream 9",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(10)",
+                    "unit": "kscmh"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "purge_composition",
+                  "alias": "TEP_Plant_Purge_Metric_purge_composition",
+                  "description": "XMEAS(29-36) - Purge stream 9 composition",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(29-36)",
+                    "unit": "mol%"
+                  },
+                  "schema": [
+                    {
+                      "name": "comp_A",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_B",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_C",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_D",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_E",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_F",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_G",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_H",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "path",
+          "name": "Reactor",
+          "alias": "TEP_Plant_Reactor",
+          "dataType": "NORMAL",
+          "children": [
+            {
+              "type": "path",
+              "name": "Action",
+              "alias": "TEP_Plant_Reactor_Action",
+              "dataType": "ACTION",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "reactor_cooling_water_valve",
+                  "alias": "TEP_Plant_Reactor_Action_reactor_cooling_water_valve",
+                  "description": "XMV(10) - Reactor cooling water valve",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(10)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "path",
+              "name": "Metric",
+              "alias": "TEP_Plant_Reactor_Metric",
+              "dataType": "METRIC",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "reactor_feed_rate",
+                  "alias": "TEP_Plant_Reactor_Metric_reactor_feed_rate",
+                  "description": "XMEAS(6) - Reactor feed rate",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(6)",
+                    "unit": "kscmh"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "reactor_cooling_water_outlet_temp",
+                  "alias": "TEP_Plant_Reactor_Metric_reactor_cooling_water_outlet_temp",
+                  "description": "XMEAS(21) - Reactor cooling water outlet temp",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(21)",
+                    "unit": "°C"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "feed_composition",
+                  "alias": "TEP_Plant_Reactor_Metric_feed_composition",
+                  "description": "XMEAS(23-28) - Reactor feed composition",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(23-28)",
+                    "unit": "mol%"
+                  },
+                  "schema": [
+                    {
+                      "name": "comp_A",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_B",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_C",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_D",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_E",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_F",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "path",
+              "name": "State",
+              "alias": "TEP_Plant_Reactor_State",
+              "dataType": "STATE",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "reactor_temperature",
+                  "alias": "TEP_Plant_Reactor_State_reactor_temperature",
+                  "description": "XMEAS(9) - Reactor temperature",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(9)",
+                    "unit": "°C"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "reactor_pressure",
+                  "alias": "TEP_Plant_Reactor_State_reactor_pressure",
+                  "description": "XMEAS(7) - Reactor pressure",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(7)",
+                    "unit": "kPa"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "reactor_level",
+                  "alias": "TEP_Plant_Reactor_State_reactor_level",
+                  "description": "XMEAS(8) - Reactor level",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(8)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "path",
+          "name": "Separator",
+          "alias": "TEP_Plant_Separator",
+          "dataType": "NORMAL",
+          "children": [
+            {
+              "type": "path",
+              "name": "Action",
+              "alias": "TEP_Plant_Separator_Action",
+              "dataType": "ACTION",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "separator_liquid_valve",
+                  "alias": "TEP_Plant_Separator_Action_separator_liquid_valve",
+                  "description": "XMV(7) - Separator liquid valve",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(7)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "condenser_cooling_water_valve",
+                  "alias": "TEP_Plant_Separator_Action_condenser_cooling_water_valve",
+                  "description": "XMV(11) - Condenser cooling water valve",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(11)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "path",
+              "name": "Metric",
+              "alias": "TEP_Plant_Separator_Metric",
+              "dataType": "METRIC",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "separator_underflow",
+                  "alias": "TEP_Plant_Separator_Metric_separator_underflow",
+                  "description": "XMEAS(14) - Separator underflow",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(14)",
+                    "unit": "m3/hr"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "separator_cooling_water_outlet_temp",
+                  "alias": "TEP_Plant_Separator_Metric_separator_cooling_water_outlet_temp",
+                  "description": "XMEAS(22) - Separator cooling water outlet temp",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(22)",
+                    "unit": "°C"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "path",
+              "name": "State",
+              "alias": "TEP_Plant_Separator_State",
+              "dataType": "STATE",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "separator_temperature",
+                  "alias": "TEP_Plant_Separator_State_separator_temperature",
+                  "description": "XMEAS(11) - Separator temperature",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(11)",
+                    "unit": "°C"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "separator_level",
+                  "alias": "TEP_Plant_Separator_State_separator_level",
+                  "description": "XMEAS(12) - Separator level",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(12)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "separator_pressure",
+                  "alias": "TEP_Plant_Separator_State_separator_pressure",
+                  "description": "XMEAS(13) - Separator pressure",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(13)",
+                    "unit": "kPa"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "path",
+          "name": "Stripper",
+          "alias": "TEP_Plant_Stripper",
+          "dataType": "NORMAL",
+          "children": [
+            {
+              "type": "path",
+              "name": "Action",
+              "alias": "TEP_Plant_Stripper_Action",
+              "dataType": "ACTION",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "stripper_liquid_valve",
+                  "alias": "TEP_Plant_Stripper_Action_stripper_liquid_valve",
+                  "description": "XMV(8) - Stripper liquid valve",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(8)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "stripper_steam_valve",
+                  "alias": "TEP_Plant_Stripper_Action_stripper_steam_valve",
+                  "description": "XMV(9) - Stripper steam valve",
+                  "topicType": "Action",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "FALSE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMV(9)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "path",
+              "name": "Metric",
+              "alias": "TEP_Plant_Stripper_Metric",
+              "dataType": "METRIC",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "stripper_underflow",
+                  "alias": "TEP_Plant_Stripper_Metric_stripper_underflow",
+                  "description": "XMEAS(17) - Stripper underflow",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(17)",
+                    "unit": "m3/hr"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "stripper_steam_flow",
+                  "alias": "TEP_Plant_Stripper_Metric_stripper_steam_flow",
+                  "description": "XMEAS(19) - Stripper steam flow",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(19)",
+                    "unit": "kg/hr"
+                  },
+                  "schema": [
+                    {
+                      "name": "value",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "product_composition",
+                  "alias": "TEP_Plant_Stripper_Metric_product_composition",
+                  "description": "XMEAS(37-41) - Product composition D-H",
+                  "topicType": "Metric",
+                  "dataType": "TIME_SEQUENCE_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(37-41)",
+                    "unit": "mol%"
+                  },
+                  "schema": [
+                    {
+                      "name": "comp_D",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_E",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_F",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_G",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "comp_H",
+                      "type": "DOUBLE"
+                    },
+                    {
+                      "name": "quality",
+                      "type": "INTEGER"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "path",
+              "name": "State",
+              "alias": "TEP_Plant_Stripper_State",
+              "dataType": "STATE",
+              "children": [
+                {
+                  "type": "topic",
+                  "name": "stripper_level",
+                  "alias": "TEP_Plant_Stripper_State_stripper_level",
+                  "description": "XMEAS(15) - Stripper level",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(15)",
+                    "unit": "%"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "stripper_pressure",
+                  "alias": "TEP_Plant_Stripper_State_stripper_pressure",
+                  "description": "XMEAS(16) - Stripper pressure",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(16)",
+                    "unit": "kPa"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                },
+                {
+                  "type": "topic",
+                  "name": "stripper_temperature",
+                  "alias": "TEP_Plant_Stripper_State_stripper_temperature",
+                  "description": "XMEAS(18) - Stripper temperature",
+                  "topicType": "State",
+                  "dataType": "JSONB_TYPE",
+                  "generateDashboard": "FALSE",
+                  "enableHistory": "TRUE",
+                  "mockData": "FALSE",
+                  "extendProperties": {
+                    "source": "XMEAS(18)",
+                    "unit": "°C"
+                  },
+                  "fields": [
+                    {
+                      "name": "json",
+                      "type": "STRING",
+                      "maxLen": 2048
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -28,7 +28,7 @@ const Button = React.forwardRef(
       <Comp
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b2ed1d] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+          "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b2ed1d] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
           buttonSizes[size] || buttonSizes.default,
           buttonVariants[variant] || buttonVariants.default,
           className

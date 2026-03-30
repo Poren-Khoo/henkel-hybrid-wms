@@ -1,5 +1,6 @@
 import React from 'react'
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   Search,
   Wifi,
@@ -20,26 +21,10 @@ import {
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from './ui/breadcrumb'
 import { Separator } from './ui/separator'
-
-// Helper to find current page label
-const menuItems = [
-  { label: 'Dashboards', path: '/dashboard-group' },
-  { label: 'Master Data', path: '/master' },
-  { label: 'Inbound', path: '/inbound-group' },
-  { label: 'Inventory', path: '/inventory' },
-  { label: 'Quality', path: '/quality' },
-  { label: 'Production', path: '/production' },
-  { label: 'Dispatch to 3PL', path: '/dispatch' },
-  { label: 'Outbound', path: '/outbound-group' },
-  { label: '3PL Management', path: '/finance' },
-  { label: 'Governance', path: '/governance' },
-]
 
 export default function Layout() {
   const location = useLocation()
@@ -53,26 +38,73 @@ export default function Layout() {
     }
   }
 
-  // Helper to find current page label
+  // Path-to-page-title map (matches sidebar labels)
+  const ROUTE_TITLES = React.useMemo(() => ({
+    '/dashboard': 'Dashboard',
+    '/internal-dashboard': 'Production Dashboard',
+    '/internal': 'Internal Ops',
+    '/operations/inbound/orders': 'Inbound Orders',
+    '/operations/inbound/receiving': 'Receiving',
+    '/operations/inbound/execution': 'Execution',
+    '/operations/outbound/planning': 'Outbound Planning',
+    '/operations/outbound/order/new': 'New Order',
+    '/operations/outbound/order': 'Order',
+    '/operations/outbound/execution': 'Execution',
+    '/operations/outbound/packing': 'Packing',
+    '/operations/inventory/list': 'Stock List',
+    '/operations/inventory/count': 'Cycle Count',
+    '/operations/transfer/orders': 'Transfer Orders',
+    '/production/orders': 'Prod. Orders',
+    '/production/requests': 'Material Requests',
+    '/production/reservations': 'Reservations',
+    '/production/picking': 'Picking',
+    '/production/staging': 'Line Staging',
+    '/production/consumption': 'Consumption',
+    '/production/fg-receipt': 'FG Receipt',
+    '/qc/samples': 'QA Samples',
+    '/qc/worklist': 'QA Decisions',
+    '/qc/disposition': 'Disposition',
+    '/quality/samples': 'QA Samples',
+    '/quality/decisions': 'QA Decisions',
+    '/quality/disposition': 'Disposition',
+    '/master/materials': 'Materials',
+    '/master/material': 'Material Details',
+    '/master/warehouses': 'Warehouses',
+    '/master/warehouse': 'Warehouse Details',
+    '/master/partners': 'Partners',
+    '/master/partner': 'Partner Details',
+    '/master/containers': 'Containers',
+    '/master/workers': 'Workers',
+    '/master/worker': 'Worker Details',
+    '/master/locations': 'Locations',
+    '/external': 'Sync Status',
+    '/costing': 'Daily Costing',
+    '/monthly-billing': 'Monthly Billing',
+    '/reconciliation': 'Reconciliation',
+    '/rate-cards': 'Rate Cards',
+    '/exceptions': 'Disputes',
+    '/warehouses': 'Warehouse Admin',
+    '/governance/traceability': 'Traceability',
+    '/governance/audit': 'Audit Log',
+    '/admin/users': 'User Management',
+    '/reports': 'Reports',
+    '/inbound/exceptions': 'Exceptions',
+    '/outbound-vas': 'Outbound VAS',
+  }), [])
+
   const currentPageLabel = React.useMemo(() => {
-    // This is a simplified version - you can enhance it to match your actual routes
     const path = location.pathname
-    if (path === '/') return 'Dashboard'
-    if (path.startsWith('/outbound')) return 'Outbound Orders'
-    if (path.startsWith('/inbound')) return 'Inbound'
-    if (path.startsWith('/master')) return 'Master Data'
-    if (path.startsWith('/production')) return 'Production'
-    if (path.startsWith('/dispatch')) return 'Dispatch'
-    if (path.startsWith('/governance')) return 'Governance'
-    if (path.startsWith('/finance')) return '3PL Management'
-    return 'Dashboard'
-  }, [location.pathname])
+    if (ROUTE_TITLES[path]) return ROUTE_TITLES[path]
+    const sorted = Object.entries(ROUTE_TITLES).sort((a, b) => b[0].length - a[0].length)
+    const match = sorted.find(([p]) => path.startsWith(p))
+    return match ? match[1] : 'Dashboard'
+  }, [location.pathname, ROUTE_TITLES])
 
   return (
     <SidebarProvider>
       <AppSidebar isDark={isSidebarDark} onThemeToggle={() => setIsSidebarDark(!isSidebarDark)} />
       <SidebarInset>
-        <header className="flex h-[72px] shrink-0 items-center gap-2 bg-white border-b border-slate-200 shadow-sm">
+        <header className="flex h-[56px] sm:h-[72px] shrink-0 items-center gap-2 bg-white border-b border-slate-200 shadow-sm">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -81,16 +113,8 @@ export default function Layout() {
             />
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink asChild>
-                    <Link to="/" className="hover:text-slate-600 transition-colors">
-                      Home
-                    </Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-lg font-bold text-slate-900">
+                  <BreadcrumbPage className="text-base sm:text-lg font-bold text-slate-900 truncate max-w-[140px] sm:max-w-none">
                     {currentPageLabel}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
@@ -133,7 +157,7 @@ export default function Layout() {
           </div>
 
           {/* RIGHT: Status & User */}
-          <div className="flex items-center gap-5 pr-6">
+          <div className="flex items-center gap-3 sm:gap-5 pr-3 sm:pr-6">
             {/* Status Rail */}
             <div className="hidden xl:flex flex-col items-end gap-0.5 text-[10px] font-medium text-slate-500 border-r border-slate-100 pr-5 h-8 justify-center">
               <div className="flex items-center gap-1.5">
@@ -155,7 +179,17 @@ export default function Layout() {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto p-[10px] bg-slate-50">
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </div>
       </SidebarInset>
     </SidebarProvider>

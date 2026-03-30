@@ -555,10 +555,18 @@ export class OutboundOrderValidator {
     }
 
     // Legacy: Pending Approval
-    if (statusUpper === 'PENDING_APPROVAL' || statusUpper === 'NEW' || statusUpper === 'PENDING') {
+    if (statusUpper === 'NEW') {
       return {
         className: 'bg-amber-100 text-amber-700 border-amber-200',
-        label: 'Pending',
+        label: 'New',
+        variant: 'default',
+        icon: 'clock'
+      };
+    }
+    if (statusUpper === 'PENDING_APPROVAL' || statusUpper === 'PENDING') {
+      return {
+        className: 'bg-amber-100 text-amber-700 border-amber-200',
+        label: 'Pending Approval',
         variant: 'default',
         icon: 'clock'
       };

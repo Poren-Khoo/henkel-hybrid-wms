@@ -18,12 +18,7 @@ export class OutboundOrderService {
     const id = rawData.dn_no || rawData.id || rawData.ref_no || rawData.dn_id || rawData.dnNumber || 'UNKNOWN';
 
     // Determine type based on source
-    let type = 'SALES_ORDER';
-    if (source === 'shipment') {
-      type = 'TRANSFER_OUT';
-    } else if (rawData.type) {
-      type = rawData.type;
-    }
+    const type = rawData.type || 'SALES_ORDER';
 
     // Handle status variations
     const status = rawData.status || rawData.workflow_status || rawData.sync_status || 'NEW';
@@ -162,10 +157,49 @@ export class OutboundOrderService {
       }
     });
 
-    // Finally, add shipments (they have different IDs, so no conflict)
+    // Finally, merge shipments — update existing orders, add new ones if no match
     shipments.forEach(order => {
       if (order && order.id) {
-        orderMap.set(order.id, order);
+        if (orderMap.has(order.id)) {
+          const existing = orderMap.get(order.id);
+          const raw = order.raw || {};
+          const ci = raw.carrier_info ?? order.carrier_info;
+          let carrierFromShipment;
+          if (ci != null && ci !== '') {
+            if (typeof ci === 'string') {
+              carrierFromShipment = ci;
+            } else if (typeof ci === 'object') {
+              carrierFromShipment = ci.carrier ?? ci.driver ?? undefined;
+            }
+          }
+          const trackingFromShipment = raw.tracking_no ?? raw.trackingNo;
+
+          orderMap.set(order.id, {
+            ...order,
+            status: existing.status,  // always keep DN status
+            breakdown: existing.breakdown || order.breakdown,
+            total_cost: existing.total_cost || order.total_cost,
+            basic_cost: existing.basic_cost || order.basic_cost,
+            vas_cost: existing.vas_cost || order.vas_cost,
+            lines: existing.lines?.length ? existing.lines : order.lines,
+            picked_at: existing.picked_at ?? order.picked_at,
+            shipped_at: existing.shipped_at ?? order.shipped_at,
+            carrier:
+              existing.carrier != null && existing.carrier !== ''
+                ? existing.carrier
+                : carrierFromShipment != null && carrierFromShipment !== ''
+                  ? carrierFromShipment
+                  : order.carrier || existing.carrier,
+            tracking_number:
+              existing.tracking_number != null && existing.tracking_number !== ''
+                ? existing.tracking_number
+                : trackingFromShipment != null && trackingFromShipment !== ''
+                  ? trackingFromShipment
+                  : order.tracking_number || existing.tracking_number,
+          });
+        } else {
+          orderMap.set(order.id, order);
+        }
       }
     });
 
@@ -336,70 +370,6 @@ export class OutboundOrderService {
     return {
       dn_no: orderId,
       action: 'RELEASE_HOLD',
-      timestamp: Date.now()
-    };
-  }
-
-  // ===========================================
-  // WAVE COMMANDS (Trading only)
-  // ===========================================
-
-  /**
-   * Build MQTT command payload for adding order to wave
-   * @param {string} orderId - Order ID
-   * @param {string} waveId - Wave ID to add to
-   * @returns {Object} MQTT payload
-   */
-  static buildAddToWaveCommand(orderId, waveId) {
-    if (!orderId || orderId.trim().length === 0) {
-      throw new OutboundOrderValidationError("Order ID is required");
-    }
-    if (!waveId || waveId.trim().length === 0) {
-      throw new OutboundOrderValidationError("Wave ID is required");
-    }
-
-    return {
-      dn_no: orderId,
-      wave_id: waveId,
-      action: 'ADD_TO_WAVE',
-      timestamp: Date.now()
-    };
-  }
-
-  /**
-   * Build MQTT command payload for removing order from wave
-   * @param {string} orderId - Order ID
-   * @returns {Object} MQTT payload
-   */
-  static buildRemoveFromWaveCommand(orderId) {
-    if (!orderId || orderId.trim().length === 0) {
-      throw new OutboundOrderValidationError("Order ID is required");
-    }
-
-    return {
-      dn_no: orderId,
-      action: 'REMOVE_FROM_WAVE',
-      timestamp: Date.now()
-    };
-  }
-
-  // ===========================================
-  // ALLOCATION COMMANDS
-  // ===========================================
-
-  /**
-   * Build MQTT command payload for triggering allocation
-   * @param {string} orderId - Order ID
-   * @returns {Object} MQTT payload
-   */
-  static buildAllocateCommand(orderId) {
-    if (!orderId || orderId.trim().length === 0) {
-      throw new OutboundOrderValidationError("Order ID is required");
-    }
-
-    return {
-      dn_no: orderId,
-      action: 'ALLOCATE',
       timestamp: Date.now()
     };
   }

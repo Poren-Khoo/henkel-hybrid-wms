@@ -2,41 +2,25 @@
 
 @theme {
   /* Tier0 Brand Colors */
-  --color-tier0-brand: #b2ed1d;        /* The Lime Green */
-  --color-tier0-brand-dark: #65a30d;   /* A darker green for hover states */
-  --color-tier0-brand-fg: #1a2e05;     /* Dark text to sit ON TOP of the lime green */
+  --color-tier0-brand: #b2ed1d;
+  --color-tier0-brand-dark: #65a30d;
+  --color-tier0-brand-fg: #1a2e05;
   
-  /* Enterprise Shell Colors (The "Tech" Vibe) */
-  --color-sidebar-bg: #0f172a;         /* Slate 900 - Deep, serious dark blue/black */
-  --color-sidebar-fg: #f8fafc;         /* Slate 50 - White text */
-  --color-sidebar-border: #1e293b;     /* Slate 800 - Subtle borders */
+  /* Enterprise Shell Colors */
+  --color-sidebar-bg: #0f172a;
+  --color-sidebar-fg: #f8fafc;
+  --color-sidebar-border: #1e293b;
   
-  /* Semantic Overrides for Shadcn */
-  --radius: 0.3rem;                    /* Slightly squarer = more "industrial" */
+  --radius: 0.3rem;
 }
 
 :root {
-  color-scheme: light; /* Keep content area light */
-}
-
-/* GLOBAL RESET FOR FOCUS RINGS */
-/* This makes every keyboard focus match your green brand */
-button:focus-visible, 
-input:focus-visible, 
-select:focus-visible {
-  outline: 2px solid var(--color-tier0-brand);
-  outline-offset: 2px;
-}
-
-:root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light;
   color: #1a1a1a;
   background-color: #ffffff;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -44,7 +28,7 @@ select:focus-visible {
 }
 
 * {
-  border-color: #d1d5db;
+  border-color: #e2e2e2;
 }
 
 body {
@@ -54,8 +38,11 @@ body {
   background-color: #ffffff;
 }
 
-button:focus-visible {
-  outline: 2px solid #1a1a1a;
+button:focus-visible, 
+input:focus-visible, 
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-tier0-brand);
   outline-offset: 2px;
 }
 
@@ -184,3 +171,34 @@ button:focus-visible {
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
 .delay-500 { animation-delay: 500ms; }
+
+/* =============================================================================
+   SHIMMER SKELETON
+   Moving gradient for premium loading placeholders
+   ============================================================================= */
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 0%,
+    #f1f5f9 40%,
+    #f8fafc 50%,
+    #f1f5f9 60%,
+    #e2e8f0 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}

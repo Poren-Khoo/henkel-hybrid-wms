@@ -110,7 +110,7 @@ export default function MaterialDetail() {
     >
       
       {/* HEADER ACTIONS */}
-      <div className="mb-6 flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+      <div className="mb-6 flex flex-col sm:flex-row gap-2 justify-between items-stretch sm:items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
         <Button variant="ghost" onClick={() => navigate('/master/material')} className="text-slate-500">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
         </Button>
@@ -123,7 +123,7 @@ export default function MaterialDetail() {
       </div>
 
       <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 max-w-3xl bg-slate-100 p-1 rounded-lg">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 max-w-3xl bg-slate-100 p-1 rounded-lg">
           <TabsTrigger value="general">General Info</TabsTrigger>
           <TabsTrigger value="uom">UoM & Packaging</TabsTrigger>
           <TabsTrigger value="inventory">Inventory Control</TabsTrigger>
@@ -138,7 +138,7 @@ export default function MaterialDetail() {
                 <CardDescription>Core identification for the material.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6 max-w-4xl">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <Label>Material Code <span className="text-red-500">*</span></Label>
                         <Input 
@@ -169,7 +169,7 @@ export default function MaterialDetail() {
                         onChange={e => setFormData({...formData, desc: e.target.value})} 
                     />
                 </div>
-                <div className="space-y-2 w-1/2 pr-3">
+                <div className="space-y-2 w-full sm:w-1/2 sm:pr-3">
                     <Label>Status</Label>
                     <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
@@ -191,7 +191,7 @@ export default function MaterialDetail() {
                 <CardTitle className="text-base">Units of Measure</CardTitle>
             </CardHeader>
             <CardContent className="max-w-2xl">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <Label>Base Unit (Inventory)</Label>
                         <Select value={formData.uom} onValueChange={v => setFormData({...formData, uom: v})}>
@@ -222,7 +222,7 @@ export default function MaterialDetail() {
         </CardTitle>
         <CardDescription>Define how this material is packed for shipping.</CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-6">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         
         {/* 包装层级 */}
         <div className="space-y-2">
@@ -290,7 +290,7 @@ export default function MaterialDetail() {
                         />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label>Shelf Life (Days)</Label>
                             <Input 
@@ -325,7 +325,7 @@ export default function MaterialDetail() {
                         Critical safety data. Mismatches here will block putaway tasks.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-6 max-w-3xl">
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl">
                     <div className="space-y-2">
                         <Label>Hazard Classification</Label>
                         <Select value={formData.hazard} onValueChange={v => setFormData({...formData, hazard: v})}>

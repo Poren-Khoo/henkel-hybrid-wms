@@ -122,7 +122,7 @@ export default function WorkerDetail() {
       subtitle="Manage worker information"
     >
       {/* HEADER ACTIONS */}
-      <div className="mb-6 flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+      <div className="mb-6 flex flex-col sm:flex-row gap-2 justify-between items-stretch sm:items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
         <Button variant="ghost" onClick={() => navigate(`/master/worker`)}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
         </Button>
@@ -138,7 +138,7 @@ export default function WorkerDetail() {
         </CardHeader>
         <CardContent className="grid gap-6 max-w-2xl">
           {/* Row 1: Code & Name */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Worker Code *</Label>
               <Input 
@@ -159,7 +159,7 @@ export default function WorkerDetail() {
           </div>
 
           {/* Row 2: Role & Auth Role */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Job Role *</Label>
               <Select 
@@ -207,7 +207,7 @@ export default function WorkerDetail() {
           </div>
 
           {/* Row 4: Email & Phone */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Email</Label>
               <Input 

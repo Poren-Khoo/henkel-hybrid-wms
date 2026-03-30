@@ -102,7 +102,7 @@ export default function PartnerDetail() {
   return (
     <PageContainer title={isNew ? "New Business Partner" : `${formData.name} (${formData.code})`} subtitle="Manage partner information">
       
-      <div className="mb-6 flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+      <div className="mb-6 flex flex-col sm:flex-row gap-2 justify-between items-stretch sm:items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
         <Button variant="ghost" onClick={() => navigate('/master/partners')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Partners
         </Button>
@@ -117,7 +117,7 @@ export default function PartnerDetail() {
         </CardHeader>
         <CardContent className="grid gap-6 max-w-2xl">
           {/* Row 1: Code & Name */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Partner Code *</Label>
               <Input 
@@ -140,7 +140,7 @@ export default function PartnerDetail() {
           {/* Row 2: Roles */}
           <div className="space-y-2">
             <Label>Roles * (Select at least one)</Label>
-            <div className="flex gap-4 pt-2">
+            <div className="flex flex-wrap gap-4 pt-2">
               {['Supplier', 'Customer', 'Carrier'].map(role => (
                 <div key={role} className="flex items-center gap-2">
                   <input 
@@ -156,7 +156,7 @@ export default function PartnerDetail() {
           </div>
 
           {/* Row 3: Contact Person & Email */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Contact Person</Label>
               <Input 
@@ -177,7 +177,7 @@ export default function PartnerDetail() {
           </div>
 
           {/* Row 4: Phone & City */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Phone</Label>
               <Input 

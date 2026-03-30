@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
+import { Card, CardContent } from '../../../components/ui/card'
 import { Button } from '../../../components/ui/button'
 import { Input } from '../../../components/ui/input'
 import { Badge } from '../../../components/ui/badge'
 import { Label } from '../../../components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableSkeletonRows } from '../../../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'
 import { Textarea } from '../../../components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../../components/ui/dialog'
@@ -14,14 +14,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../../components/ui/tooltip"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../../../components/ui/popover"
 import { 
   ArrowRight, 
-  MapPin, 
   Search, 
   ScanLine, 
   AlertTriangle, 
@@ -30,17 +24,11 @@ import {
   Thermometer, 
   Clock, 
   Filter, 
-  History, 
-  Info,
-  Lightbulb,
-  Lock,
   XCircle,
-  Layers,
   Box,
   Factory,
   Truck
 } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
 import PageContainer from '../../../components/PageContainer'
 import { useGlobalUNS } from '../../../context/UNSContext'
 import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
@@ -52,45 +40,15 @@ const TOPIC_TASK_QUEUE = "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Task_Qu
 const TOPIC_ACTION_CONFIRM = "Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Confirm_Putaway"
 const TOPIC_ACTION_REPORT_EX = "Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Report_Exception"
 
-// --- MOCK STRATEGY ENGINE ---
-const STRATEGY_EXPLAINER = "We filter bins by hard constraints (status/zone, hazmat, temperature, capacity) then rank by proximity + consolidation."
-
-const SUGGESTION_LOGIC = {
-  'QUARANTINE': [
-    { bin: 'ZONE-Q-01-A', type: 'Cage', reason: ['Status: Quarantine Only', 'Hazmat Safe'], capacity: '80%', distance: 'Near' },
-    { bin: 'ZONE-Q-01-B', type: 'Cage', reason: ['Status: Quarantine Only', 'High Capacity'], capacity: '20%', distance: 'Mid' }
-  ],
-  'AVAILABLE': [
-    { bin: 'RACK-A-04-02', type: 'Standard', reason: ['Consolidate: Same SKU', 'ABC: High Mover'], capacity: '45%', distance: 'Near' },
-    { bin: 'RACK-B-12-01', type: 'Standard', reason: ['Empty Bin', 'Hazmat Compatible'], capacity: '0%', distance: 'Far' },
-    { bin: 'RACK-C-01-01', type: 'Deep', reason: ['Overflow Area'], capacity: '10%', distance: 'Far' }
-  ],
-  'BLOCKED': [], // Simulates "No Eligible Bins"
-  'EXCEPTION': [] 
-}
-
-// MOCK AUDIT TRAIL DATA GENERATOR
-const generateAudit = (task) => [
-  { event: 'TASK_CREATED', user: 'System', time: 'Today, 08:00', detail: 'Received from GR' },
-  { event: 'STRATEGY_RUN', user: 'System', time: 'Today, 08:05', detail: 'Applied: HAZMAT_STRICT' },
-  ...(task.status === 'EXCEPTION' ? [{ event: 'EXCEPTION_RAISED', user: 'Operator', time: 'Today, 09:15', detail: 'Bin Damaged' }] : [])
-]
-
 export default function PutawayTasks() {
   const { data, publish } = useGlobalUNS()
-  const location = useLocation()
   
-  // Detect Context
-  const isPutaway = location.pathname.includes('putaway')
-  const pageTitle = isPutaway ? "Putaway Worklist" : "Internal Task Queue"
-  const pageSubtitle = isPutaway 
-    ? "Manage strategy-driven inventory placement" 
-    : "Execute replenishment and relocation tasks"
+  const pageTitle = "Putaway"
+  const pageSubtitle = "Move released inventory to storage bins"
   
   // VIEW STATE
   const [selectedTask, setSelectedTask] = useState(null) 
   const [isExceptionOpen, setIsExceptionOpen] = useState(false)
-  const [showAudit, setShowAudit] = useState(false)
   
   // FILTERS
   const [filterText, setFilterText] = useState('')
@@ -148,13 +106,8 @@ export default function PutawayTasks() {
     })
 
     // Apply context filter using service (putaway vs internal moves)
-    return PutawayTaskService.filterTasksByContext(filteredTasks, isPutaway)
-  }, [data.raw, filterText, statusFilter, isPutaway])
-
-  const suggestions = useMemo(() => {
-    if (!selectedTask) return []
-    return SUGGESTION_LOGIC[selectedTask.status] || []
-  }, [selectedTask])
+    return PutawayTaskService.filterTasksByContext(filteredTasks, true)
+  }, [data.raw, filterText, statusFilter])
 
   // KPI DATA - Use live tasks data
   const kpiData = useMemo(() => {
@@ -170,11 +123,11 @@ export default function PutawayTasks() {
 
   const handleOpenTask = (task) => {
     setSelectedTask(task)
-    setConfirmedTarget(null)
-    setScanBin('')
+    const defaultBin = task.topBin || ''
+    setConfirmedTarget(defaultBin ? { bin: defaultBin } : null)
+    setScanBin(defaultBin)
     setScanHu('')
     setOverrideMode(false)
-    setShowAudit(false)
     setExceptionReason('')
     setExceptionNotes('')
   }
@@ -275,84 +228,11 @@ export default function PutawayTasks() {
           </Card>
         </div>
 
-        {/* --- ACTIVE STRATEGY BANNER --- */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Card className="bg-indigo-50/50 border-indigo-100 shadow-sm cursor-pointer hover:bg-indigo-50 transition-colors">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                      <Layers className="h-5 w-5 text-indigo-700" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900">Active Putaway Strategy:</span>
-                        <span className="font-semibold text-indigo-700">RM-Quarantine-Strict</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-indigo-200 text-indigo-600 bg-white">
-                          v2.1
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="text-indigo-700 hover:text-indigo-800 hover:bg-indigo-100 h-8">
-                    View Rules <Info className="ml-1 h-3 w-3" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </PopoverTrigger>
-          <PopoverContent className="w-80" align="start">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-bold text-indigo-700 text-sm mb-3 flex items-center gap-2">
-                  <Layers className="h-4 w-4" />
-                  RM-Quarantine-Strict v2.1
-                </h4>
-              </div>
-              
-              <div className="space-y-3">
-                <div>
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Hard Constraints
-                  </div>
-                  <ul className="space-y-1.5 text-sm text-slate-700">
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></div>
-                      <span>Status Separation (Quarantine vs Available)</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></div>
-                      <span>Hazmat Compatibility Check</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="border-t border-slate-100 pt-3">
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Soft Optimization
-                  </div>
-                  <ul className="space-y-1.5 text-sm text-slate-700">
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
-                      <span>Consolidation (Fill partial bins first)</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
-                      <span>FEFO (First Expired First Out)</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-        
         {/* --- 1. OPERATIONAL FILTERS --- */}
         <Card className="border-slate-200 shadow-sm">
           <div className="p-4 flex flex-col xl:flex-row gap-4 justify-between items-center">
             <div className="flex flex-wrap gap-4 w-full xl:w-auto flex-1 items-center">
-            <div className="relative w-72">
+            <div className="relative w-full sm:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
                 <Input 
                   placeholder="Scan HU or Search Material..." 
@@ -363,7 +243,7 @@ export default function PutawayTasks() {
               </div>
               
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <div className="flex items-center gap-2"><Filter className="h-4 w-4"/> <SelectValue placeholder="Filter Status" /></div>
                 </SelectTrigger>
                 <SelectContent>
@@ -394,6 +274,8 @@ export default function PutawayTasks() {
             <TableHeader>
               <TableRow className="bg-slate-50 hover:bg-slate-50">
                 <TableHead>HU / Material</TableHead>
+                <TableHead>Source PO</TableHead>
+                <TableHead>Supplier</TableHead>
                 <TableHead>Constraints</TableHead>
                 <TableHead>Strategy</TableHead>
                 <TableHead>Suggestion Status</TableHead>
@@ -404,17 +286,7 @@ export default function PutawayTasks() {
             </TableHeader>
             <TableBody>
               {!data.raw[TOPIC_TASK_QUEUE] ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">
-                    <div className="flex flex-col items-center gap-3 py-8">
-                      <div className="h-6 w-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
-                      <div className="space-y-1">
-                        <p className="font-medium text-slate-700">Loading Tasks...</p>
-                        <p className="text-xs text-slate-400">Waiting for MQTT data from backend</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <TableSkeletonRows rows={6} cols={9} />
               ) : tasks.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-32 text-center text-slate-500">
@@ -441,6 +313,12 @@ export default function PutawayTasks() {
                           {task.source.includes('LINE') ? <Factory className="h-3 w-3"/> : <Truck className="h-3 w-3"/>}
                           {task.qty} • {task.source}
                         </div>
+                  </TableCell>
+                  <TableCell>
+                        <div className="font-mono text-xs text-slate-700">{task.doc_id}</div>
+                  </TableCell>
+                  <TableCell>
+                        <div className="text-xs text-slate-500">{task.supplier}</div>
                   </TableCell>
                   <TableCell>
                         <div className="flex flex-col gap-1">
@@ -504,113 +382,52 @@ export default function PutawayTasks() {
                       <Badge variant="outline" className="bg-white mb-2">{selectedTask.status}</Badge>
                       <DialogTitle className="text-xl font-mono">{selectedTask.hu}</DialogTitle>
                       <DialogDescription className="text-xs mt-1">
-                        {selectedTask.material} • {selectedTask.desc}
+                        {selectedTask.material}{selectedTask.batch ? ` • Batch: ${selectedTask.batch}` : ''} {selectedTask.desc ? `• ${selectedTask.desc}` : ''}
                       </DialogDescription>
-                    </div>
-                    <div className="text-right text-xs text-slate-500">
-                      <div>Qty: <span className="font-bold text-slate-900">{selectedTask.qty}</span></div>
-                      <div>From: <span className="font-bold text-slate-900">{selectedTask.source}</span></div>
                     </div>
                   </div>
                 </DialogHeader>
 
-                <div className="p-6 space-y-8">
-                  
-                  {/* SECTION A: SUGGESTION ENGINE */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-sm font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
-                        <Lightbulb className="h-4 w-4 text-amber-500" />
-                        1. System Suggestions
-                      </Label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="h-4 w-4 text-slate-400" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-[300px]"><p>{STRATEGY_EXPLAINER}</p></TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-
-                    {suggestions.length > 0 ? (
-                      <div className="grid gap-2">
-                        {suggestions.map((sug, i) => (
-                          <div 
-                            key={i}
-                            onClick={() => !overrideMode && setConfirmedTarget(sug)}
-                            className={`
-                              p-3 rounded-lg border-2 cursor-pointer transition-all relative
-                              ${confirmedTarget?.bin === sug.bin ? 'border-green-600 bg-green-50' : 'border-slate-100 hover:border-slate-300'}
-                              ${overrideMode ? 'opacity-50 pointer-events-none' : ''}
-                            `}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <div className="font-bold text-slate-900 flex items-center gap-2">
-                                  {sug.bin}
-                                  {i === 0 && <Badge className="h-4 text-[9px] bg-green-600">BEST</Badge>}
-                                </div>
-                                <div className="text-xs text-slate-500 mt-0.5">Capacity: {sug.capacity} • {sug.distance}</div>
-                              </div>
-                              {confirmedTarget?.bin === sug.bin && <CheckCircle2 className="h-5 w-5 text-green-600" />}
-                            </div>
-                            <div className="flex gap-1 mt-2 flex-wrap">
-                              {sug.reason.map((r, idx) => (
-                                <span key={idx} className="text-[9px] px-1.5 py-0.5 bg-white border rounded-full text-slate-500 font-medium">
-                                  {r}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
+                <div className="p-6 space-y-6">
+                  {/* Task Info */}
+                  <div className="space-y-3 p-4 border rounded-lg bg-slate-50">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-slate-500">HU</span>
+                        <div className="font-mono font-bold text-slate-900">{selectedTask.hu}</div>
                       </div>
-                    ) : (
-                      // NO ELIGIBLE BINS STATE
-                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-                        <XCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                        <h4 className="font-bold text-red-800 text-sm">No Eligible Bins Found</h4>
-                        <p className="text-xs text-red-600 mt-1 mb-3">
-                          Constraints check failed. No bins match: <br/>
-                          <b>{selectedTask.strategy}</b> for <b>{selectedTask.status}</b>.
-                        </p>
-                        <Button size="sm" variant="outline" className="border-red-300 text-red-700 bg-white" onClick={() => setIsExceptionOpen(true)}>
-                          Raise No-Bin Exception
-                        </Button>
+                      <div>
+                        <span className="text-slate-500">Material</span>
+                        <div className="font-medium text-slate-900">{selectedTask.material}{selectedTask.batch ? ` (${selectedTask.batch})` : ''}</div>
                       </div>
-                    )}
-
-                    {/* OVERRIDE TOGGLE */}
-                    <div className="pt-2 flex justify-end">
-                      <Button variant="link" className="h-auto p-0 text-xs text-slate-400 hover:text-blue-600" onClick={() => setOverrideMode(!overrideMode)}>
-                        {overrideMode ? "Cancel Override" : "Supervisor Override"}
-                      </Button>
+                      <div className="col-span-2 flex items-center gap-2">
+                        <span className="text-slate-500">Source</span>
+                        <span className="font-mono font-medium text-slate-900">{selectedTask.source}</span>
+                        <ArrowRight className="h-4 w-4 text-slate-400" />
+                        <span className="text-slate-500">Target</span>
+                        <span className="font-mono font-medium text-slate-900">{selectedTask.topBin}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Quantity</span>
+                        <div className="font-bold text-slate-900">{selectedTask.qty}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Source PO</span>
+                        <div className="font-mono text-slate-900">{selectedTask.doc_id}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Supplier</span>
+                        <div className="text-slate-900">{selectedTask.supplier}</div>
+                      </div>
                     </div>
-
-                    {overrideMode && (
-                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-3 animate-in fade-in">
-                        <div className="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase">
-                          <Lock className="h-3 w-3" /> Manual Override Mode
-                        </div>
-                        <Select onValueChange={(val) => setConfirmedTarget({ bin: val })}>
-                          <SelectTrigger className="bg-white"><SelectValue placeholder="Select Override Bin..." /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="OVERRIDE-ZONE-A">ZONE-A (General)</SelectItem>
-                            <SelectItem value="OVERRIDE-Cage">Secure Cage (Manual)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Textarea placeholder="Required: Override Justification" className="bg-white h-16 text-xs" />
-                        </div>
-                    )}
                   </div>
 
-                  {/* SECTION B: VALIDATION (Scanning) */}
-                  <div className={`space-y-4 transition-all duration-300 ${!confirmedTarget ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+                  {/* Validation Scan */}
+                  <div className="space-y-4">
                     <Label className="text-sm font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
                       <ScanLine className="h-4 w-4 text-blue-600" />
-                      2. Validation Scan
+                      Validation Scan
                     </Label>
-                    
                     <div className="space-y-4 p-4 border rounded-lg bg-slate-50">
                       <div>
                         <div className="flex justify-between mb-1">
@@ -624,53 +441,30 @@ export default function PutawayTasks() {
                           className={scanHu === selectedTask.hu ? "border-green-500 ring-1 ring-green-500 bg-white" : "bg-white"}
                         />
                       </div>
-
                       <div>
                         <div className="flex justify-between mb-1">
-                          <Label className="text-xs text-slate-500">Confirm Bin</Label>
-                          {scanBin === confirmedTarget?.bin && <span className="text-[10px] text-green-600 font-bold">MATCH</span>}
+                          <Label className="text-xs text-slate-500">Target Bin</Label>
+                          {scanBin === confirmedTarget?.bin && scanBin && <span className="text-[10px] text-green-600 font-bold">MATCH</span>}
                         </div>
                         <Input 
-                          placeholder={`Scan Bin ${confirmedTarget?.bin || ''}`} 
+                          placeholder={`Scan or enter bin (default: ${selectedTask.topBin || '—'})`} 
                           value={scanBin}
-                          onChange={(e) => setScanBin(e.target.value)}
-                          disabled={!confirmedTarget}
-                          className={scanBin === confirmedTarget?.bin ? "border-green-500 ring-1 ring-green-500 bg-white" : "bg-white"}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setScanBin(v)
+                            setConfirmedTarget(v ? { bin: v } : null)
+                          }}
+                          className={scanBin === confirmedTarget?.bin && scanBin ? "border-green-500 ring-1 ring-green-500 bg-white" : "bg-white"}
                         />
                       </div>
                     </div>
-                  </div>
-
-                  {/* SECTION C: AUDIT TRAIL */}
-                  <div className="border-t pt-4">
-                    <div 
-                      className="flex items-center gap-2 cursor-pointer text-xs text-slate-400 hover:text-slate-600 transition-colors"
-                      onClick={() => setShowAudit(!showAudit)}
-                    >
-                      <History className="h-3 w-3" />
-                      <span className="font-medium uppercase tracking-wider">History & Audit Trail</span>
-                      <span className="ml-auto text-[10px]">{showAudit ? 'Hide' : 'Show'}</span>
-                    </div>
-                    
-                    {showAudit && (
-                      <div className="mt-3 space-y-3 pl-1.5 relative border-l border-slate-200 ml-1.5">
-                        {generateAudit(selectedTask).map((log, i) => (
-                          <div key={i} className="pl-4 relative">
-                            <div className="absolute -left-[4.5px] top-1.5 h-2 w-2 rounded-full bg-slate-300 ring-2 ring-white"></div>
-                            <div className="text-xs font-bold text-slate-700">{log.event}</div>
-                            <div className="text-[10px] text-slate-500">{log.user} • {log.time}</div>
-                            <div className="text-[10px] text-slate-400 mt-0.5 font-mono">{log.detail}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                 </div>
 
                 <DialogFooter className="p-6 border-t bg-white flex flex-col gap-3 sm:flex-col">
                   <Button 
-                    className="w-full bg-slate-900 hover:bg-slate-800" 
+                    className="w-full bg-green-600 hover:bg-green-700" 
                     size="lg"
                     disabled={scanHu !== selectedTask.hu || scanBin !== confirmedTarget?.bin}
                     onClick={handleConfirmPutaway}

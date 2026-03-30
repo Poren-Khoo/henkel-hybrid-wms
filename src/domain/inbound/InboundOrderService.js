@@ -18,6 +18,7 @@ export class InboundOrderService {
     
     // Build MQTT command (DTO formatting)
     return {
+      request_id: orderData.request_id ?? crypto.randomUUID(),
       ...orderData,
       supplier: InboundOrderValidator.isManufacturing(orderData.type) 
         ? orderData.lineId 
@@ -25,7 +26,9 @@ export class InboundOrderService {
       businessType: BUSINESS_TYPES[orderData.type] || orderData.type,
       lines: orderData.lines.map(l => ({
         code: l.code,
-        qty: Number(l.qty)
+        qty: Number(l.qty),
+        lot: l.lot || '',
+        expiry: l.expiry || '',
       })),
       timestamp: Date.now()
     }

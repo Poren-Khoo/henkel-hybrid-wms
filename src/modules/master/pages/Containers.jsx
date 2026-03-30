@@ -318,7 +318,7 @@ export default function Containers() {
 
             <div className="grid gap-6 py-4">
                 {/* Row 1: ID & Type */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label className="text-xs font-semibold text-slate-700">Container ID *</Label>
                         <Input 
@@ -345,7 +345,7 @@ export default function Containers() {
                 </div>
 
                 {/* Row 2: Capacity & UoM */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label className="text-xs font-semibold text-slate-700">Max Capacity</Label>
                         <Input 
@@ -369,7 +369,7 @@ export default function Containers() {
                 </div>
 
                 {/* Row 3: Tare & Status */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label className="text-xs font-semibold text-slate-700">Tare Weight (KG)</Label>
                         <Input 

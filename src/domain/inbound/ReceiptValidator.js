@@ -54,9 +54,9 @@ export class ReceiptValidator {
     }
 
     if (!isManufacturing) {
-      // Commercial orders: truck required
-      if (!headerData.truck || headerData.truck.trim().length === 0) {
-        throw new ReceiptValidationError("Truck Plate is required for Commercial Receipts.");
+      // Commercial orders: vehicle license required (from dropdown or manual)
+      if (!headerData.vehicleLicense || String(headerData.vehicleLicense).trim().length === 0) {
+        throw new ReceiptValidationError("Vehicle License is required for Commercial Receipts.");
       }
     } else {
       // Manufacturing orders: prodLine required

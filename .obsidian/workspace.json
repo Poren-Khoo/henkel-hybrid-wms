@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/reference/architecture/MQTT_CONTRACT.md",
+                "file": "NODERED_FIXES.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "MQTT_CONTRACT"
+              "title": "NODERED_FIXES"
             }
           }
         ]
@@ -185,14 +185,40 @@
   },
   "active": "494f0795140f368b",
   "lastOpenFiles": [
-    "2026-03-09.md",
-    "docs/reference/architecture/MQTT_CONTRACT.md",
-    "docs/reference/architecture/ARCHITECTURE_OVERVIEW.md",
-    "DEPLOYMENT_GUIDE.md",
-    "NODERED_FIXES.md",
+    "outbound implementation_plan.md",
     "README.md",
+    "src/modules/quality/pages/QualityControl.jsx",
+    "src/modules/quality/pages/QCDisposition.jsx",
+    "src/modules/quality/pages/QASamples.jsx",
+    "src/modules/quality/pages/QADecisions.jsx",
+    "src/modules/quality/pages",
+    "src/modules/quality",
+    "src/modules/production/pages/Reservations.jsx",
+    "src/modules/production/pages/ProductionRequests.jsx",
+    "src/modules/production/pages/ProductionPicking.jsx",
+    "src/modules/production/pages/ProductionOrders.jsx",
+    "docs/reference/standards/EDGE_CASES.md",
+    "docs/reference/standards/DEFINITION_OF_DONE.md",
+    "docs/reference/product/WORKFLOWS.md",
+    "docs/reference/product/UI_PAGES.md",
+    "docs/reference/product/PRD.md",
+    "docs/reference/domain/DOMAIN_MODEL.md",
+    "docs/reference/domain/BUSINESS_RULES.md",
+    "docs/reference/architecture/MQTT_CONTRACT.md",
+    "docs/reference/architecture/ENTERPRISE_OUTBOUND_MQTT.md",
+    "docs/reference/architecture/ARCHITECTURE_OVERVIEW.md",
+    "docs/development/ui/SIDEBAR_RESTRUCTURE_PLAN.md",
+    "docs/development/outbound/OUTBOUND_UPGRADE_WALKTHROUGH.md",
+    "docs/development/outbound/OUTBOUND_PHASE_A_WALKTHROUGH.md",
+    "docs/development/outbound/OUTBOUND_MODULE_TESTING_GUIDE.md",
     "docs/development/CHANGE_IMPACT_GUIDE.md",
+    "docs/development/DDD_REFACTOR_LEARNING_OUTCOMES.md",
     "docs/development/BRANCH_COMPARISON_DDD_REFACTOR.md",
-    "docs/development/ui/SIDEBAR_RESTRUCTURE_PLAN.md"
+    "docs/bugs/2026-02-04-page-transition-dialog-chain-bug.md",
+    "docs/README.md",
+    "docs/bug-fixes.md",
+    "NODERED_FIXES.md",
+    "2026-03-09.md",
+    "DEPLOYMENT_GUIDE.md"
   ]
 }

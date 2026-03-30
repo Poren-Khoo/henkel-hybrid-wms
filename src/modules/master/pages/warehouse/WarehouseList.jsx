@@ -39,8 +39,8 @@ export default function WarehouseList() {
         </div>
 
         {/* ACTION BAR */}
-        <div className="flex justify-between items-center bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-          <div className="relative w-72">
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+          <div className="relative w-full sm:w-72">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
             <Input 
               placeholder="Search warehouses..." 

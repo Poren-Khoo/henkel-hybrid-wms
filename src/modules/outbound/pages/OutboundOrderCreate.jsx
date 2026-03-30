@@ -5,6 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui
 import { Button } from '../../../components/ui/button'
 import { Input } from '../../../components/ui/input'
 import { Label } from '../../../components/ui/label'
+import { Textarea } from '../../../components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'
 import {
   Table,
   TableBody,
@@ -17,12 +19,12 @@ import { Trash2, Plus } from 'lucide-react'
 import { useGlobalUNS } from '../../../context/UNSContext'
 import { WarehouseSelect } from '../../../components/selectors/WarehouseSelect'
 import { MaterialSelect } from '../../../components/selectors/Material'
+import { CustomerSelect } from '../../../components/selectors/CustomerSelect'
 import { WorkerSelect } from '../../../components/selectors/WorkerSelect'
-import UNSConnectionInfo from '../../../components/UNSConnectionInfo'
 import { OutboundOrderService } from '../../../domain/outbound/OutboundOrderService'
 import { OutboundOrderValidator, OutboundOrderValidationError } from '../../../domain/outbound/OutboundOrderValidator'
 import { useAuth } from '../../../context/AuthContext'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../components/ui/tabs'
+import { Separator } from '../../../components/ui/separator'
 
 const TOPIC_CREATE_ACTION = 'Henkelv2/Shanghai/Logistics/Outbound/Action/Create_Order'
 const TOPIC_COST_DB = 'Henkelv2/Shanghai/Logistics/Costing/State/DN_Workflow_DB'
@@ -37,8 +39,9 @@ const INITIAL_FORM_STATE = {
   customer: '',
   shipToAddress: '',
   destination: '',
-  // Operator is selected from Worker master data; start empty so user must choose
+  referenceNo: '',
   operator: '',
+  notes: '',
   lines: [{ code: '', qty: '100' }]
 }
 
@@ -52,15 +55,19 @@ export default function OutboundOrderCreate() {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [validationErrors, setValidationErrors] = useState({})
-  const [activeTab, setActiveTab] = useState('header')
   const [draftAvailable, setDraftAvailable] = useState(false)
 
   // --- PHASE 1 (optional): load existing order when editing ---
   useEffect(() => {
     if (isNew || !id) return
 
-    // 1. Get costing orders
-    const rawCostDNs = Array.isArray(data.dns) ? data.dns : []
+    // 1. Get costing orders from raw topic (same unwrap pattern as sync / shipment)
+    let costPacket = data.raw?.[TOPIC_COST_DB]
+    if (costPacket?.topics && Array.isArray(costPacket.topics) && costPacket.topics.length > 0) {
+      costPacket = costPacket.topics[0].value || costPacket.topics[0]
+    }
+    let rawCostDNs = Array.isArray(costPacket) ? costPacket : (costPacket?.items ?? [])
+    if (!Array.isArray(rawCostDNs)) rawCostDNs = []
 
     // 2. Unwrap sync status
     const syncRaw = data.raw?.[TOPIC_SYNC_STATUS]
@@ -108,7 +115,7 @@ export default function OutboundOrderCreate() {
         // lines: keep default for now; Phase 2/3 can hydrate from items
       }))
     }
-  }, [isNew, id, data])
+  }, [isNew, id, data.raw])
 
   // --- PHASE 2: local draft saving (frontend-only) ---
   useEffect(() => {
@@ -214,33 +221,10 @@ export default function OutboundOrderCreate() {
     }
   }
 
-  const handleTabChange = (nextTab) => {
-    if (nextTab === 'lines') {
-      const errors = OutboundOrderValidator.collectCreateErrors(formData)
-      const headerFields = ['type', 'warehouse', 'requestedDate']
-      if (formData.type === 'SALES_ORDER') {
-        headerFields.push('customer')
-      } else if (formData.type === 'TRANSFER_OUT') {
-        headerFields.push('destination')
-      }
-
-      const hasHeaderErrors = headerFields.some(field => !!errors[field])
-
-      if (hasHeaderErrors) {
-        setValidationErrors(errors)
-        setActiveTab('header')
-        return
-      }
-    }
-
-    setActiveTab(nextTab)
-  }
-
   const handleConfirmCreate = () => {
     const errors = OutboundOrderValidator.collectCreateErrors(formData)
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors)
-      setActiveTab('header')
       return
     }
 
@@ -277,21 +261,8 @@ export default function OutboundOrderCreate() {
   }
 
   return (
-    <PageContainer
-      title={isNew ? 'Create Outbound Order' : `Edit Outbound Order ${id}`}
-      subtitle="Define shipment header and line items before releasing to the warehouse"
-    >
+    <PageContainer>
       <div className="space-y-4">
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <UNSConnectionInfo topic={TOPIC_CREATE_ACTION} />
-          <div>
-            Mode:{' '}
-            <span className="font-mono font-semibold text-slate-700">
-              {isNew ? 'NEW' : 'EDIT'}
-            </span>
-          </div>
-        </div>
-
         {draftAvailable && isNew && (
           <Card className="border-amber-200 bg-amber-50/60">
             <CardContent className="py-3 flex items-center justify-between gap-4">
@@ -299,11 +270,11 @@ export default function OutboundOrderCreate() {
                 A local draft exists for this user. You can restore it or start fresh.
               </div>
               <div className="flex gap-2">
-                <Button size="xs" variant="outline" className="h-7 text-xs" onClick={handleRestoreDraft}>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleRestoreDraft}>
                   Restore Draft
                 </Button>
                 <Button
-                  size="xs"
+                  size="sm"
                   variant="ghost"
                   className="h-7 text-xs text-amber-700"
                   onClick={() => setDraftAvailable(false)}
@@ -315,29 +286,24 @@ export default function OutboundOrderCreate() {
           </Card>
         )}
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="header">Header</TabsTrigger>
-            <TabsTrigger value="lines">Lines</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="header" className="space-y-4">
+        <div className="max-h-[calc(100dvh-14rem)] overflow-y-auto space-y-6 pr-1">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Header</CardTitle>
+                <CardTitle className="text-sm">Order Header</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
                     <Label className="text-xs">Business Type *</Label>
-                    <select
-                      className={`border rounded-md h-9 px-2 text-sm ${validationErrors.type ? 'border-red-500' : ''}`}
-                      value={formData.type}
-                      onChange={e => updateField('type', e.target.value)}
-                    >
-                      <option value="SALES_ORDER">Sales Shipment (DN)</option>
-                      <option value="TRANSFER_OUT">Inter-WH Transfer</option>
-                    </select>
+                    <Select value={formData.type} onValueChange={val => updateField('type', val)}>
+                      <SelectTrigger className={`h-9 text-sm ${validationErrors.type ? 'border-red-500' : ''}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SALES_ORDER">Sales Shipment (DN)</SelectItem>
+                        <SelectItem value="TRANSFER_OUT">Inter-WH Transfer</SelectItem>
+                      </SelectContent>
+                    </Select>
                     {validationErrors.type && (
                       <p className="text-[11px] text-red-600 mt-0.5">{validationErrors.type}</p>
                     )}
@@ -366,22 +332,45 @@ export default function OutboundOrderCreate() {
                       <p className="text-[11px] text-red-600 mt-0.5">{validationErrors.requestedDate}</p>
                     )}
                   </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs">Priority</Label>
+                    <Select value={formData.priority} onValueChange={val => updateField('priority', val)}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="LOW">Low</SelectItem>
+                        <SelectItem value="NORMAL">Normal</SelectItem>
+                        <SelectItem value="HIGH">High</SelectItem>
+                        <SelectItem value="URGENT">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {formData.type === 'SALES_ORDER' ? (
                     <>
                       <div className="space-y-1">
                         <Label className="text-xs">Customer *</Label>
-                        <Input
-                          placeholder="Customer or Ship-to"
-                          className={`h-9 text-sm ${validationErrors.customer ? 'border-red-500' : ''}`}
+                        <CustomerSelect
                           value={formData.customer}
-                          onChange={e => updateField('customer', e.target.value)}
+                          onChange={val => updateField('customer', val)}
+                          className={`h-9 min-h-9 text-sm py-2 ${validationErrors.customer ? 'border-red-500' : ''}`}
                         />
                         {validationErrors.customer && (
                           <p className="text-[11px] text-red-600 mt-0.5">{validationErrors.customer}</p>
                         )}
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Ship-to Address</Label>
+                        <Input
+                          placeholder="Delivery address"
+                          className="h-9 text-sm"
+                          value={formData.shipToAddress}
+                          onChange={e => updateField('shipToAddress', e.target.value)}
+                        />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Operator (Worker)</Label>
@@ -415,11 +404,32 @@ export default function OutboundOrderCreate() {
                     </>
                   )}
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Reference / PO No.</Label>
+                    <Input
+                      placeholder="External reference number"
+                      className="h-9 text-sm"
+                      value={formData.referenceNo}
+                      onChange={e => updateField('referenceNo', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Notes</Label>
+                    <Textarea
+                      placeholder="Special instructions, handling notes..."
+                      className="text-sm min-h-[36px] h-9 resize-none"
+                      value={formData.notes}
+                      onChange={e => updateField('notes', e.target.value)}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="lines">
+            <Separator />
+
             <Card>
               <CardHeader className="flex justify-between items-center">
                 <CardTitle className="text-sm">Line Items</CardTitle>
@@ -475,13 +485,17 @@ export default function OutboundOrderCreate() {
                 </Table>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+        </div>
 
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={handleCancel}>
-            Cancel
-          </Button>
+        <div className="flex flex-col-reverse sm:flex-row justify-between gap-2 pt-2">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button variant="ghost" className="text-slate-500" onClick={handleSaveDraft}>
+              Save Draft
+            </Button>
+          </div>
           <Button
             className="bg-[#b2ed1d] text-slate-900 font-bold hover:bg-[#8cd121]"
             onClick={handleConfirmCreate}

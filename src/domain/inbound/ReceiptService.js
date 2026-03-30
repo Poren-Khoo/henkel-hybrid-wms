@@ -48,29 +48,36 @@ export class ReceiptService {
 
     const isMfg = InboundOrderValidator.isManufacturing(receiptData.orderType);
 
-    // Build polymorphic context
+    // Build polymorphic context (aligned with LotReceivingModal)
     const context = isMfg
       ? {
           line: receiptData.headerData.prodLine,
           shift: receiptData.headerData.shift
         }
       : {
-          dock: receiptData.headerData.dock,
-          truck: receiptData.headerData.truck
+          dock: receiptData.headerData.dock || 'DOCK-IN-01',
+          vehicleLicense: receiptData.headerData.vehicleLicense || ''
         };
 
-    // Build MQTT command payload
+    // Build MQTT command payload (identical structure to LotReceivingModal)
     return {
       doc_id: receiptData.docId || receiptData.headerData.dnNumber,
       type: receiptData.orderType || 'MANUAL',
       context: context,
       lines: receiptData.lines.map(l => ({
-        ...l,
+        code: l.code,
+        desc: l.desc || '',
+        batch: l.batch || '',
+        mfgDate: l.mfgDate || '',
+        expiry: l.expiry || '',
         qty: Number(l.qty),
-        mfg_date: l.mfgDate
+        uom: l.uom || 'KG',
+        containerId: l.containerId || '',
+        stagingLocation: l.stagingLocation || 'RCV-01',
+        receiver: l.receiver || receiptData.operator || ''
       })),
       outcome: receiptData.outcome,
-      inspection: receiptData.inspection,
+      inspection: receiptData.inspection || { packagingOk: true, noLeaks: true, notes: '' },
       operator: receiptData.operator || "CurrentUser",
       timestamp: Date.now()
     };

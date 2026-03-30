@@ -42,27 +42,28 @@ const ROLE_PERMISSIONS = {
     '/operations',
     '/operations/inbound',
     '/operations/inbound/orders',
+    '/operations/inbound/receiving',
     '/operations/inbound/execution',
     '/operations/outbound',
-    '/operations/outbound/orders',
+    '/operations/outbound/planning',
     '/operations/outbound/execution',
-    '/operations/outbound/waves',
-    '/operations/outbound/ship',
+    '/operations/outbound/packing',
     '/operations/inventory',
     '/operations/inventory/list',
     '/operations/transfer',
     '/operations/transfer/orders',
-    '/production',
-    '/production/orders',
-    '/production/requests',
-    '/production/execution',
+    // [PAUSED - 内仓 scope] production navigation permissions
+    // '/production',
+    // '/production/orders',
+    // '/production/requests',
+    // '/production/execution',
   ],
   APPROVER: [
     '/',
     '/dashboard',
     '/operations',
     '/operations/outbound',
-    '/operations/outbound/orders',
+    '/operations/outbound/planning',
     '/governance',
     '/governance/reports',
   ],
@@ -97,8 +98,8 @@ const menuItems = [
     icon: LayoutGrid,
     path: '/dashboard-group',
     children: [
-      { path: '/dashboard', label: 'Logistics Dashboard', labelCn: '物流仪表盘' },
-      { path: '/internal-dashboard', label: 'Manufacturing Ops', labelCn: '制造运营' },
+      { path: '/dashboard', label: 'Dashboard', labelCn: '仪表盘' },
+      { path: '/internal-dashboard', label: 'Production Dashboard', labelCn: '生产仪表盘' },
     ]
   },
 
@@ -118,7 +119,8 @@ const menuItems = [
         isGroup: true, // Marks this as a sub-group (Level 2)
         children: [
           { path: '/operations/inbound/orders', label: 'Inbound Orders', labelCn: '入库通知' },
-          { path: '/operations/inbound/execution', label: 'Execution', labelCn: '入库执行' },
+          { path: '/operations/inbound/receiving', label: 'Receiving', labelCn: '收货' },
+          { path: '/operations/inbound/execution', label: 'Putaway', labelCn: '上架' },
         ]
       },
       // --- OUTBOUND (出库管理) ---
@@ -129,10 +131,9 @@ const menuItems = [
         path: '/operations/outbound',
         isGroup: true,
         children: [
-          { path: '/operations/outbound/orders', label: 'Outbound Orders', labelCn: '出库通知' },
-          { path: '/operations/outbound/waves', label: 'Wave Planning', labelCn: '波次管理' },
+          { path: '/operations/outbound/planning', label: 'Outbound Planning', labelCn: '出库规划' },
           { path: '/operations/outbound/execution', label: 'Execution', labelCn: '出库执行' },
-          { path: '/operations/outbound/ship', label: 'Ship Confirm', labelCn: '发运确认' },
+          { path: '/operations/outbound/packing', label: 'Packing', labelCn: '打包' },
         ]
       },
       // --- INVENTORY (库存管理) ---
@@ -161,7 +162,9 @@ const menuItems = [
     ]
   },
 
-  // === PRODUCTION ===
+  // [PAUSED - 内仓 scope] production navigation
+  // Uncomment to re-enable manufacturing warehouse sidebar entries
+  /*
   {
     label: 'Production',
     labelCn: '生产管理',
@@ -177,6 +180,7 @@ const menuItems = [
       { path: '/production/fg-receipt', label: 'FG Receipt', labelCn: '成品入库' },
     ]
   },
+  */
 
   // === QUALITY ===
   {
@@ -187,7 +191,6 @@ const menuItems = [
     children: [
       { path: '/qc/samples', label: 'QA Samples', labelCn: '质检样品' },
       { path: '/qc/worklist', label: 'QA Decisions', labelCn: '质检决策' },
-      { path: '/qc/disposition', label: 'Disposition', labelCn: '处置' },
     ]
   },
 
@@ -458,13 +461,10 @@ export function AppSidebar({ isDark, onThemeToggle }) {
               </div>
 
               <div className={cn(
-                "flex flex-col justify-center border-l pl-4 h-8 transition-colors duration-300",
+                "flex items-center border-l pl-4 h-8 transition-colors duration-300",
                 isDark ? "border-slate-700" : "border-slate-200"
               )}>
-                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest leading-none">
-                  Unified
-                </span>
-                <span className="text-[15px] font-bold text-[#b2ed1d] uppercase tracking-widest leading-none mt-1">
+                <span className="text-[15px] font-bold text-[#b2ed1d] uppercase tracking-widest leading-none">
                   WMS
                 </span>
               </div>

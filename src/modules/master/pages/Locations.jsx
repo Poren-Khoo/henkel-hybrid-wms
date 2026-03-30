@@ -351,7 +351,7 @@ export default function Locations() {
 
             <div className="grid gap-6 py-4">
                 {/* Row 1: WH & Zone */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label className="text-xs font-semibold text-slate-700">Warehouse Code *</Label>
                         <Input 
@@ -372,7 +372,7 @@ export default function Locations() {
                 </div>
 
                 {/* Row 2: Bin Code & Type */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label className="text-xs font-semibold text-slate-700">Bin Code *</Label>
                         <Input 
@@ -399,7 +399,7 @@ export default function Locations() {
                 </div>
 
                 {/* Row 3: Capacity & UoM */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label className="text-xs font-semibold text-slate-700">Capacity</Label>
                         <Input 
@@ -423,7 +423,7 @@ export default function Locations() {
                 </div>
 
                 {/* Row 4: Temp & Util */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label className="text-xs font-semibold text-slate-700">Temperature Condition</Label>
                         <Select value={formData.temp} onValueChange={v => setFormData({...formData, temp: v})}>

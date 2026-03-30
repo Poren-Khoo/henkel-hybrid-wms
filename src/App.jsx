@@ -19,7 +19,7 @@ import PutawayMove from './modules/inbound/pages/PutawayMove';
 import Exceptions from './modules/inbound/pages/Exceptions';
 
 // --- OUTBOUND MODULE ---
-import OutboundOrders from './modules/outbound/pages/OutboundOrders';
+import OutboundPlanning from './modules/outbound/pages/OutboundPlanning';
 import OutboundOrderCreate from './modules/outbound/pages/OutboundOrderCreate';
 import OutboundDN from './modules/outbound/pages/OutboundDN';
 import DnOperatorQueue from './modules/outbound/pages/DnOperatorQueue';
@@ -28,9 +28,7 @@ import OutboundVAS from './modules/outbound/pages/OutboundVAS';
 import DispatchOrders from './modules/outbound/pages/DispatchOrders';
 import DispatchPicking from './modules/outbound/pages/DispatchPicking';
 import DispatchPacking from './modules/outbound/pages/DispatchPacking';
-import ShipmentConfirmation from './modules/outbound/pages/ShipmentConfirmation';
 import PickingTasks from './modules/outbound/pages/PickingTask';
-import WavePlanning from './modules/outbound/pages/WavePlanning';
 import OutboundExecution from './modules/outbound/pages/OutboundExecution';
 
 // --- MASTER DATA MODULE ---
@@ -52,20 +50,20 @@ import RateCard from './modules/finance/pages/RateCard';
 import MonthlyBilling from './modules/finance/pages/MonthlyBilling';
 import Reconciliation from './modules/finance/pages/Reconciliation';
 
-// --- PRODUCTION MODULE ---
-import ProductionOrders from './modules/production/pages/ProductionOrders';
-import ProductionRequests from './modules/production/pages/ProductionRequests';
-import Reservations from './modules/production/pages/Reservations';
-import ProductionPicking from './modules/production/pages/ProductionPicking';
-import LineStaging from './modules/production/pages/LineStaging';
-import ProductionConsumption from './modules/production/pages/ProductionConsumption';
-import FinishedGoodsReceipt from './modules/production/pages/FinishedGoodsReceipt';
+// [PAUSED - 内仓 scope] production module imports
+// Uncomment to re-enable manufacturing warehouse features
+// import ProductionOrders from './modules/_production_paused/pages/ProductionOrders';
+// import ProductionRequests from './modules/_production_paused/pages/ProductionRequests';
+// import Reservations from './modules/_production_paused/pages/Reservations';
+// import ProductionPicking from './modules/_production_paused/pages/ProductionPicking';
+// import LineStaging from './modules/_production_paused/pages/LineStaging';
+// import ProductionConsumption from './modules/_production_paused/pages/ProductionConsumption';
+// import FinishedGoodsReceipt from './modules/_production_paused/pages/FinishedGoodsReceipt';
 
 // --- QUALITY MODULE ---
 import QualityControl from './modules/quality/pages/QualityControl';
 import QASamples from './modules/quality/pages/QASamples';
 import QADecisions from './modules/quality/pages/QADecisions';
-import QCDisposition from './modules/quality/pages/QCDisposition';
 
 // --- INVENTORY MODULE ---
 import InventoryList from './modules/inventory/pages/InventoryList';
@@ -117,18 +115,21 @@ function App() {
                 OPERATIONS: INBOUND (入库管理)
             ═══════════════════════════════════════════════════════════════ */}
             <Route path="operations/inbound/orders" element={<InboundOrders />} />
+            <Route path="operations/inbound/receiving" element={<Receiving />} />
             <Route path="operations/inbound/execution" element={<PutawayMove />} />
-            {/* TODO: Create InboundExecution.jsx with tabs for Receipt + Putaway */}
 
             {/* ═══════════════════════════════════════════════════════════════
                 OPERATIONS: OUTBOUND (出库管理)
             ═══════════════════════════════════════════════════════════════ */}
-            <Route path="operations/outbound/orders" element={<OutboundOrders />} />
+            <Route path="operations/outbound/planning" element={<OutboundPlanning />} />
             <Route path="operations/outbound/order/new" element={<OutboundOrderCreate />} />
             <Route path="operations/outbound/order/:id/edit" element={<OutboundOrderCreate />} />
-            <Route path="operations/outbound/waves" element={<WavePlanning />} />
             <Route path="operations/outbound/execution" element={<OutboundExecution />} />
-            <Route path="operations/outbound/ship" element={<ShipmentConfirmation />} />
+            <Route path="operations/outbound/packing" element={<DispatchPacking />} />
+            {/* Legacy: /orders and /waves redirect to /planning */}
+            <Route path="operations/outbound/orders" element={<Navigate to="/operations/outbound/planning" replace />} />
+            <Route path="operations/outbound/waves" element={<Navigate to="/operations/outbound/planning" replace />} />
+            <Route path="operations/outbound/ship" element={<Navigate to="/operations/outbound/execution?tab=dispatch" replace />} />
 
             {/* ═══════════════════════════════════════════════════════════════
                 OPERATIONS: INVENTORY (库存管理)
@@ -143,15 +144,16 @@ function App() {
             <Route path="operations/transfer/orders" element={<DispatchOrders />} />
 
             {/* ═══════════════════════════════════════════════════════════════
-                PRODUCTION (生产管理)
+                [PAUSED - 内仓 scope] production module routes
+                Uncomment to re-enable manufacturing warehouse features
             ═══════════════════════════════════════════════════════════════ */}
-            <Route path="production/orders" element={<ProductionOrders />} />
-            <Route path="production/requests" element={<ProductionRequests />} />
-            <Route path="production/reservations" element={<Reservations />} />
-            <Route path="production/picking" element={<ProductionPicking />} />
-            <Route path="production/staging" element={<LineStaging />} />
-            <Route path="production/consumption" element={<ProductionConsumption />} />
-            <Route path="production/fg-receipt" element={<FinishedGoodsReceipt />} />
+            {/* <Route path="production/orders" element={<ProductionOrders />} /> */}
+            {/* <Route path="production/requests" element={<ProductionRequests />} /> */}
+            {/* <Route path="production/reservations" element={<Reservations />} /> */}
+            {/* <Route path="production/picking" element={<ProductionPicking />} /> */}
+            {/* <Route path="production/staging" element={<LineStaging />} /> */}
+            {/* <Route path="production/consumption" element={<ProductionConsumption />} /> */}
+            {/* <Route path="production/fg-receipt" element={<FinishedGoodsReceipt />} /> */}
 
             {/* ═══════════════════════════════════════════════════════════════
                 QUALITY (质量管理)
@@ -159,11 +161,9 @@ function App() {
             <Route path="qc" element={<QualityControl />} />
             <Route path="qc/samples" element={<QASamples />} />
             <Route path="qc/worklist" element={<QADecisions />} />
-            <Route path="qc/disposition" element={<QCDisposition />} />
             {/* New quality routes */}
             <Route path="quality/samples" element={<QASamples />} />
             <Route path="quality/decisions" element={<QADecisions />} />
-            <Route path="quality/disposition" element={<QCDisposition />} />
 
             {/* ═══════════════════════════════════════════════════════════════
                 MASTER DATA (基础数据)
@@ -206,29 +206,29 @@ function App() {
             {/* Old Inbound Routes */}
             <Route path="inbound" element={<Navigate to="/operations/inbound/orders" replace />} />
             <Route path="inbound/orders" element={<Navigate to="/operations/inbound/orders" replace />} />
-            <Route path="inbound/receipt" element={<Navigate to="/operations/inbound/execution" replace />} />
+            <Route path="inbound/receipt" element={<Navigate to="/operations/inbound/receiving" replace />} />
             <Route path="inbound/putaway" element={<Navigate to="/operations/inbound/execution" replace />} />
             <Route path="inbound/exceptions" element={<Exceptions />} /> {/* Keep until migrated */}
 
             {/* Old Outbound Routes */}
-            <Route path="outbound" element={<Navigate to="/operations/outbound/orders" replace />} />
+            <Route path="outbound" element={<Navigate to="/operations/outbound/planning" replace />} />
             <Route path="outbound/order/new" element={<Navigate to="/operations/outbound/order/new" replace />} />
             <Route path="outbound/order/:id/edit" element={<OutboundOrderCreate />} />
             <Route path="outbound/picking-tasks" element={<Navigate to="/operations/outbound/execution" replace />} />
-            <Route path="outbound-dn" element={<Navigate to="/operations/outbound/orders" replace />} />
-            <Route path="dn-operator" element={<Navigate to="/operations/outbound/orders" replace />} />
-            <Route path="dn-approval" element={<Navigate to="/operations/outbound/orders" replace />} />
+            <Route path="outbound-dn" element={<Navigate to="/operations/outbound/planning" replace />} />
+            <Route path="dn-operator" element={<Navigate to="/operations/outbound/planning" replace />} />
+            <Route path="dn-approval" element={<Navigate to="/operations/outbound/planning" replace />} />
             <Route path="outbound-vas" element={<OutboundVAS />} /> {/* Keep until migrated */}
 
             {/* Old Dispatch Routes */}
             <Route path="dispatch/orders" element={<Navigate to="/operations/transfer/orders" replace />} />
             <Route path="dispatch/picking" element={<Navigate to="/operations/outbound/execution" replace />} />
-            <Route path="dispatch/packing" element={<Navigate to="/operations/outbound/execution" replace />} />
-            <Route path="dispatch/ship" element={<Navigate to="/operations/outbound/ship" replace />} />
+            <Route path="dispatch/packing" element={<Navigate to="/operations/outbound/packing" replace />} />
+            <Route path="dispatch/ship" element={<Navigate to="/operations/outbound/execution" replace />} />
 
             {/* Old Inventory Routes */}
             <Route path="inventory/list" element={<Navigate to="/operations/inventory/list" replace />} />
-            <Route path="inventory/receipt" element={<Navigate to="/operations/inbound/execution" replace />} />
+            <Route path="inventory/receipt" element={<Navigate to="/operations/inbound/receiving" replace />} />
             <Route path="inventory/move" element={<Navigate to="/operations/inbound/execution" replace />} />
             <Route path="inventory/putaway" element={<Navigate to="/operations/inbound/execution" replace />} />
 

@@ -85,9 +85,9 @@ export default function Materials() {
         </div>
 
         {/* ACTION BAR */}
-        <div className="flex justify-between items-center bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="relative w-72">
+            <div className="relative w-full sm:w-72">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
               <Input 
                 placeholder="Search materials..." 

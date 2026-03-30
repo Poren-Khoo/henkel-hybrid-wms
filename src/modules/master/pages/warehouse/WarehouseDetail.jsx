@@ -57,7 +57,7 @@ export default function WarehouseDetail() {
   return (
     <PageContainer title={isNew ? "New Warehouse" : `${formData.name} (${formData.code})`} subtitle="Configure facility rules">
       
-      <div className="mb-6 flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+      <div className="mb-6 flex flex-col sm:flex-row gap-2 justify-between items-stretch sm:items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
         <Button variant="ghost" onClick={() => navigate('/master/warehouses')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Network
         </Button>
@@ -78,7 +78,7 @@ export default function WarehouseDetail() {
           <Card>
             <CardHeader><CardTitle>Facility Details</CardTitle></CardHeader>
             <CardContent className="grid gap-6 max-w-2xl">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Warehouse Code</Label>
                         <Input value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!isNew} />

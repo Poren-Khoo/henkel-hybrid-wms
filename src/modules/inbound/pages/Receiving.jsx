@@ -38,6 +38,8 @@ import { InboundOrderValidator } from '../../../domain/inbound/InboundOrderValid
 const TOPIC_INBOUND_PLAN = "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inbound_Plan"
 const TOPIC_ACTION_RECEIPT = "Henkelv2/Shanghai/Logistics/Internal/Ops/Action/Post_Goods_Receipt"
 const TOPIC_MAT = "Henkelv2/Shanghai/Logistics/MasterData/State/Materials"
+const TOPIC_PLATFORMS = "Henkelv2/Shanghai/Logistics/MasterData/State/Platforms"
+const TOPIC_VEHICLES = "Henkelv2/Shanghai/Logistics/MasterData/State/Vehicles"
 
 // HELPER: Reliable Local Date (YYYY-MM-DD)
 const getTodayLocal = () => new Date().toLocaleDateString('en-CA')
@@ -50,17 +52,17 @@ export default function Receiving() {
   const [isManual, setIsManual] = useState(false)
   const [submissionSuccess, setSubmissionSuccess] = useState(null)
   const [overReceiptWarning, setOverReceiptWarning] = useState(null)
-  const [isSubmitting, setIsSubmitting] = useState(false) 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [useManualVehicleInput, setUseManualVehicleInput] = useState(false)
 
   // --- FORM DATA (Extended for Manufacturing) ---
   const [headerData, setHeaderData] = useState({
-    dock: 'DOCK-IN-01',
-    truck: '',
+    dock: '',
+    vehicleLicense: '',
     dnNumber: '',
     // Manufacturing specific fields
     prodLine: '',
     shift: 'SHIFT-A',
-    
     hasCoa: false,
     supplier: ''
   })
@@ -84,12 +86,35 @@ export default function Receiving() {
     return new Map(list.map(m => [m.code, m]))
   }, [data.raw])
 
+  const platforms = useMemo(() => {
+    const raw = data?.raw?.[TOPIC_PLATFORMS]
+    const list = raw?.topics?.[0]?.value || raw || []
+    return Array.isArray(list) ? list : []
+  }, [data.raw])
+
+  const vehicles = useMemo(() => {
+    const raw = data?.raw?.[TOPIC_VEHICLES]
+    const list = raw?.topics?.[0]?.value || raw || []
+    return Array.isArray(list) ? list : []
+  }, [data.raw])
+
   // --- 2. ROBUST INBOUND QUEUE ---
   const livePendingDocs = useMemo(() => {
-    const raw = data?.raw?.[TOPIC_INBOUND_PLAN]?.asns
-    let rawData = Array.isArray(raw) ? raw : []
-    return rawData
-      .filter(r => r?.status === 'PLANNED' || r?.status === 'PENDING')
+    const packet = data?.raw?.[TOPIC_INBOUND_PLAN]
+    if (!packet || typeof packet !== 'object') return []
+    const rawList = Array.isArray(packet.asns) ? packet.asns :
+                    Array.isArray(packet.items) ? packet.items :
+                    Array.isArray(packet.orders) ? packet.orders : []
+    return rawList
+      .filter(r => {
+        const status = (r?.status || '').toUpperCase()
+        if (status !== 'PLANNED' && status !== 'PENDING' && status !== 'RECEIVING') return false
+        const lines = r.lines || (r.sku ? [{ qty_expected: r.qty || r.qty_expected, received_qty: 0 }] : [])
+        const allFullyReceived = lines.length > 0 && lines.every(l => 
+          (l.received_qty ?? 0) >= (l.qty_expected || l.qty || 0)
+        )
+        return !allFullyReceived
+      })
       .map(r => ({
         id: r.id,
         supplier: r.supplier,
@@ -110,8 +135,8 @@ export default function Receiving() {
     setOverReceiptWarning(null)
     setSubmissionSuccess(null)
     setIsSubmitting(false)
-    // Reset all fields including new Mfg ones
-    setHeaderData({ dock: 'DOCK-IN-01', truck: '', dnNumber: '', prodLine: '', shift: 'SHIFT-A', hasCoa: false, supplier: '' })
+    setUseManualVehicleInput(false)
+    setHeaderData({ dock: '', vehicleLicense: '', dnNumber: '', prodLine: '', shift: 'SHIFT-A', hasCoa: false, supplier: '' })
     setLines([])
     setInspection({ packagingOk: true, noLeaks: true, notes: '' })
     setOutcome('ACCEPT_QUARANTINE')
@@ -121,26 +146,31 @@ export default function Receiving() {
     resetForm() 
     setIsManual(false)
     setSelectedDoc(doc)
-    
-    // Auto-fill context based on type
+
+    const defaultDock = platforms?.[0]?.code || ''
+    const defaultVehicle = vehicles?.[0]?.license || ''
     setHeaderData(prev => ({
       ...prev,
-      truck: InboundOrderValidator.isManufacturing(doc.type) ? '' : 'Simulated Truck', 
+      dock: InboundOrderValidator.isManufacturing(doc.type) ? '' : defaultDock,
+      vehicleLicense: InboundOrderValidator.isManufacturing(doc.type) ? '' : defaultVehicle,
       dnNumber: doc.id,
-      prodLine: InboundOrderValidator.isManufacturing(doc.type) ? (doc.supplier || 'LINE-01') : '', // If Mfg, Supplier field usually holds Line ID
+      prodLine: InboundOrderValidator.isManufacturing(doc.type) ? (doc.supplier || 'LINE-01') : '',
       hasCoa: true,
       supplier: doc.supplier || ''
     }))
 
-    const mappedLines = (doc.lines || []).map((l, idx) => ({
+    const mappedLines = (doc.lines || []).map((l) => ({
       id: crypto.randomUUID(), 
       code: l.code || '',
       desc: l.desc || '', 
       batch: '', 
       mfgDate: getTodayLocal(), 
-      containerId: '', // Blank by default, user must scan or gen
+      expiry: '',
+      containerId: '',
+      stagingLocation: 'RCV-01',
+      receiver: '',
       qty: l.qty || l.qty_expected || 0,
-      uom: 'KG' 
+      uom: l.uom || 'KG' 
     }))
 
     setLines(mappedLines)
@@ -149,13 +179,13 @@ export default function Receiving() {
   const handleStartManual = () => {
     resetForm()
     setIsManual(true)
-    setLines([{ id: crypto.randomUUID(), code: '', desc: '', batch: '', mfgDate: getTodayLocal(), containerId: '', qty: '', uom: 'KG' }])
+    setLines([{ id: crypto.randomUUID(), code: '', desc: '', batch: '', mfgDate: getTodayLocal(), expiry: '', containerId: '', stagingLocation: 'RCV-01', receiver: '', qty: '', uom: 'KG' }])
   }
 
   const addLine = () => {
     setLines(prev => [...prev, { 
       id: crypto.randomUUID(), 
-      code: '', desc: '', batch: '', mfgDate: getTodayLocal(), containerId: '', qty: '', uom: 'KG' 
+      code: '', desc: '', batch: '', mfgDate: getTodayLocal(), expiry: '', containerId: '', stagingLocation: 'RCV-01', receiver: '', qty: '', uom: 'KG' 
     }])
   }
 
@@ -185,6 +215,7 @@ export default function Receiving() {
   }
 
   const handleSubmit = (force = false) => {
+    if (isSubmitting) return
     try {
       // 1. DDD Validation using domain validator
       const orderType = selectedDoc ? selectedDoc.type : 'MANUAL'
@@ -227,7 +258,7 @@ export default function Receiving() {
           invId: "INV-" + Math.floor(Math.random() * 10000),
           outcome: outcome,
           location: outcome === 'REJECT' ? 'REJECT-ZONE' : headerData.dock,
-          docId: selectedDoc ? selectedDoc.id : headerData.dnNumber
+          doc_Id: selectedDoc ? selectedDoc.id : headerData.dnNumber
         })
         setOverReceiptWarning(null)
         setIsSubmitting(false)
@@ -372,10 +403,10 @@ export default function Receiving() {
                 )}
 
               {/* === UNIVERSAL HEADER (Polymorphic) === */}
-              <div className="px-6 py-4 border-b border-slate-100 bg-white flex justify-between items-center">
+              <div className="px-4 sm:px-6 py-4 border-b border-slate-100 bg-white flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
                 <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-lg font-bold text-slate-900 font-mono tracking-tight">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 font-mono tracking-tight">
                       {isManual ? 'MANUAL-RECEIPT' : selectedDoc.id}
                     </h2>
                     <Badge variant="outline" className={isManual ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-blue-50 text-blue-700 border-blue-200"}>
@@ -386,15 +417,15 @@ export default function Receiving() {
                 </div>
                 
                 {/* DYNAMIC CONTEXT SWITCHER */}
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-3 sm:gap-4">
                     {/* Show DOCK for Commercial, LINE for Manufacturing */}
                     {InboundOrderValidator.isManufacturing(selectedDoc?.type) ? (
                         <>
-                            <div className="w-[140px]">
+                            <div className="w-full sm:w-[140px]">
                                 <Label className="text-[10px] uppercase text-emerald-600 font-bold tracking-wider mb-1 block">Prod Line</Label>
                                 <Input value={headerData.prodLine} onChange={e => setHeaderData({...headerData, prodLine: e.target.value})} className="h-8 text-xs font-bold text-emerald-800 bg-emerald-50 border-emerald-100" />
                             </div>
-                            <div className="w-[120px]">
+                            <div className="w-full sm:w-[120px]">
                                 <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1 block">Shift</Label>
                                 <Select value={headerData.shift} onValueChange={v => setHeaderData({...headerData, shift: v})}>
                                     <SelectTrigger className="h-8 text-xs bg-slate-50"><SelectValue /></SelectTrigger>
@@ -406,13 +437,14 @@ export default function Receiving() {
                             </div>
                         </>
                     ) : (
-                        <div className="w-[180px]">
-                            <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1 block">Target Dock</Label>
+                        <div className="w-full sm:w-[180px]">
+                            <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1 block">Platform / Dock</Label>
                             <Select value={headerData.dock} onValueChange={v => setHeaderData(h => ({...h, dock: v}))}>
-                                <SelectTrigger className="h-8 text-xs bg-slate-50 border-slate-200"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-8 text-xs bg-slate-50 border-slate-200"><SelectValue placeholder="Select Dock" /></SelectTrigger>
                                 <SelectContent>
-                                <SelectItem value="DOCK-IN-01">DOCK-IN-01 (General)</SelectItem>
-                                <SelectItem value="DOCK-IN-02">DOCK-IN-02 (Hazmat)</SelectItem>
+                                  {platforms.map(p => (
+                                    <SelectItem key={p.code} value={p.code}>{p.code} — {p.name}</SelectItem>
+                                  ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -425,10 +457,27 @@ export default function Receiving() {
                 
                 {/* ARRIVAL DATA (CONDITIONAL) */}
                 {!InboundOrderValidator.isManufacturing(selectedDoc?.type) && (
-                    <div className="grid grid-cols-2 gap-6 bg-slate-50/50 p-4 rounded-lg border border-slate-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 bg-slate-50/50 p-4 rounded-lg border border-slate-100">
                         <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold text-slate-700">Truck / License Plate</Label>
-                            <Input placeholder="e.g. 沪A-88291" value={headerData.truck} onChange={e => setHeaderData({...headerData, truck: e.target.value})} className="bg-white border-slate-200 h-9" />
+                            <Label className="text-xs font-semibold text-slate-700">Vehicle License</Label>
+                            {useManualVehicleInput ? (
+                              <div className="flex gap-1">
+                                <Input placeholder="e.g. 沪A-88291" value={headerData.vehicleLicense} onChange={e => setHeaderData({...headerData, vehicleLicense: e.target.value})} className="bg-white border-slate-200 h-9 flex-1" />
+                                <Button type="button" variant="ghost" size="sm" className="h-9 text-xs text-slate-500" onClick={() => setUseManualVehicleInput(false)}>From List</Button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-1">
+                                <Select value={headerData.vehicleLicense} onValueChange={v => setHeaderData({...headerData, vehicleLicense: v})}>
+                                  <SelectTrigger className="h-9 bg-white border-slate-200 flex-1"><SelectValue placeholder="Select Vehicle" /></SelectTrigger>
+                                  <SelectContent>
+                                    {vehicles.map(v => (
+                                      <SelectItem key={v.code} value={v.license}>{v.license} ({v.carrier})</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button type="button" variant="ghost" size="sm" className="h-9 text-xs text-slate-500" onClick={() => setUseManualVehicleInput(true)}>Manual</Button>
+                              </div>
+                            )}
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-xs font-semibold text-slate-700">Delivery Note (DN)</Label>
@@ -455,7 +504,7 @@ export default function Receiving() {
                           <TableHead className="w-[25%] text-[10px] uppercase font-bold text-slate-500 h-9">Material Info</TableHead>
                           <TableHead className="text-[10px] uppercase font-bold text-slate-500 h-9">Batch ID</TableHead>
                           <TableHead className="text-[10px] uppercase font-bold text-slate-500 h-9">Mfg Date</TableHead>
-                          {/* NEW COLUMN: ASSET / LPN */}
+                          <TableHead className="text-[10px] uppercase font-bold text-slate-500 h-9">Expiry Date</TableHead>
                           <TableHead className="w-[20%] text-[10px] uppercase font-bold text-slate-500 h-9">Asset / LPN</TableHead>
                           <TableHead className="w-[12%] text-[10px] uppercase font-bold text-slate-500 h-9">Qty</TableHead>
                           <TableHead className="w-[40px] h-9"></TableHead>
@@ -486,7 +535,11 @@ export default function Receiving() {
                                     <CalendarDays className="absolute left-2 top-2 h-3.5 w-3.5 text-slate-400" />
                                 </div>
                             </TableCell>
-                            {/* 4. ASSET / LPN (ENTERPRISE FEATURE) */}
+                            {/* 4. Expiry Date */}
+                            <TableCell className="py-2 align-top">
+                                <Input type="date" className="h-8 text-xs border-slate-200" value={line.expiry || ''} onChange={e => updateLine(line.id, 'expiry', e.target.value)} />
+                            </TableCell>
+                            {/* 5. ASSET / LPN (ENTERPRISE FEATURE) */}
                             <TableCell className="py-2 align-top">
                               <div className="flex gap-1">
                                 <Input 
@@ -505,14 +558,27 @@ export default function Receiving() {
                                 )}
                               </div>
                             </TableCell>
-                            {/* 5. Qty */}
+                            {/* 6. Qty + Pallet Hint */}
                             <TableCell className="py-2 align-top">
                               <div className="relative">
                                 <Input type="number" className="h-8 text-xs pr-8 border-slate-200 font-medium" value={line.qty} onChange={e => updateLine(line.id, 'qty', e.target.value)} />
                                 <div className="absolute right-2 top-2 text-[10px] text-slate-400 font-bold">{line.uom}</div>
                               </div>
+                              {(() => {
+                                const mat = materialMap.get(line.code)
+                                const palletSpec = mat?.pcs_per_pallet || mat?.palletSpec || mat?.pallet_qty
+                                if (!palletSpec || !line.qty || Number(line.qty) <= 0) return null
+                                const pallets = (Number(line.qty) / palletSpec).toFixed(1)
+                                const isFullPallet = Number(pallets) % 1 === 0
+                                return (
+                                  <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${isFullPallet ? 'text-green-600' : 'text-amber-600'}`}>
+                                    {isFullPallet ? <CheckCircle2 className="h-2.5 w-2.5" /> : <AlertTriangle className="h-2.5 w-2.5" />}
+                                    = {pallets} pallet{Number(pallets) !== 1 ? 's' : ''} {isFullPallet ? '\u2713' : '\u26A0'}
+                                  </div>
+                                )
+                              })()}
                             </TableCell>
-                            {/* 6. Remove */}
+                            {/* 7. Remove */}
                             <TableCell className="py-2 align-top">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={() => removeLine(line.id)}>
                                 <Trash2 className="h-3 w-3" />

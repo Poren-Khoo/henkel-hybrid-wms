@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table'
+import { Progress } from '../../../components/ui/progress'
 import { 
   Printer, FileText, Clock, Truck, Package, 
   MapPin, User, Calendar, CheckCircle2, AlertCircle, FileCheck
@@ -34,9 +35,14 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
   useEffect(() => {
     if (!initialOrder?.id) return
 
-    // Get data from all sources
-    const rawCostDNs = Array.isArray(data.dns) ? data.dns : []
-    
+    // Get costing DNs from raw topic (same unwrap pattern as sync / shipment)
+    let costPacket = data.raw?.[TOPIC_COST_DB]
+    if (costPacket?.topics && Array.isArray(costPacket.topics) && costPacket.topics.length > 0) {
+      costPacket = costPacket.topics[0].value || costPacket.topics[0]
+    }
+    let rawCostDNs = Array.isArray(costPacket) ? costPacket : (costPacket?.items ?? [])
+    if (!Array.isArray(rawCostDNs)) rawCostDNs = []
+
     // Unwrap UNS envelope for sync status
     const syncRaw = data.raw[TOPIC_SYNC_STATUS]
     let syncPacket = syncRaw
@@ -83,7 +89,7 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
       // Fallback to initial order if no real-time data found
       setCurrentOrder(initialOrder)
     }
-  }, [data, initialOrder])
+  }, [data.raw, initialOrder])
 
   // Update when initialOrder prop changes
   useEffect(() => {
@@ -305,6 +311,23 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
             {/* --- TAB 1: OVERVIEW (Progress & Context) --- */}
             <TabsContent value="overview" className="pt-6 pb-6 flex-1 overflow-y-auto min-h-0">
               <div className="space-y-6">
+
+                {/* Order Numbers */}
+                <div className="bg-slate-50 rounded-lg p-3 grid grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">DN No.</div>
+                    <div className="font-mono font-semibold text-sm text-slate-900">{orderToDisplay.id}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Warehouse</div>
+                    <div className="font-medium text-sm text-slate-900">{orderToDisplay.warehouse || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Requested Date</div>
+                    <div className="font-medium text-sm text-slate-900">{orderToDisplay.requested_date || orderToDisplay.requestedDate || '—'}</div>
+                  </div>
+                </div>
+
                 {/* Workflow Progress - Using Domain Service */}
                 <Card>
               <CardHeader className="pb-3">
@@ -351,6 +374,57 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
                 <InfoCard icon={FileCheck} label="Tracking Number" value={orderToDisplay.trackingNumber} />
               )}
             </div>
+
+                {/* Carrier Info Card */}
+                {(orderToDisplay.carrier || orderToDisplay.tracking_number) && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Truck className="w-4 h-4 text-blue-600" />
+                      <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Carrier Information</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-blue-400">Carrier</div>
+                        <div className="font-medium text-blue-900">{orderToDisplay.carrier || '—'}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-blue-400">Tracking No.</div>
+                        <div className="font-mono text-blue-900">{orderToDisplay.tracking_number || orderToDisplay.trackingNumber || '—'}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-blue-400">Shipped At</div>
+                        <div className="text-blue-900">
+                          {orderToDisplay.shipped_at ? new Date(orderToDisplay.shipped_at).toLocaleString() : '—'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Timeline */}
+                <div>
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Timeline</div>
+                  <div className="space-y-2">
+                    {[
+                      { label: 'Created', ts: orderToDisplay.created_at, always: true },
+                      { label: 'Approved', ts: orderToDisplay.approved_at, always: false },
+                      { label: 'Picked', ts: orderToDisplay.picked_at, always: false },
+                      { label: 'Shipped', ts: orderToDisplay.shipped_at, always: false },
+                    ]
+                      .filter(e => e.always || e.ts)
+                      .map((e, idx) => (
+                        <div key={idx} className="flex items-center gap-3 text-sm">
+                          <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${e.ts ? 'bg-green-500' : 'bg-slate-200'}`} />
+                          <span className="font-medium text-slate-700 w-20 shrink-0">{e.label}</span>
+                          <span className="text-slate-500 text-xs">
+                            {e.ts ? new Date(e.ts).toLocaleString() : 'Pending'}
+                          </span>
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+
               </div>
             </TabsContent>
 
@@ -365,32 +439,44 @@ export default function OutboundOrderDetail({ order: initialOrder, open, onClose
                     <TableHead>SKU</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead className="text-right">Qty Req</TableHead>
+                    <TableHead>Pick Progress</TableHead>
                     <TableHead className="text-center">Allocation</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {lineItems.length > 0 ? (
-                    lineItems.map((line, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-mono font-medium">{line.code || line.sku}</TableCell>
-                      <TableCell className="text-xs text-slate-500">
-                          {line.desc || line.description || "Standard Material"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">{line.qty}</TableCell>
-                      <TableCell className="text-center">
-                          {orderToDisplay.status === 'NEW' || orderToDisplay.status === 'PENDING_APPROVAL' ? (
-                          <Badge variant="outline" className="text-slate-400 border-slate-200">Pending</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-green-600 bg-green-50 border-green-200">
-                            <CheckCircle2 className="w-3 h-3 mr-1" /> Reserved
-                          </Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    ))
+                    lineItems.map((line, i) => {
+                      const pickedQty = line.picked_qty || 0
+                      const totalQty = line.qty || 0
+                      const pickPct = totalQty > 0 ? Math.min(100, Math.round((pickedQty / totalQty) * 100)) : 0
+                      return (
+                      <TableRow key={i}>
+                        <TableCell className="font-mono font-medium">{line.code || line.sku}</TableCell>
+                        <TableCell className="text-xs text-slate-500">
+                            {line.desc || line.description || "Standard Material"}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">{totalQty}</TableCell>
+                        <TableCell className="min-w-[140px]">
+                          <div className="space-y-1">
+                            <div className="text-xs text-slate-500">Picked: {pickedQty} / {totalQty}</div>
+                            <Progress value={pickPct} className="h-1.5" />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                            {orderToDisplay.status === 'NEW' ? (
+                            <Badge variant="outline" className="text-slate-400 border-slate-200">Pending</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-green-600 bg-green-50 border-green-200">
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Reserved
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      )
+                    })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-slate-400">No line items found</TableCell>
+                      <TableCell colSpan={5} className="text-center py-8 text-slate-400">No line items found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

@@ -23,13 +23,13 @@ const GLOBAL_SUBSCRIPTIONS = [
   "Henkelv2/Shanghai/Logistics/MasterData/State/Warehouses",
   "Henkelv2/Shanghai/Logistics/MasterData/State/BusinessPartners",
   "Henkelv2/Shanghai/Logistics/MasterData/State/Workers",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/Platforms",
+  "Henkelv2/Shanghai/Logistics/MasterData/State/Vehicles",
 
   // --- 4. INTERNAL WAREHOUSE (Manufacturing Support) ---
   "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inventory_Level", // Real-time Stock
   "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Task_Queue",      // Forklift Drivers' tasks
   "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Inbound_Plan",
-  "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Disposition_Queue", // QC Disposition Queue
-  "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Decision_Queue", // QA Manager Approval Queue
   "Henkelv2/Shanghai/Logistics/Production/State/Order_List",      // The Master Schedule
   "Henkelv2/Shanghai/Logistics/Production/State/Reservation_List", // Material Demands
   "Henkelv2/Shanghai/Logistics/Production/State/Picking_Tasks" ,    // Tasks for Operators
@@ -41,11 +41,11 @@ const GLOBAL_SUBSCRIPTIONS = [
   "Henkelv2/Shanghai/Logistics/Internal/Ops/State/Exceptions",       // [NEW] For Internal Exception Management
 
 
-  // --- 6. UPCOMING FEATURES (Pre-loading for next phase) ---
-  "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Inspection_Queue", // Ready for QC Page
+  // --- 6. QC MODULE (Inspection + Decision) ---
+  "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Inspection_Queue", // Lab technician worklist
+  "Henkelv2/Shanghai/Logistics/Internal/Quality/State/Decision_Queue",
 
   // --- 7. OUTBOUND (Trading Context) ---
-  "Henkelv2/Shanghai/Logistics/Outbound/State/Wave_List",
   "Henkelv2/Shanghai/Logistics/Outbound/State/DN_Workflow",
   "Henkelv2/Shanghai/Logistics/Outbound/State/Picking_Queue",
   "Henkelv2/Shanghai/Logistics/Outbound/State/Staging_Area",
@@ -200,7 +200,8 @@ export const UNSProvider = ({ children }) => {
           
           // Optimization: Specialized buckets for heavy data
           if (topic.includes('DN_Workflow_DB')) {
-            newData.dns = cleanValue; 
+            const val = cleanValue
+            newData.dns = Array.isArray(val) ? val : (val?.items ?? [])
           } else if (topic.includes('Rate_Cards')) {
             newData.rates = cleanValue;
           }

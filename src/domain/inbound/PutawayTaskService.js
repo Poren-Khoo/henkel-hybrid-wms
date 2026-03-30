@@ -23,6 +23,8 @@ export class PutawayTaskService {
       suggestionStatus: rawTask.suggestionStatus || rawTask.suggestion_status || 'SUGGESTED',
       topBin: rawTask.topBin || rawTask.top_bin || rawTask.suggested_bin || rawTask.suggestedBin || '—',
       batch: rawTask.batch || rawTask.batch_id || rawTask.batchId || '',
+      doc_id: rawTask.doc_id || '-',
+      supplier: rawTask.supplier || '-',
     };
   }
 
@@ -64,8 +66,9 @@ export class PutawayTaskService {
     // Build MQTT command payload
     return {
       task_id: confirmationData.task.id,
-      hu: confirmationData.scanHu,
-      target_bin: confirmationData.confirmedTarget?.bin || confirmationData.scanBin,
+      hu: confirmationData.scanHu || confirmationData.task.hu,
+      target_bin: confirmationData.confirmedTarget?.bin || confirmationData.scanBin || confirmationData.task.topBin,
+      doc_id: confirmationData.task.doc_id,
       operator: confirmationData.operator || "Current_User",
       timestamp: Date.now()
     };

@@ -17,7 +17,7 @@ export function WarehouseSelect({ value, onChange }) {
       <SelectTrigger>
         <SelectValue placeholder="Select Facility..." />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent position="popper" className="max-h-60 overflow-y-auto">
         {warehouses.filter(w => w.status === 'Active').map(wh => (
           <SelectItem key={wh.code} value={wh.code}>
             {wh.name} ({wh.code})

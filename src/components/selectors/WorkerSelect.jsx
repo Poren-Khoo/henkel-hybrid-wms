@@ -44,7 +44,7 @@ export function WorkerSelect({ value, onChange, placeholder = "Select Operator..
           <SelectValue placeholder={placeholder} />
         )}
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent position="popper" className="max-h-60 overflow-y-auto">
         {activeWorkers.map(worker => (
           <SelectItem key={worker.code} value={worker.code}>
             <span className="font-mono font-bold mr-2">{worker.code}</span>

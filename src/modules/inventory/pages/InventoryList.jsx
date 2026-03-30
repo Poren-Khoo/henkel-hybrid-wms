@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableSkeletonRows 
 } from '../../../components/ui/table'
 import { Card } from '../../../components/ui/card'
 import { Badge } from '../../../components/ui/badge'
@@ -47,7 +47,8 @@ export default function InventoryList() {
       status: item.status || item.inventory_status || item.inventoryStatus || 'AVAILABLE',
       location: item.location || item.bin || item.bin_location || item.binLocation || 'N/A',
       supplier: item.supplier || item.supplier_lot || item.supplierLot || 'N/A',
-      expiry_date: item.expiry_date || item.expiry || item.expiryDate || null
+      expiry_date: item.expiry_date || item.expiry || item.expiryDate || null,
+      doc_id: item.doc_id || '-'
     }))
   }, [data.raw])
 
@@ -132,7 +133,7 @@ export default function InventoryList() {
              
              {/* Status Filter */}
              <Select value={statusFilter} onValueChange={setStatusFilter}>
-               <SelectTrigger className="w-[160px] h-9 text-xs border-slate-200 text-slate-600 bg-white">
+               <SelectTrigger className="w-full sm:w-[160px] h-9 text-xs border-slate-200 text-slate-600 bg-white">
                  <Filter className="h-3.5 w-3.5 mr-2 text-slate-400" /> 
                  <SelectValue placeholder="Status" />
                </SelectTrigger>
@@ -147,7 +148,7 @@ export default function InventoryList() {
 
              {/* Material Filter */}
              <Select value={materialFilter} onValueChange={setMaterialFilter}>
-               <SelectTrigger className="w-[160px] h-9 text-xs border-slate-200 text-slate-600 bg-white">
+               <SelectTrigger className="w-full sm:w-[160px] h-9 text-xs border-slate-200 text-slate-600 bg-white">
                  <Package className="h-3.5 w-3.5 mr-2 text-slate-400" />
                  <SelectValue placeholder="Material" />
                </SelectTrigger>
@@ -180,6 +181,7 @@ export default function InventoryList() {
               <TableRow className="bg-slate-50 border-b border-slate-200">
                 <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Inv ID / HU</TableHead>
                 <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Material Info</TableHead>
+                <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Source PO</TableHead>
                 <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Supplier Lot</TableHead>
                 <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Quantity</TableHead>
                 <TableHead className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Location</TableHead>
@@ -190,20 +192,10 @@ export default function InventoryList() {
             </TableHeader>
             <TableBody>
               {!data.raw[TOPIC_INVENTORY] ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-40 text-center text-slate-500">
-                    <div className="flex flex-col items-center gap-3 py-8">
-                      <div className="h-6 w-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-slate-700">Connecting to Live Stream...</p>
-                        <p className="text-xs text-slate-400">Waiting for MQTT payload</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <TableSkeletonRows rows={8} cols={9} />
               ) : filteredItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-40 text-center text-slate-500">
+                  <TableCell colSpan={9} className="h-40 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-3 py-8">
                       <Box className="h-10 w-10 text-slate-200" />
                       <div className="space-y-1">
@@ -232,6 +224,9 @@ export default function InventoryList() {
                         <span className="font-semibold text-slate-900 text-sm">{item.desc}</span>
                         <span className="text-xs text-slate-500 font-mono mt-0.5">{item.sku}</span>
                       </div>
+                    </TableCell>
+                    <TableCell className="align-top py-3 text-slate-500 text-xs font-mono">
+                      {item.doc_id}
                     </TableCell>
                     <TableCell className="align-top py-3 text-slate-500 text-xs font-mono">
                       {item.supplier || "N/A"}
